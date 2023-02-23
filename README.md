@@ -1,6 +1,5 @@
 # cc1101_rf uC v1.0.10 with cc1101 support 
 
-Master: ![unittest](https://github.com/HomeAutoUser/cc1101_rf?branch=main)
 ### Getting started
 
 
