@@ -1,0 +1,29 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+a:link.RAW, a:visited.RAW { color: #cc00cc; }
+
+.tdsd {
+ text-align: center;
+}
+
+.tdsb {
+ text-align: center;
+ width: 16.6%;
+}
+
+.inp {
+ text-align: center;
+}
+
+.dd {
+ width: 8.3%;
+}
+
+/* found odd number of nibbles */
+.sd {
+ color: red;
+ text-align: center;
+}

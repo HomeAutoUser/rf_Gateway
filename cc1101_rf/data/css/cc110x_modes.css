@@ -1,0 +1,60 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+/* all inactive buttons */
+.btn {
+ background-color: #3399ff;
+ color: white;
+ padding: 2px 6px;
+ margin: 0px 4px 0px 4px;
+ cursor: pointer;
+ text-align: center;
+ border-radius: 11px 11px 11px 11px;
+}
+
+/* all active buttons */
+.btn2 {
+ background-color: #009933;
+ color: white;
+ padding: 2px 6px;
+ margin: 0px 4px 0px 4px;
+ cursor: pointer;
+ text-align: center;
+ border-radius: 11px 11px 11px 11px;
+}
+
+.btn:hover {
+ background-color: #ffff00;
+ color: black;
+}
+
+.ac {
+ text-align: center;
+}
+
+/* name of register value | set to ... | modes */
+.thf1 {
+ width: 33.2%;
+}
+
+.in {
+ text-align: center;
+}
+
+.grn {
+ color: green;
+}
+
+.red {
+ color: red;
+}
+
+input {
+ text-align: center;
+}
+
+a:link.CC110x, a:visited.CC110x {
+ color: #cc00cc;
+}

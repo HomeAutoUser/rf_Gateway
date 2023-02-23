@@ -1,0 +1,13 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+body {
+ word-wrap: break-word;
+}
+
+.back {
+ border-radius: 11px 11px 11px 11px;
+ border: 1px solid #3399ff;
+}

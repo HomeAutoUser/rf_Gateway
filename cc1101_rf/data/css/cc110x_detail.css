@@ -1,0 +1,56 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+input {
+ text-align: center;
+ color: #0000b3;
+}
+
+a:link.CC110x, a:visited.CC110x {
+ color: #cc00cc;
+}
+
+.btn {
+ background-color: #3399ff;
+ color: white;
+ padding: 2px 6px;
+ cursor: pointer;
+ text-align: center;
+ border-radius: 11px 11px 11px 11px;
+}
+
+.btn:hover {
+ background-color: #ffff00;
+ color: black;
+}
+
+.ce {
+ text-align: center;
+}
+
+/* detail information */
+.di {
+ text-align: center;
+}
+
+/* Output information after button press */
+.in {
+ color: green;
+ text-align: center;
+}
+
+/* one cell width to default -> Frequency*/
+.f1 {
+ width: 33.2%;
+}
+
+.f2 {
+ width: 16.6%;
+}
+
+/* cell with register name */
+.f4 {
+ width: 24.8%;
+}

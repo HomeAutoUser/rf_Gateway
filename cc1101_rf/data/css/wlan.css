@@ -1,0 +1,124 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+a:link.WLAN, a:visited.WLAN {
+ color: #cc00cc;
+}
+
+th.fw {
+ width: 66.6%;
+}
+
+/* https://wiki.selfhtml.org/wiki/CSS/Tutorials/Boxmodell/Rahmen */
+td.b1 {
+ border-bottom: 2px solid black;
+ border-left: 2px solid white;
+ border-right: 2px solid white;
+ border-top: 2px solid black;
+ color:green;
+ height: 18px;
+ text-align: center;
+}
+
+td.b2 {
+ border-bottom: 2px solid white;
+ border-left: 2px solid white;
+ border-right: 2px solid white;
+ border-top: 2px solid black;
+ color:green;
+ text-align: center;
+}
+
+td.fb {
+ font-family: "Courier New", "Lucida Console";
+ text-align: center;
+}
+
+td.grn {
+ color:green;
+ text-align: center;
+}
+
+td.red {
+ color:red;
+ text-align: center;
+}
+
+td.s3red {
+ border-bottom: 2px solid white;
+ border-left: 2px solid white;
+ border-right: 2px solid white;
+ border-top: 2px solid black;
+ color:red;
+ text-align: center;
+}
+
+.btn {
+ width: 50%;
+ background-color: #3399ff;
+ color: white;
+ padding: 2px 2px;
+ cursor: pointer;
+ text-align: center;
+ border-radius: 14px 14px 14px 14px;
+}
+
+.btn:hover {
+ background-color: #ffff00;
+ color: black;
+}
+
+input {
+ text-align: center;
+}
+
+.ra1 {
+ text-align: center;
+}
+
+.ssid {
+ width: 200px;
+}
+
+.alig_c {
+ text-align: center;
+}
+
+.alig_r {
+ text-align: right;
+}
+
+.td2 {
+ text-align: center;
+}
+
+/* wlan - CH */
+.wch {
+ text-align: center;
+ width: 28px;
+}
+
+/* wlan - RSSI */
+.wrs {
+ text-align: center;
+ width: 50px;
+}
+
+/* wlan - RSSI color */
+.wrsgrn {
+ color: #00cc00;
+}
+/* wlan - RSSI color */
+.wrsred {
+ color: red;
+}
+
+.zcb {
+ border-right: hidden;
+}
+
+.inp {
+ text-align: center;
+}

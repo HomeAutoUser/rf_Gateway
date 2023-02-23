@@ -1,0 +1,10 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+a:link.HOME, a:visited.HOME { color: #cc00cc; }
+
+.tdf {
+  width: 24.9%; /* 220px moved to the header cell */
+}

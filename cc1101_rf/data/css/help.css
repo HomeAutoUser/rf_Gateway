@@ -1,0 +1,17 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+.td1 {
+ text-align: center;
+ width: 16.6%;
+}
+
+.td2 {
+ text-align: center;
+}
+
+a:link.Help, a:visited.Help {
+ color: #cc00cc;
+}

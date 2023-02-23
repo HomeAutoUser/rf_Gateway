@@ -1,0 +1,46 @@
+﻿/*
+  color theme style for website <NAME> - cc1101_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser>
+*/
+
+table {
+ border-collapse:collapse;
+ border:2px solid #000000;
+ padding:4px;
+ width: 870px;
+}
+
+.htd {
+ text-align: center;
+ width: 16.6%;
+}
+
+.hth {
+ font-size: 18pt;
+}
+
+table th {
+ background: #4db8ff;
+ border:1px solid #000000;
+ color: #313030;
+ padding:6px;
+}
+
+table td {
+ background: #ffffff;
+ border:1px solid #000000;
+ color: #313030;
+ padding:4px;
+}
+
+a:link, a:visited {
+ background-color: #e6f5ff;
+ color: black;
+ display: inline-block;
+ padding: 2px 14px;
+}
+
+a:hover, a:active {
+ background-color: #ffff00;
+ color: black;
+}
