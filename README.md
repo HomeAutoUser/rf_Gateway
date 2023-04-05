@@ -11,7 +11,7 @@ You can also open it with the Arduino IDE.
 Compile it and have fun.
 If you are using the Arduino IDE, you have to copy all the libs into your sketch folder and modify some includes.
 
-### Using cc1101_rf in FHEM
+### Using cc1101_rf_Gateway in FHEM
 
 -> will be added
 
