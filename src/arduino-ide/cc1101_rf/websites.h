@@ -94,16 +94,16 @@ void web_index() {
   }
   website += F("</td></tr><tr><td>Version</td><td>");
   website += TXT_VERSION;
-#ifdef ARDUINO_ARCH_ESP8266
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   website += F("</td></tr><tr><td>WLAN RSSI</td><td>");
   website += WiFi.RSSI();
+#endif
+#ifdef ARDUINO_ARCH_ESP8266
   website += F(" dB</td></tr><tr><td>Supply voltage</td><td>");
   website += String(ESP.getVcc() / 1000.0, 2);  // using a float and 2 decimal places
-  website += F(" Volt</td></tr></tbody></table></body></html>");
-#else
-  website += F("</td></tr></tbody></table></body></html>");
+  website += F(" Volt");
 #endif
-
+  website += F("</td></tr></tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
 }
 

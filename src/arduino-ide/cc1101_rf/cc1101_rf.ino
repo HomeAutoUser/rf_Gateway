@@ -171,13 +171,13 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[]     = "V 1.11 SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[]     = "V 1.12 SIGNALduino compatible cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "MN;D=";
 static const char TXT_RawRSSI[]     = ";R=";
 static const char TXT_RawFP2[]      = ";A=";
 byte CC1101_writeReg_offset         = 2;
 #else
-static const char TXT_VERSION[]     = "V 1.11 cc1101_rf_Gateway ";
+static const char TXT_VERSION[]     = "V 1.12 cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "data: ";
 static const char TXT_RawRSSI[]     = "; RSSI=";
 static const char TXT_RawFP2[]      = "; FREQAFC=";
