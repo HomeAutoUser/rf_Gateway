@@ -8,7 +8,7 @@
 
 setInterval(function() {
   getData();
-}, 1500);    // milliseconds update rate
+}, 1000);    // milliseconds update rate
 
 function getData() {
   var xhttp = new XMLHttpRequest();
@@ -34,14 +34,15 @@ function getData() {
         cell2.style.fontFamily = "Courier New,Lucida Console";
         // RSSI & Style
         cell3.innerHTML = obj.RAW_rssi;
-        if(obj.RAW_rssi <= -60) {
+        if(obj.RAW_rssi <= -80) {
           cell3.style.color = "#ff0000";
           cell3.style.textAlign = "right";
-        }
-        if(obj.RAW_rssi > -60) {
+        }else if(obj.RAW_rssi > -50) {
           cell3.style.color = "#28a428";
           cell3.style.textAlign = "right";
-        }
+        }else{
+          cell3.style.textAlign = "right";
+				}
         cell4.innerHTML = obj.RAW_afc;
         cell4.style.textAlign = "right";
       }

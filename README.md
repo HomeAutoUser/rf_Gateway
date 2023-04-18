@@ -1,4 +1,4 @@
-# cc1101_rf_Gateway uC v1.0.10 with cc1101 support 
+# cc1101_rf_Gateway uC v1.0.11 with cc1101 support 
 
 ### Getting started
 

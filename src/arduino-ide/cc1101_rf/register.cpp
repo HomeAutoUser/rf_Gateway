@@ -596,7 +596,7 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
     Channel Number = 0
     Channel Spacing = 199.951172
     Data Format = Normal mode
-    Data Rate = 9.57108
+    Data Rate = 9.59608
     Deviation = 31.738281
     Device Address = 0
     Manchester Enable = false
@@ -629,7 +629,7 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.300 MHz)
   0x6A,  // FREQ0               Frequency Control Word, Low Byte    (868.300 MHz)
   0xC8,  // MDMCFG4             Modem Configuration
-  0x82,  // MDMCFG3             Modem Configuration
+  0x83,  // MDMCFG3             Modem Configuration
   0x02,  // MDMCFG2             Modem Configuration
   0x22,  // MDMCFG1             Modem Configuration
   0xF8,  // MDMCFG0             Modem Configuration

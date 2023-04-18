@@ -24,6 +24,7 @@ void CC1101_sendFIFO(char *startpos);
 extern void InputCommand(char* In);
 extern int RSSI_dez;
 extern int8_t freqOffAcc;
+extern float freqErrAvg;
 extern boolean CC1101_found;
 extern boolean freqAfc;
 extern byte ToggleValues;

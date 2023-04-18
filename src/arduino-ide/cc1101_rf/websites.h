@@ -17,7 +17,7 @@ extern boolean freqAfc;
   https://divtable.com/table-styler/
 */
 
-void html_meta(String & html) {     /* added meta to html */
+void html_meta(String& html) { /* added meta to html */
   html = F("<!DOCTYPE html>"
            "<html lang=\"de\">"
            "<head>"
@@ -35,7 +35,7 @@ void html_meta(String & html) {     /* added meta to html */
 }
 
 
-void html_head_table(String & html) {    /* added table on head with all links */
+void html_head_table(String& html) { /* added table on head with all links */
   html += F("<table>"
             "<tr><th class=\"hth\" colspan=\"6\">cc110x_rf_Gateway</th></tr>"
             "<tr>"
@@ -81,9 +81,28 @@ void web_index() {
   website += F(" minute(s)&emsp;");
   website += numberOfSeconds(getUptime());
   website += F(" second(s)");
-  website += F("</span></td></tr><tr><td>Version</td><td>");
+  website += F("</span></td></tr><tr><td>Message count</td><td>");
+  website += msgCount;
+  if (getUptime() / 60 >= 60) {
+    website += F("&emsp;(");
+    website += (msgCount / (getUptime() / 3600));
+    website += F(" per hour)");
+  } else if (getUptime() / 60 >= 1) {
+    website += F("&emsp;(");
+    website += (msgCount / (getUptime() / 60));
+    website += F(" per minute)");
+  }
+  website += F("</td></tr><tr><td>Version</td><td>");
   website += TXT_VERSION;
+#ifdef ARDUINO_ARCH_ESP8266
+  website += F("</td></tr><tr><td>WLAN RSSI</td><td>");
+  website += WiFi.RSSI();
+  website += F(" dB</td></tr><tr><td>Supply voltage</td><td>");
+  website += String(ESP.getVcc() / 1000.0, 2);  // using a float and 2 decimal places
+  website += F(" Volt</td></tr></tbody></table></body></html>");
+#else
   website += F("</td></tr></tbody></table></body></html>");
+#endif
 
   HttpServer.send(200, "text/html", website);
 }
@@ -117,11 +136,7 @@ void web_cc110x() {
 
   if (CC1101_found) {
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
-    website += String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX) +
-               F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX) +
-               F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\">") + web_Marcstate_read() +
-               F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\">") + activated_mode_name +
-               F("</td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\">{");
+    website += String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX) + F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX) + F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\">") + web_Marcstate_read() + F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\">") + activated_mode_name + F("</td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\">{");
 
     website += F("&emsp;");
     for (byte i = 0; i < 4; i++) {
@@ -145,15 +160,15 @@ void web_cc110x_modes() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String InputCmd;                                  // preparation for processing | control html InputCommand
-  String submit = HttpServer.arg("submit");         // welcher Button wurde betätigt
+  String InputCmd;                           // preparation for processing | control html InputCommand
+  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
-  String tgtime = HttpServer.arg("tgt");            // toggle time
+  String tgtime = HttpServer.arg("tgt");  // toggle time
   String web_status = F("<tr><td></td>");
   String website;
-  uint8_t countargs = HttpServer.args();            // Anzahl Argumente
-  uint8_t tb_nr;                                    // togglebank nr
-  uint8_t tb_val;                                   // togglebank value
+  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
+  uint8_t tb_nr;                          // togglebank nr
+  uint8_t tb_val;                         // togglebank value
   char InCmdBuf[11];
 
 #ifdef debug_html
@@ -169,7 +184,7 @@ void web_cc110x_modes() {
 #endif
 
   if (countargs != 0) {
-    if (submit != "" && submit != "time") {                 // button "enable reception"
+    if (submit != "" && submit != "time") {  // button "enable reception"
       InputCmd = "m" + submit;
 
 #ifdef debug_html
@@ -180,7 +195,7 @@ void web_cc110x_modes() {
       web_status += String(Registers[submit.toInt()].name) + F(" &#10004;</td>");
     }
 
-    if (submit != "" && submit == "time") {                 // button "START"
+    if (submit != "" && submit == "time") {  // button "START"
       if (tgtime == "") {
         tgtime = String(ToggleTime);
       }
@@ -205,8 +220,8 @@ void web_cc110x_modes() {
     }
 
     if (tb != "") {
-      tb_nr = tb.substring(0, 1).toInt();   /* 0,1,2,3 for valid bank´s and 9 for reset all */
-      tb_val = tb.substring(2).toInt();     /* 0 and 1 */
+      tb_nr = tb.substring(0, 1).toInt(); /* 0,1,2,3 for valid bank´s and 9 for reset all */
+      tb_val = tb.substring(2).toInt();   /* 0 and 1 */
 
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_modes, set togglebank "));
@@ -217,9 +232,9 @@ void web_cc110x_modes() {
 
       web_status = F("<tr><td class=\"in grn\">");
       if (tb_nr <= 3) {
-        InputCmd = F("tob");    // preparation for processing
-        InputCmd += tb_nr;      // preparation for processing
-        InputCmd += tb_val;     // preparation for processing
+        InputCmd = F("tob");  // preparation for processing
+        InputCmd += tb_nr;    // preparation for processing
+        InputCmd += tb_val;   // preparation for processing
         web_status += F("togglebank ");
         web_status += tb_nr;
         web_status += F(" &#10004;</td>");
@@ -231,7 +246,7 @@ void web_cc110x_modes() {
 
     InputCmd.toCharArray(InCmdBuf, 11);
     InputCommand(InCmdBuf);
-    InputCmd = "";              // reset String
+    InputCmd = "";  // reset String
   }
 
   html_meta(website);
@@ -239,7 +254,7 @@ void web_cc110x_modes() {
                "</head>");
   html_head_table(website);
   website += F("<body>"
-               "<form method=\"get\">"            /* form method wichtig für Daten von Button´s !!! */
+               "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                //"<body><form method=\"post\">"   /* https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<table>"
                "<thead><tr>"
@@ -284,8 +299,7 @@ void web_cc110x_modes() {
   }
 
   website += F("<tr>");
-  website += web_status +
-             F("<td class=\"ac\">toggletime&nbsp;");
+  website += web_status + F("<td class=\"ac\">toggletime&nbsp;");
   website += F("<input name=\"tgt\" type=\"text\" size=\"7\" maxlength=\"7\" pattern=\"^[\\d]{1,7}$\" placeholder=\"");
 
   if (ToggleTime != 0) {
@@ -297,7 +311,7 @@ void web_cc110x_modes() {
                "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" value=\"9_0\">reset togglebank & STOP</button>"
                "</td></tr></tbody></table></body></html>");
 
-  HttpServer.send(200, "text / html", website );
+  HttpServer.send(200, "text / html", website);
 }
 
 
@@ -337,17 +351,17 @@ void web_cc110x_detail_export() {
 
 
 void web_cc110x_detail_import() {
-  String submit = HttpServer.arg("submit");         // welcher Button wurde betätigt
-  String imp = HttpServer.arg("imp");               // String der Register inklusive Werte
+  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
+  String imp = HttpServer.arg("imp");        // String der Register inklusive Werte
   String website;
-  uint8_t countargs = HttpServer.args();            // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
   String Part = "";
   String PartAdr = "";
   String PartVal = "";
 
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_imp.css\"></head>");
-  website += F("<body><form method=\"get\">");        /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"get\">"); /* form method wichtig für Daten von Button´s !!! */
 
   if (countargs != 0) {
 #ifdef debug_html
@@ -360,7 +374,7 @@ void web_cc110x_detail_import() {
     Serial.println(imp);
 #endif
 
-    if (submit == "registers") {                    // register processing from String imp ['01AB','11FB']
+    if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
       uint8_t Adr;
       uint8_t Val;
 
@@ -380,14 +394,15 @@ void web_cc110x_detail_import() {
           Serial.print(' ');
           Serial.println(Val);
 #endif
-
           if (Adr > 0x2E) {
             break;
           } else {
             CC1101_writeReg(Adr, Val);    // write in cc1101
             EEPROMwrite(Adr, Val);        // write in flash
           }
-          Part = "";          // reset String
+          Part = "";                      // reset String
+          PartAdr = "";                   // reset String
+          PartVal = "";                   // reset String
         }
 
         if (imp[i] != '[' && imp[i] != ']' && imp[i] != ',' && imp[i] != '\'') {
@@ -408,7 +423,6 @@ void web_cc110x_detail_import() {
     website += F("<br><br>");
     website += F("<button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button>");
   }
-
   website += F("<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>");
   website += F("</form></body></html>");
   HttpServer.send(200, "text/html", website);
@@ -429,11 +443,11 @@ void web_cc110x_detail() {
   String mod = HttpServer.arg("modulation");
   String mod_array[8] = { F("2-FSK"), F("GFSK"), "", F("ASK/OOK"), F("4-FSK"), "", "", F("MSK") };
   String return_val;
-  String submit = HttpServer.arg("submit");         // welcher Button wurde betätigt
+  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
   String web_status = F("<tr><td class=\"in\" colspan=\"6\">current values ​​readed &#10004;</td></tr>");
   String website;
-  uint8_t countargs = HttpServer.args();            // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
 
 
   if (countargs != 0) {
@@ -473,21 +487,22 @@ void web_cc110x_detail() {
         freqAfc = 0;
       }
       EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
-      freqOffAcc = 0;
-      CC1101_writeReg(CC1101_FSCTRL0, 0);                      // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+      freqOffAcc = 0;                      // reset cc110x afc offset
+      freqErrAvg = 0;                      // reset cc110x afc average
+      CC1101_writeReg(CC1101_FSCTRL0, 0);  // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
       Freq_offset = freqOff.toFloat();
       EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
-#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
 #endif
 
       return_val = web_Freq_set(freq);
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Frequency & Frequency Offset set &#10004;</td></tr>");
 
-      for (byte i = 0; i < 3; i++) {        /* write value to register 0D,0E,0F */
+      for (byte i = 0; i < 3; i++) { /* write value to register 0D,0E,0F */
         byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 13, value);     // write in cc1101
-        EEPROMwrite(i + 13, value);         // write in flash
+        CC1101_writeReg(i + 13, value);  // write in cc1101
+        EEPROMwrite(i + 13, value);      // write in flash
       }
     } else if (submit == "bbandw") {
 #ifdef debug_html
@@ -497,9 +512,9 @@ void web_cc110x_detail() {
       Serial.println(web_regData[16]);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Bandwidth set &#10004;</td></tr>");
-      int value = web_Bandw_cal(bandw.toInt(), (hexToDec(web_regData[16]) & 0x0f));   /* input complete | input split */
-      CC1101_writeReg(16, value);           // write in cc1101
-      EEPROMwrite(16, value);               // write in flash
+      int value = web_Bandw_cal(bandw.toInt(), (hexToDec(web_regData[16]) & 0x0f)); /* input complete | input split */
+      CC1101_writeReg(16, value);                                                   // write in cc1101
+      EEPROMwrite(16, value);                                                       // write in flash
     } else if (submit == "bdatarate") {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, button set datarate pushed with "));
@@ -508,10 +523,10 @@ void web_cc110x_detail() {
       web_status = F("<tr><td class=\"in\" colspan=\"6\">DataRate set &#10004;</td></tr>");
       return_val = web_Datarate_set(datar.toFloat());
 
-      for (byte i = 0; i < 2; i++) {        /* write value to register 0D,0E,0F */
+      for (byte i = 0; i < 2; i++) { /* write value to register 0D,0E,0F */
         byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 16, value);     // write in cc1101
-        EEPROMwrite(i + 16, value);         // write in flash
+        CC1101_writeReg(i + 16, value);  // write in cc1101
+        EEPROMwrite(i + 16, value);      // write in flash
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
@@ -528,8 +543,8 @@ void web_cc110x_detail() {
       Serial.println(mod);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
-      CC1101_writeReg(18, web_Mod_set(mod));      // write in cc1101
-      EEPROMwrite(18, web_Mod_set(mod));          // write in flash
+      CC1101_writeReg(18, web_Mod_set(mod));  // write in cc1101
+      EEPROMwrite(18, web_Mod_set(mod));      // write in flash
     } else if (submit == "breg") {
 #ifdef debug_html
       Serial.println(F("DB web_cc1101_detail, button set registers pushed"));
@@ -566,23 +581,24 @@ void web_cc110x_detail() {
             activated_mode_packet_length = hexToDec(web_regData[i]);
           }
           /* write value to registe */
-          CC1101_writeReg(i, hexToDec(web_regData[i]));     // write in cc1101
-          EEPROMwrite(i, hexToDec(web_regData[i]));         // write in flash
+          CC1101_writeReg(i, hexToDec(web_regData[i]));  // write in cc1101
+          EEPROMwrite(i, hexToDec(web_regData[i]));      // write in flash
         }
       }
     }
     activated_mode_name = F("CC110x user configuration");
   } else {
-    freq = String(web_Freq_read( CC1101_readReg(13, READ_BURST),
-                                 CC1101_readReg(14, READ_BURST),
-                                 CC1101_readReg(15, READ_BURST)), 3);
+    freq = String(web_Freq_read(CC1101_readReg(13, READ_BURST),
+                                CC1101_readReg(14, READ_BURST),
+                                CC1101_readReg(15, READ_BURST)
+                               ), 3);
   }
   temp = "";
 
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\"></head>");
   html_head_table(website);
-  website += F("<body><form method=\"get\">"        /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"
                "<thead><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
@@ -590,18 +606,18 @@ void web_cc110x_detail() {
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
                "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\">");
-  website += String( web_Freq_read(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 13),
-                                   pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 14),
-                                   pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 15)
-                                  ), 3);
+  website += String(web_Freq_read(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 13),
+                                  pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 14),
+                                  pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 15)
+                                 ), 3);
   website += F(" | ");
-  website += String( web_Freq_read( CC1101_readReg(13, READ_BURST),
-                                    CC1101_readReg(14, READ_BURST),
-                                    CC1101_readReg(15, READ_BURST)
-                                  ), 3);
+  website += String(web_Freq_read(CC1101_readReg(13, READ_BURST),
+                                  CC1101_readReg(14, READ_BURST),
+                                  CC1101_readReg(15, READ_BURST)
+                                 ), 3);
   website += F(" MHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"7\" name=\"freq\" value=\"");
   website += freq;
-  website += F("\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>");          // end Frequency
+  website += F("\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>");  // end Frequency
 
   website += F("<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input name=\"afc\" type=\"checkbox\" value=\"1\"");
   if (freqAfc == 1) {
@@ -614,23 +630,23 @@ void web_cc110x_detail() {
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"6\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
-  website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>");    // end Frequency Offset
+  website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>");  // end Frequency Offset
 
   website += F("<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\">");
   website += web_Bandw_read();
   website += F(" kHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
   website += String(web_Bandw_read(), 0);
-  website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"         // end Bandwidth
+  website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"  // end Bandwidth
                "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\">");
   website += String(web_Datarate_read(), 2);
   website += F(" kBaud</td><td class=\"ce\"><input size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
   website += String(web_Datarate_read(), 2);
-  website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"    // end DataRate
+  website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"  // end DataRate
                "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\">");
   website += String(web_Devi_read(), 2);
   website += F(" kHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
   website += String(web_Devi_read(), 2);
-  website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"   // end Deviation
+  website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"  // end Deviation
                "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\">");
   website += web_Mod_read();
   website += F("<td class=\"ce\"><select id=\"modulation\" name=\"modulation\">");
@@ -649,7 +665,7 @@ void web_cc110x_detail() {
     website += F("</option>");
   }
 
-  website += F("</select></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"                                      // end Modulation
+  website += F("</select></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"  // end Modulation
                "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\">");
   website += web_PackConf_read();
   website += F("</td></tr><tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\">");
@@ -658,27 +674,26 @@ void web_cc110x_detail() {
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_import'\">import registers</button></td></tr>");
-  website += web_status +
-             F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
+  website += web_status + F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
 
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\">0x");
-    temp = onlyDecToHex2Digit(i);                               /* register */
+    temp = onlyDecToHex2Digit(i); /* register */
     temp.toUpperCase();
     website += temp;
     website += F("&emsp;");
     website += regExplanation_short[i];
     website += F("</td><td class=\"ce\">");
-    temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));   /* value */
+    temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     temp.toUpperCase();
     website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"0x");
-    website += onlyDecToHex2Digit(i);                                                                   /* registername for GET / POST */
+    website += onlyDecToHex2Digit(i); /* registername for GET / POST */
     website += F("\" value=\"");
-    website += temp;                                                                                    /* value for GET / POST */
+    website += temp; /* value for GET / POST */
     website += F("\" type=\"text\" maxlength=\"2\" pattern=\"^[\\da-fA-F]{1,2}$\" placeholder=\"");
-    website += temp;                                                                                    /* placeholder */
+    website += temp; /* placeholder */
     website += F("\"></td><td colspan=\"4\">");
-    website += regExplanation[i];                                                                       /* description */
+    website += regExplanation[i]; /* description */
     if (i == 6) {
       website += F(" = ");
       website += String(CC1101_readReg(0x06, READ_BURST));
@@ -688,7 +703,7 @@ void web_cc110x_detail() {
 
   website += F("</tbody></table></form></body></html>");
 
-  HttpServer.send(200, "text/html", website );
+  HttpServer.send(200, "text/html", website);
 }
 
 
@@ -727,13 +742,13 @@ void web_raw() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String sd = HttpServer.arg("sd");                 // welche Daten genutzt werden sollen
-  String submit = HttpServer.arg("submit");         // welcher Button wurde betätigt
+  String sd = HttpServer.arg("sd");          // welche Daten genutzt werden sollen
+  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String website;
-  uint8_t countargs = HttpServer.args();            // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
 
   html_meta(website);
-  website += F("<body><form method=\"get\">"        /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
                "<script src=\"raw.js\"></script>"
                "</head>");
@@ -755,12 +770,12 @@ void web_raw() {
 
     if (submit == "send") { /* SEND DATA */
       if (sd != "") {
-        if (sd.length() % 2 == 0) {                   /* check datapart is odd */
+        if (sd.length() % 2 == 0) { /* check datapart is odd */
           char senddata[sd.length() + 1];
           sd.toCharArray(senddata, sd.length() + 1);
-          CC1101_setTransmitMode();                   /* enable TX */
+          CC1101_setTransmitMode(); /* enable TX */
           CC1101_sendFIFO(senddata);
-          CC1101_setReceiveMode();                    /* enable RX */
+          CC1101_setReceiveMode(); /* enable RX */
         } else {
 #ifdef debug_html
           Serial.println(F("DB web_raw, found odd number of nibbles"));
@@ -805,7 +820,7 @@ void web_val_raw() {
   } else {
     website = F("{}");
   }
-  HttpServer.send(200, "text/plain", website); // Send value, JSON to client ajax request
+  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
 }
 
 
@@ -813,21 +828,21 @@ void web_wlan() {
   /* https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/scan-class.html
      https://links2004.github.io/Arduino/d4/d52/wl__definitions_8h_source.html
      https://blog.robberg.net/wifi-scanner-with-esp32/ */
-  IPAddress ipadr;                                  // IP addresse
+  IPAddress ipadr;  // IP addresse
   char ipbuffer[16];
   String WifiEncryptionType;
   String WifiMAC;
-  String hssid = HttpServer.arg("hiddenssid");      // Auswahl versteckte SSID
-  String qdhcp = HttpServer.arg("dhcp");            // 1-DHCP ein, 0-DHCP aus
-  String qdns = HttpServer.arg("dns");              // Domain Name Server statisch
-  String qip = HttpServer.arg("ip");                // IP-Adresse statisch
-  String qpass = HttpServer.arg("pw");              // WLAN Passwort
-  String qsgw = HttpServer.arg("gw");               // Gateway statisch
-  String qsnm = HttpServer.arg("sn");               // Subnetzmaske  statisch
-  String qssid = HttpServer.arg("setssid");         // Auswahl SSID
-  String submit = HttpServer.arg("submit");         // welcher Button wurde betätigt
+  String hssid = HttpServer.arg("hiddenssid");  // Auswahl versteckte SSID
+  String qdhcp = HttpServer.arg("dhcp");        // 1-DHCP ein, 0-DHCP aus
+  String qdns = HttpServer.arg("dns");          // Domain Name Server statisch
+  String qip = HttpServer.arg("ip");            // IP-Adresse statisch
+  String qpass = HttpServer.arg("pw");          // WLAN Passwort
+  String qsgw = HttpServer.arg("gw");           // Gateway statisch
+  String qsnm = HttpServer.arg("sn");           // Subnetzmaske  statisch
+  String qssid = HttpServer.arg("setssid");     // Auswahl SSID
+  String submit = HttpServer.arg("submit");     // welcher Button wurde betätigt
   String website;
-  uint8_t countargs = HttpServer.args();            // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
   used_ssid_mac = WiFi.BSSIDstr();
 
 #ifdef debug_html
@@ -858,8 +873,8 @@ void web_wlan() {
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"wlan.css\">"
                "</head>");
   html_head_table(website);
-  website += F("<body><form method=\"get\">"      /* form method wichtig für Daten von Button´s !!! */
-               "<table>"   /* START Tabelle gesamt */
+  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
+               "<table>"                     /* START Tabelle gesamt */
                "<thead>"
                "<tr><th colspan=\"6\">WLAN - Device status</th></tr>"
                "<tr><th colspan=\"4\" class=\"fw\">Mode</td><th colspan=\"2\">MAC</th></tr>"
@@ -880,7 +895,7 @@ void web_wlan() {
   website += F("<thead><tr><th colspan=\"6\">WLAN - available networks</th></tr>"
                "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr></thead>");
 
-  WifiNetworks = WiFi.scanNetworks();         // Scanne Netzwerke
+  WifiNetworks = WiFi.scanNetworks();  // Scanne Netzwerke
 
   for (uint8_t i = 0; i < WifiNetworks; ++i) {
     WifiMAC = WLAN_MAC_String(WiFi.BSSID(i));
@@ -919,15 +934,13 @@ void web_wlan() {
 #endif
 
     website += F("</td><td class=\"ssid\">");
-    website += WiFi.SSID(i) + F("</td><td class=\"fb\">") + WifiMAC +
-               F("</td><td class=\"wch\">") + WiFi.channel(i) +
-               F("</td><td class=\"wrs");
-    if (WiFi.RSSI(i) > -40) {         // WLAN RSSI good
+    website += WiFi.SSID(i) + F("</td><td class=\"fb\">") + WifiMAC + F("</td><td class=\"wch\">") + WiFi.channel(i) + F("</td><td class=\"wrs");
+    if (WiFi.RSSI(i) > -40) {  // WLAN RSSI good
       website += F(" wrsgrn\">");
     } else if (WiFi.RSSI(i) < -65) {  // WLAN RSSI very bad
       website += F(" wrsred\">");
     } else {
-      website += F("\">");            // WLAN RSSI middle
+      website += F("\">");  // WLAN RSSI middle
     }
     website += WiFi.RSSI(i);
     website += F(" db</td><td class=\"alig_c\">");
@@ -950,9 +963,9 @@ void web_wlan() {
   website += F("<thead><tr><th colspan=\"6\">Setting IP - network</th></tr></thead>");
 
   if (WLAN_AP) {
-    ipadr = WiFi.softAPIP();     // IP
+    ipadr = WiFi.softAPIP();  // IP
   } else {
-    ipadr = WiFi.localIP();      // IP
+    ipadr = WiFi.localIP();  // IP
   }
 
   /* Tabelle Setting IP - network | IP DHCP */
@@ -976,19 +989,19 @@ void web_wlan() {
   website += ipbuffer;
   website += F("\"></td></tr>");
 
-  ipadr = WiFi.gatewayIP();     /* Tabelle Setting IP - network | domain name server */
+  ipadr = WiFi.gatewayIP(); /* Tabelle Setting IP - network | domain name server */
   website += F("<tr><td class=\"alig_r\" colspan=\"3\">domain name server</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"dns\" type=\"text\" id=\"dns\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
 
-  ipadr = WiFi.gatewayIP();     /* Tabelle Setting IP - network | Standard-Gateway */
+  ipadr = WiFi.gatewayIP(); /* Tabelle Setting IP - network | Standard-Gateway */
   website += F("<tr><td class=\"alig_r\" colspan=\"3\">default gateway</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"gw\" type=\"text\" id=\"gw\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
 
-  ipadr = WiFi.subnetMask();    /* Tabelle Setting IP - network | Subnetzkaske */
+  ipadr = WiFi.subnetMask(); /* Tabelle Setting IP - network | Subnetzkaske */
   website += F("<tr><td class=\"alig_r\" colspan=\"3\">subnet mask</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"sn\" type=\"text\" id=\"sn\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
@@ -1000,57 +1013,57 @@ void web_wlan() {
     Serial.println(qdhcp == "1" ? F("DB web_wlan, qdhcp 1 (on)") : F("DB web_wlan, qdhcp 0 (off)"));
 #endif
 
-    if (qdhcp == "1") {     /* DHCP ein */
+    if (qdhcp == "1") { /* DHCP ein */
       used_dhcp = 1;
       EEPROMwrite(EEPROM_ADDR_DHCP, 1);
-    } else {                /* DHCP aus */
+    } else { /* DHCP aus */
       EEPROMwrite(EEPROM_ADDR_DHCP, 0);
       used_dhcp = 0;
 
       byte ipaddress[4];
       /* statische IP übernehmen */
-      if (str2ip((char*)qip.c_str(), ipaddress)) {              // convert String to Array of 4 Bytes
+      if (str2ip((char*)qip.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
         Serial.print(F("DB web_wlan, static IP "));
         Serial.println(qip);
 #endif
-        EEPROMwrite_ipaddress(EEPROM_ADDR_IP, qip);             // write IPAddress to EEPROM
+        EEPROMwrite_ipaddress(EEPROM_ADDR_IP, qip);  // write IPAddress to EEPROM
         eip = EEPROMread_ipaddress(EEPROM_ADDR_IP);
       } else {
         /* Static IP address invalid! */
       }
 
       /* Standard-Gateway übernehmen */
-      if (str2ip((char*)qsgw.c_str(), ipaddress)) {             // convert String to Array of 4 Bytes
+      if (str2ip((char*)qsgw.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
         Serial.print(F("DB web_wlan, Standard-Gateway "));
         Serial.println(qsgw);
 #endif
-        EEPROMwrite_ipaddress(EEPROM_ADDR_GATEWAY, qsgw);       // write IPAddress to EEPROM
+        EEPROMwrite_ipaddress(EEPROM_ADDR_GATEWAY, qsgw);  // write IPAddress to EEPROM
         esgw = EEPROMread_ipaddress(EEPROM_ADDR_GATEWAY);
       } else {
         /* Default gateway invalid! */
       }
 
       /* statischen Domain Name Server übernehmen */
-      if (str2ip((char*)qdns.c_str(), ipaddress)) {             // convert String to Array of 4 Bytes
+      if (str2ip((char*)qdns.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
         Serial.print(F("DB web_wlan, static Domain Name Server "));
         Serial.println(qdns);
 #endif
-        EEPROMwrite_ipaddress(EEPROM_ADDR_DNS, qdns);           // write IPAddress to EEPROM
+        EEPROMwrite_ipaddress(EEPROM_ADDR_DNS, qdns);  // write IPAddress to EEPROM
         edns = EEPROMread_ipaddress(EEPROM_ADDR_DNS);
       } else {
         /* Invalid domain name server! */
       }
 
       /* Subnetmask übernehmen */
-      if (str2ip((char*)qsnm.c_str(), ipaddress)) {             // convert String to Array of 4 Bytes
+      if (str2ip((char*)qsnm.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
         Serial.print(F("DB web_wlan, subnet mask "));
         Serial.println(qsnm);
 #endif
-        EEPROMwrite_ipaddress(EEPROM_ADDR_NETMASK, qsnm);       // write IPAddress to EEPROM
+        EEPROMwrite_ipaddress(EEPROM_ADDR_NETMASK, qsnm);  // write IPAddress to EEPROM
         esnm = EEPROMread_ipaddress(EEPROM_ADDR_NETMASK);
       } else {
         /* Invalid subnet mask! */
@@ -1058,8 +1071,8 @@ void web_wlan() {
     }
 
     if (qssid.length() > 0 && qpass.length() > 0) {
-      if (qssid == "hidden") {              /* verstecktes Netzwerk */
-        qssid = hssid;                      /* versteckte SSID übernehmen */
+      if (qssid == "hidden") { /* verstecktes Netzwerk */
+        qssid = hssid;         /* versteckte SSID übernehmen */
       }
     }
 
@@ -1071,7 +1084,7 @@ void web_wlan() {
     website += qssid;
     website += F("<br>If the attempt fails, the old settings are loaded.</html>");
 
-    HttpServer.send(200, "text/html", website );
+    HttpServer.send(200, "text/html", website);
     delay(250);
 
     start_WLAN_STATION(qssid, qpass);
@@ -1129,9 +1142,9 @@ void web_val_status() {
   website += F(" minute(s)&emsp;");
   website += numberOfSeconds(getUptime());
   website += F(" second(s)");
-  website += + F("\"}");
+  website += +F("\"}");
 
-  HttpServer.send(200, "text/plain", website); // Send value, JSON to client ajax request
+  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
 }
 
 
@@ -1168,7 +1181,7 @@ void routing_websites() {
   HttpServer.serveStatic("/wlan.js", LittleFS, "/js/wlan.js");
 
   HttpServer.onNotFound([]() {
-    HttpServer.sendHeader("Location", "/", true);   // Redirect to our html
+    HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   });
 }
