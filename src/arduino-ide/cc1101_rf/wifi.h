@@ -31,12 +31,9 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
 
   if (WiFi.softAP(ssid_ap.c_str(), password_ap.c_str(), 1, false, 3) == true) {
     Serial.println(F("WIFI AP Ready"));
-    Serial.print(F("WIFI SSID        "));
-    Serial.println(ssid_ap);
-    Serial.print(F("WIFI IP address  "));
-    Serial.println(WiFi.softAPIP());
-    Serial.print(F("WIFI HOSTNAME    "));
-    Serial.println(OwnStationHostname);
+    Serial.print(F("WIFI SSID        ")); Serial.println(ssid_ap);
+    Serial.print(F("WIFI IP address  ")); Serial.println(WiFi.softAPIP());
+    Serial.print(F("WIFI HOSTNAME    ")); Serial.println(OwnStationHostname);
     WLAN_AP = true;
     WLAN_OK = true;
     File logfile = LittleFS.open("/files/log.txt", "a");         // Datei mit Schreibrechten öffnen
@@ -57,16 +54,11 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
 
 void start_WLAN_STATION(String qssid, String qpass) {
 #ifdef debug_html
-  Serial.print(F("DB start_WLAN_STATION, EEPROM DHCP       "));
-  Serial.println(EEPROMread(EEPROM_ADDR_DHCP) == 1 ? F("1 (on)") : F("0 (off)"));
-  Serial.print(F("DB start_WLAN_STATION, EEPROM IP         "));
-  Serial.println(eip);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM Gateway    "));
-  Serial.println(esgw);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM DNS        "));
-  Serial.println(edns);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM SUBNETMASK "));
-  Serial.println(esnm);
+  Serial.print(F("DB start_WLAN_STATION, EEPROM DHCP       ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP) == 1 ? F("1 (on)") : F("0 (off)"));
+  Serial.print(F("DB start_WLAN_STATION, EEPROM IP         ")); Serial.println(eip);
+  Serial.print(F("DB start_WLAN_STATION, EEPROM Gateway    ")); Serial.println(esgw);
+  Serial.print(F("DB start_WLAN_STATION, EEPROM DNS        ")); Serial.println(edns);
+  Serial.print(F("DB start_WLAN_STATION, EEPROM SUBNETMASK ")); Serial.println(esnm);
 #endif
 
   WiFi.disconnect();
@@ -85,10 +77,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
 
   WiFi.begin(qssid.c_str(), qpass.c_str()); /* WIFI connect to ssid with password */
 
-  Serial.print(F("WIFI try connect to "));
-  Serial.print(qssid);
-  Serial.print(F(" with "));
-  Serial.println(qpass);
+  Serial.print(F("WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
 
   delay(50);
 
@@ -102,8 +91,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
 
   if (WiFi.status() == WL_CONNECTED) {
     digitalWrite(LED, LOW);  // LED off
-    Serial.print(F("WIFI IP address "));
-    Serial.println(WiFi.localIP());
+    Serial.print(F("WIFI IP address ")); Serial.println(WiFi.localIP());
 
     if (qssid != EEPROMread_string(EEPROM_ADDR_SSID) || qpass != EEPROMread_string(EEPROM_ADDR_PASS)) {
       EEPROMwrite_string(EEPROM_ADDR_SSID, qssid);
@@ -131,8 +119,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
   } else {
     WLAN_reco_cnt++;
     if (WLAN_reco_cnt <= 1) {
-      Serial.print(F("WIFI connection failed, old settings attempt "));
-      Serial.println(WLAN_reco_cnt);
+      Serial.print(F("WIFI connection failed, old settings attempt ")); Serial.println(WLAN_reco_cnt);
       start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
     } else {
       start_WLAN_AP(ssid_ap, password_ap);
@@ -171,8 +158,7 @@ void ESP32_WiFiEvent(WiFiEvent_t event, system_event_info_t info) {
       break;
     case SYSTEM_EVENT_STA_GOT_IP:
       Serial.println("Connected to :" + String(WiFi.SSID()));
-      Serial.print(F("Got IP: "));
-      Serial.println(WiFi.localIP());
+      Serial.print(F("Got IP: ")); Serial.println(WiFi.localIP());
       break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
       Serial.println(F("Disconnected from station, attempting reconnection"));
@@ -229,10 +215,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
       wifi_station_set_hostname(chrOwnHostname);
 
 #ifdef debug
-      Serial.print(F("DB WIFI WPS connected to: "));
-      Serial.print(qssid);
-      Serial.print(F(" with secret key "));
-      Serial.println(WiFi.psk());
+      Serial.print(F("DB WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
 #endif
       used_ssid = qssid;            // SSID übernehmen
       used_ssid_pass = WiFi.psk();  // Wifi Passwort übernehmen
