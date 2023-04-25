@@ -60,47 +60,29 @@ void CC1101_init() { /* CC1101 - Set default´s */
     CC1101_cmdStrobe(CC1101_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
     Serial.println(F("CC110x found"));
     CC1101_found = true;
-    Serial.print(F("CC110x_PARTNUM         "));
-    Serial.println(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);    // PARTNUM – Chip ID
-    Serial.print(F("CC110x_VERSION         "));
-    Serial.println(chipVersion, HEX);                                   // VERSION – Chip ID
+    Serial.print(F("CC110x_PARTNUM         ")); Serial.println(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);        // PARTNUM – Chip ID
+    Serial.print(F("CC110x_VERSION         ")); Serial.println(chipVersion, HEX);                                       // VERSION – Chip ID
 #ifdef debug_cc110x
-    Serial.print(F("CC110x_FREQEST         "));
-    Serial.println(CC1101_readReg(CC1101_FREQEST, READ_BURST), HEX);    // FREQEST – Frequency Offset Estimate from Demodulator
-    Serial.print(F("CC110x_LQI             "));
-    Serial.println(CC1101_readReg(CC1101_LQI, READ_BURST), HEX);        // LQI – Demodulator Estimate for Link Quality
-    Serial.print(F("CC110x_RSSI            "));
-    Serial.println(CC1101_readReg(CC1101_RSSI, READ_BURST), HEX);       // RSSI – Received Signal Strength Indication
-    Serial.print(F("CC110x_MARCSTATE       "));
-    Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);  // MARCSTATE – Main Radio Control State Machine State
-    Serial.print(F("CC110x_WORTIME1        "));
-    Serial.println(CC1101_readReg(CC1101_WORTIME1, READ_BURST), HEX);   // WORTIME1 – High Byte of WOR Time
-    Serial.print(F("CC110x_WORTIME0        "));
-    Serial.println(CC1101_readReg(CC1101_WORTIME0, READ_BURST), HEX);   // WORTIME0 – Low Byte of WOR Time
-    Serial.print(F("CC110x_PKTSTATUS       "));
-    Serial.println(CC1101_readReg(CC1101_PKTSTATUS, READ_BURST), HEX);  // PKTSTATUS - Current GDOx Status and Packet Status
-    Serial.print(F("CC110x_VCO_VC_DAC      "));
-    Serial.println(CC1101_readReg(CC1101_VCO_VC_DAC, READ_BURST), HEX); // VCO_VC_DAC - Current Setting from PLL Calibration Module
-    Serial.print(F("CC110x_TXBYTES         "));
-    Serial.println(CC1101_readReg(CC1101_TXBYTES, READ_BURST), HEX);    // TXBYTES - Underflow and Number of Bytes
-    Serial.print(F("CC110x_RXBYTES         "));
-    Serial.println(CC1101_readReg(CC1101_RXBYTES, READ_BURST), HEX);    // RXBYTES - Underflow and Number of Bytes
-    Serial.print(F("CC110x_RCCTRL1_STATUS  "));
-    Serial.println(CC1101_readReg(CC1101_RCCTRL1_STATUS, READ_BURST), HEX); // CC1101_RCCTRL1_STATUS - Last RC Oscillator Calibration Result
-    Serial.print(F("CC110x_RCCTRL0_STATUS  "));
-    Serial.println(CC1101_readReg(CC1101_RCCTRL0_STATUS, READ_BURST), HEX); // CC1101_RCCTRL0_STATUS - Last RC Oscillator Calibration Result
-    Serial.print(F("CC110x_available_modes "));
-    Serial.println(RegistersCntMax);                                        // Number of compiled register modes
-    Serial.print(F("DB CC1101_init, Prog_Ident1 - FW1 = "));
-    Serial.println(Prog_Ident1);
-    Serial.print(F("DB CC1101_init, Prog_Ident2 - FW2 = "));
-    Serial.println(Prog_Ident2);
+    Serial.print(F("CC110x_FREQEST         ")); Serial.println(CC1101_readReg(CC1101_FREQEST, READ_BURST), HEX);        // FREQEST – Frequency Offset Estimate from Demodulator
+    Serial.print(F("CC110x_LQI             ")); Serial.println(CC1101_readReg(CC1101_LQI, READ_BURST), HEX);            // LQI – Demodulator Estimate for Link Quality
+    Serial.print(F("CC110x_RSSI            ")); Serial.println(CC1101_readReg(CC1101_RSSI, READ_BURST), HEX);           // RSSI – Received Signal Strength Indication
+    Serial.print(F("CC110x_MARCSTATE       ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);      // MARCSTATE – Main Radio Control State Machine State
+    Serial.print(F("CC110x_WORTIME1        ")); Serial.println(CC1101_readReg(CC1101_WORTIME1, READ_BURST), HEX);       // WORTIME1 – High Byte of WOR Time
+    Serial.print(F("CC110x_WORTIME0        ")); Serial.println(CC1101_readReg(CC1101_WORTIME0, READ_BURST), HEX);       // WORTIME0 – Low Byte of WOR Time
+    Serial.print(F("CC110x_PKTSTATUS       ")); Serial.println(CC1101_readReg(CC1101_PKTSTATUS, READ_BURST), HEX);      // PKTSTATUS - Current GDOx Status and Packet Status
+    Serial.print(F("CC110x_VCO_VC_DAC      ")); Serial.println(CC1101_readReg(CC1101_VCO_VC_DAC, READ_BURST), HEX);     // VCO_VC_DAC - Current Setting from PLL Calibration Module
+    Serial.print(F("CC110x_TXBYTES         ")); Serial.println(CC1101_readReg(CC1101_TXBYTES, READ_BURST), HEX);        // TXBYTES - Underflow and Number of Bytes
+    Serial.print(F("CC110x_RXBYTES         ")); Serial.println(CC1101_readReg(CC1101_RXBYTES, READ_BURST), HEX);        // RXBYTES - Underflow and Number of Bytes
+    Serial.print(F("CC110x_RCCTRL1_STATUS  ")); Serial.println(CC1101_readReg(CC1101_RCCTRL1_STATUS, READ_BURST), HEX); // CC1101_RCCTRL1_STATUS - Last RC Oscillator Calibration Result
+    Serial.print(F("CC110x_RCCTRL0_STATUS  ")); Serial.println(CC1101_readReg(CC1101_RCCTRL0_STATUS, READ_BURST), HEX); // CC1101_RCCTRL0_STATUS - Last RC Oscillator Calibration Result
+    Serial.print(F("CC110x_available_modes ")); Serial.println(RegistersCntMax);                                        // Number of compiled register modes
+    Serial.print(F("DB CC1101_init, Prog_Ident1 - FW1 = ")); Serial.println(Prog_Ident1);
+    Serial.print(F("DB CC1101_init, Prog_Ident2 - FW2 = ")); Serial.println(Prog_Ident2);
 #endif
 
     /* wenn Registerwerte geändert wurden beim compilieren */
 #ifdef debug_cc110x
-    Serial.print(F("DB CC1101_Init, number of registers = "));
-    Serial.println(RegistersCntMax);
+    Serial.print(F("DB CC1101_Init, number of registers = ")); Serial.println(RegistersCntMax);
 #endif
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
@@ -133,13 +115,10 @@ void CC1101_init() { /* CC1101 - Set default´s */
         EEPROM.commit();
 #endif
       }
-      Serial.print(F("CC110x_Freq.Offset     "));
-      Serial.print(Freq_offset, 3);
-      Serial.println(F(" MHz"));
+      Serial.print(F("CC110x_Freq.Offset     ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
       activated_mode_nr = EEPROMread(EEPROM_ADDR_Prot);
 #ifdef debug_cc110x
-      Serial.print(F("DB CC1101_init, EEPROM read last activated mode "));
-      Serial.println(activated_mode_nr);
+      Serial.print(F("DB CC1101_init, EEPROM read last activated mode ")); Serial.println(activated_mode_nr);
 #endif
       ToggleTime = EEPROMread_long(EEPROM_ADDR_Toggle);
       if (ToggleTime > ToggleTimeMax) {
@@ -147,24 +126,19 @@ void CC1101_init() { /* CC1101 - Set default´s */
         EEPROMwrite_long(EEPROM_ADDR_Toggle, ToggleTime);
       }
 #ifdef debug_cc110x
-      Serial.print(F("DB CC1101_init, EEPROM read toggletime "));
-      Serial.println(ToggleTime);
+      Serial.print(F("DB CC1101_init, EEPROM read toggletime ")); Serial.println(ToggleTime);
 #endif
       if (activated_mode_nr > 0 && ToggleTime == 0) {
 #ifdef debug_cc110x
         activated_mode_name = Registers[activated_mode_nr].name;
         Serial.println(F("DB CC1101_Init, use CC1101 config from EEPROM"));
-        Serial.print(F("DB CC1101_Init, write activated_mode_nr "));
-        Serial.print(activated_mode_nr);
-        Serial.print(F(", "));
-        Serial.println(activated_mode_name);
+        Serial.print(F("DB CC1101_Init, write activated_mode_nr ")); Serial.print(activated_mode_nr);
+        Serial.print(F(", ")); Serial.println(activated_mode_name);
 #endif
         /* CC1101 - configure CC1101 registers from flash addresses */
         for (byte i = 0; i < 41; i++) {
 #ifdef debug_cc110x
-          Serial.print(F("DB CC1101_init, EEPROM   0x"));
-          SerialPrintDecToHex(i);
-          Serial.println("");
+          Serial.print(F("DB CC1101_init, EEPROM   0x")); SerialPrintDecToHex(i); Serial.println("");
 #endif
           CC1101_writeReg(i, EEPROMread(i));
         }
@@ -180,22 +154,15 @@ void CC1101_init() { /* CC1101 - Set default´s */
               activated_mode_nr = ToggleOrder[ToggleValues - 1];
             }
 #ifdef debug_cc110x
-            Serial.print(F("DB CC1101_init, EEPROM read toggle value "));
-            Serial.print(ToggleValues);
-            Serial.print(F(" ("));
-            Serial.print(ToggleOrder[ToggleValues - 1]);
-            Serial.print(F(") and put it in array at "));
-            Serial.println(ToggleValues - 1);
+            Serial.print(F("DB CC1101_init, EEPROM read toggle value ")); Serial.print(ToggleValues);
+            Serial.print(F(" (")); Serial.print(ToggleOrder[ToggleValues - 1]);
+            Serial.print(F(") and put it in array at ")); Serial.println(ToggleValues - 1);
 #endif
           }
         }
         CC1101_writeRegFor(Registers[activated_mode_nr].reg_val, Registers[activated_mode_nr].length, Registers[activated_mode_nr].name);
       }
       activated_mode_name = Registers[activated_mode_nr].name;
-      // Serial.print(F("CC1101_init, switch to mode nr "));
-      // Serial.print(activated_mode_nr);
-      // Serial.print(F(", "));
-      // Serial.println(activated_mode_name);
       activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
       // Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
       // CC1101_cmdStrobe(CC1101_SIDLE);                                    // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
@@ -256,9 +223,7 @@ void CC1101_init() { /* CC1101 - Set default´s */
 #ifdef debug_cc110x
       Serial.println(F("DB CC1101_init, set cc110x to factory settings"));
       Serial.print(F("DB CC1101_init, activated_mode_nr = "));
-      Serial.print(activated_mode_nr);
-      Serial.print(F(", "));
-      Serial.println(activated_mode_name);
+      Serial.print(activated_mode_nr); Serial.print(F(", ")); Serial.println(activated_mode_name);
 #endif
       Serial.println(F("CC1101 remains idle, please set receive mode!"));
       // Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
@@ -279,11 +244,8 @@ void CC1101_writeReg(uint8_t regAddr, uint8_t value) {
   */
 
 #ifdef debug_cc110x
-  Serial.print(F("DB CC1101_writeReg       0x"));
-  SerialPrintDecToHex(regAddr);
-  Serial.print(F(" 0x"));
-  SerialPrintDecToHex(value);
-  Serial.println("");
+  Serial.print(F("DB CC1101_writeReg       0x")); SerialPrintDecToHex(regAddr);
+  Serial.print(F(" 0x")); SerialPrintDecToHex(value); Serial.println("");
 #endif
 
   cc1101_Select();        // Select CC1101
@@ -308,21 +270,16 @@ void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_
   CC1101_writeReg(CC1101_FSCTRL0, 0);  // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
 
 #ifdef debug_cc110x
-  Serial.print(F("DB CC1101_writeRegFor length = "));
-  Serial.println(reg_length);
-  Serial.print(F("DB CC1101_writeRegFor modus  = "));
-  Serial.println(reg_modus);
+  Serial.print(F("DB CC1101_writeRegFor length = ")); Serial.println(reg_length);
+  Serial.print(F("DB CC1101_writeRegFor modus  = ")); Serial.println(reg_modus);
 #endif
 
   for (byte i = 0; i < reg_length; i++) {
     CC1101_writeReg(i, pgm_read_byte_near(reg_name + i)); /* write value to cc110x */
 #ifdef debug_cc110x
-    Serial.print(F("DB CC1101_writeRegFor, i="));
-    Serial.print(i);
-    Serial.print(F(" read "));
-    Serial.print(CC1101_readReg(i, READ_BURST));
-    Serial.print(F(" (0x"));
-    SerialPrintDecToHex(CC1101_readReg(i, READ_BURST));
+    Serial.print(F("DB CC1101_writeRegFor, i=")); Serial.print(i);
+    Serial.print(F(" read ")); Serial.print(CC1101_readReg(i, READ_BURST));
+    Serial.print(F(" (0x")); SerialPrintDecToHex(CC1101_readReg(i, READ_BURST));
     Serial.println(F(") from CC1101"));
 #endif
 
@@ -410,9 +367,7 @@ uint8_t CC1101_cmdStrobe(byte cmd) {
      'cmd'  Command strobe  */
 
 #ifdef debug_cc110x
-  Serial.print(F("DB CC1101_cmdStrobe "));
-  SerialPrintDecToHex(cmd);
-  Serial.println("");
+  Serial.print(F("DB CC1101_cmdStrobe ")); SerialPrintDecToHex(cmd); Serial.println("");
 #endif
 
   cc1101_Select();                  // Select CC1101
@@ -492,10 +447,7 @@ void CC1101_sendFIFO(char *data) {
     val = hex2int(data[i]) * 16;
     val += hex2int(data[i + 1]);
 #ifdef debug_cc110x
-    Serial.print(data[i]);
-    Serial.print(data[i + 1]);
-    Serial.print(' ');
-    Serial.println(val);
+    Serial.print(data[i]); Serial.print(data[i + 1]); Serial.print(' '); Serial.println(val);
 #endif
     SPI.transfer(val);  // fill FIFO with data
   }
