@@ -53,6 +53,7 @@ void html_head_table(String& html) { /* added table on head with all links */
 
 
 void web_index() {
+  unsigned long Uptime = getUptime();
   String website;
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
@@ -68,41 +69,34 @@ void web_index() {
 #else
                "standalone"
 #endif
-               "</td></tr><tr><td>RAM (free heap)</td><td><span id=\"RAM\">");
-  website += freeRam();
-  website += F("</span></td></tr><tr><td>Uptime (Seconds)</td><td><span id=\"Upt_Sec\">");
-  website += getUptime();
-  website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"Upt_TXT\">");
-  website += elapsedDays(getUptime());
-  website += F(" day(s)&emsp;");
-  website += numberOfHours(getUptime());
-  website += F(" hour(s)&emsp;");
-  website += numberOfMinutes(getUptime());
-  website += F(" minute(s)&emsp;");
-  website += numberOfSeconds(getUptime());
-  website += F(" second(s)");
-  website += F("</span></td></tr><tr><td>Message count</td><td>");
+               "</td></tr><tr><td>Message count</td><td><span id=\"MSGcnt\">");
   website += msgCount;
-  if (getUptime() / 60 >= 60) {
-    website += F("&emsp;(");
-    website += (msgCount / (getUptime() / 3600));
-    website += F(" per hour)");
-  } else if (getUptime() / 60 >= 1) {
-    website += F("&emsp;(");
-    website += (msgCount / (getUptime() / 60));
-    website += F(" per minute)");
-  }
-  website += F("</td></tr><tr><td>Version</td><td>");
-  website += TXT_VERSION;
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  website += F("</td></tr><tr><td>WLAN RSSI</td><td>");
+  website += F("</span>");
+  website += F("</td></tr><tr><td>RAM (free heap)</td><td><span id=\"RAM\">");
+  website += freeRam();
+  website += F("</span></td></tr>");
+  website += F("<tr><td>RSSI (WLAN connection)</td><td><span id=\"WLANdB\">");
   website += WiFi.RSSI();
-#endif
+
 #ifdef ARDUINO_ARCH_ESP8266
-  website += F(" dB</td></tr><tr><td>Supply voltage</td><td>");
+  website += F("</span> dB</td></tr><tr><td>Supply voltage</td><td>");
   website += String(ESP.getVcc() / 1000.0, 2);  // using a float and 2 decimal places
   website += F(" Volt");
+#elif ARDUINO_ARCH_ESP32
+  website += F("</span> dB");
 #endif
+  website += F("</td></tr><tr><td>Uptime (Seconds)</td><td><span id=\"Uptime\">");
+  website += Uptime;
+  website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"dd\">");
+  website += elapsedDays(Uptime);
+  website += F("</span> day(s)&emsp;<span id=\"hh\">");
+  website += numberOfHours(Uptime);
+  website += F("</span> hour(s)&emsp;<span id=\"mm\">");
+  website += numberOfMinutes(Uptime);
+  website += F("</span> minute(s)&emsp;<span id=\"ss\">");
+  website += numberOfSeconds(Uptime);
+  website += F("</span> second(s)</td></tr><tr><td>Version</td><td>");
+  website += TXT_VERSION;
   website += F("</td></tr></tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
 }
@@ -160,15 +154,15 @@ void web_cc110x_modes() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String InputCmd;                           // preparation for processing | control html InputCommand
-  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
+  String InputCmd;                          // preparation for processing | control html InputCommand
+  String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
-  String tgtime = HttpServer.arg("tgt");  // toggle time
+  String tgtime = HttpServer.arg("tgt");    // toggle time
   String web_status = F("<tr><td></td>");
   String website;
-  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
-  uint8_t tb_nr;                          // togglebank nr
-  uint8_t tb_val;                         // togglebank value
+  uint8_t countargs = HttpServer.args();    // Anzahl Argumente
+  uint8_t tb_nr;                            // togglebank nr
+  uint8_t tb_val;                           // togglebank value
   char InCmdBuf[11];
 
 #ifdef debug_html
@@ -577,7 +571,7 @@ void web_cc110x_detail() {
           Serial.print(F(" -> "));
           Serial.println(web_regData[i]);
 #endif
-          if (i == 6) { /* ToDo - probably not optimal -> if register 6 is changed (dependencies) */
+          if (i == 6) { /* ToDo - probably not optimal -> if register 6 is changed (dependencies) ??? */
             activated_mode_packet_length = hexToDec(web_regData[i]);
           }
           /* write value to registe */
@@ -623,8 +617,6 @@ void web_cc110x_detail() {
   if (freqAfc == 1) {
     website += F(" checked");
   }
-
-  /* afc =1 todo !!! */
 
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
@@ -792,7 +784,9 @@ void web_raw() {
   website += F("<div>"
                "<table id=\"dataTable\">"
                "<thead>"
-               "<tr><th class=\"dd\">Time</th><th>current RAW received data</th><th class=\"dd\">RSSI in dB</th><th class=\"dd\">Offset in kHz</th></tr>"
+               "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"RAW_MODE\">");
+  website += activated_mode_name;
+  website += F("</span></th><th class=\"dd\">RSSI in dB</th><th class=\"dd\">Offset in kHz</th></tr>"
                "</thead>"
                "</table>"
                "</div>"
@@ -814,11 +808,14 @@ void web_val_raw() {
     website += RSSI_dez;
     website += F("\", \"RAW_afc\":\"");
     website += offset;
+    website += F("\", \"RAW_MODE\":\"");
+    website += activated_mode_name;
     website += F("\"}");
-
     html_raw = "";
   } else {
-    website = F("{}");
+    website = F("{\"RAW_MODE\":\"");
+    website += activated_mode_name;
+    website += F("\"}");
   }
   HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
 }
@@ -1127,21 +1124,26 @@ void web_wlan() {
 
 
 void web_val_status() {
+  /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
+  unsigned long Uptime = getUptime();
   String website = F("{\"CC1101\":\"");
   CC1101_found ? website += F("yes") : website += F("no");
   website += F("\",\"RAM\":\"");
   website += freeRam();
-  website += F("\",\"Upt_Sec\":\"");
-  website += getUptime();
-  website += F("\",\"Upt_TXT\":\"");
-  website += elapsedDays(getUptime());
-  website += F(" day(s)&emsp;");
-  website += numberOfHours(getUptime());
-  website += F(" hour(s)&emsp;");
-  website += numberOfMinutes(getUptime());
-  website += F(" minute(s)&emsp;");
-  website += numberOfSeconds(getUptime());
-  website += F(" second(s)");
+  website += F("\",\"Uptime\":\"");
+  website += Uptime;
+  website += F("\",\"dd\":\"");
+  website += elapsedDays(Uptime);
+  website += F("\",\"hh\":\"");
+  website += numberOfHours(Uptime);
+  website += F("\",\"mm\":\"");
+  website += numberOfMinutes(Uptime);
+  website += F("\",\"ss\":\"");
+  website += numberOfSeconds(Uptime);
+  website += F("\",\"MSGcnt\":\"");
+  website += msgCount;
+  website += F("\",\"WLANdB\":\"");
+  website += WiFi.RSSI();
   website += +F("\"}");
 
   HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request

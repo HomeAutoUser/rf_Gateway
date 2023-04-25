@@ -140,20 +140,20 @@ byte WLAN_reco_cnt = 0;             // counter for connection, if cnt 3, WLAN ju
 const char* ssid_ap = WLAN_ssid_ap;
 const char* password_ap = WLAN_password_ap;
 String OwnStationHostname = WLAN_hostname;
-String html_raw;                    // for the output on web server
-int RSSI_dez;                       // for the output on web server
-String used_ssid;                   // for the output on web server
-String used_ssid_mac;               // for the output on web server
-String used_ssid_pass;              // for the output on web server
-byte used_dhcp = 0;                 // IP-Adresse mittels DHCP
-boolean WLAN_AP = false;            // WiFi AP opened
-boolean WLAN_OK = false;            // WiFi connected
-uint8_t WifiNetworks;               // Anzahl Wifi-Netzwerke
+String html_raw;          // for the output on web server
+int RSSI_dez;             // for the output on web server
+String used_ssid;         // for the output on web server
+String used_ssid_mac;     // for the output on web server
+String used_ssid_pass;    // for the output on web server
+byte used_dhcp = 0;       // IP-Adresse mittels DHCP
+boolean WLAN_AP = false;  // WiFi AP opened
+boolean WLAN_OK = false;  // WiFi connected
+uint8_t WifiNetworks;     // Anzahl Wifi-Netzwerke
 
-IPAddress eip;                      // static IP - IP-Adresse
-IPAddress esnm;                     // static IP - Subnetzmaske
-IPAddress esgw;                     // static IP - Standard-Gateway
-IPAddress edns;                     // static IP - Domain Name Server
+IPAddress eip;   // static IP - IP-Adresse
+IPAddress esnm;  // static IP - Subnetzmaske
+IPAddress esgw;  // static IP - Standard-Gateway
+IPAddress edns;  // static IP - Domain Name Server
 /* --- END - all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------- */
 #else
 #define ICACHE_RAM_ATTR
@@ -161,8 +161,8 @@ IPAddress edns;                     // static IP - Domain Name Server
 
 /* varible´s for output */
 boolean commandCHECK = true;
-const char compile_date[]               = __DATE__ " " __TIME__;
-static const char TXT_COMMANDS[]        = "? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS";
+const char compile_date[] = __DATE__ " " __TIME__;
+static const char TXT_COMMANDS[] = "? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS";
 static const char TXT_COMMAND_unknown[] = "command or value is not supported";
 
 #ifdef SIGNALduino_comp
@@ -171,17 +171,17 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[]     = "V 1.12 SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.13 SIGNALduino compatible cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "MN;D=";
-static const char TXT_RawRSSI[]     = ";R=";
-static const char TXT_RawFP2[]      = ";A=";
-byte CC1101_writeReg_offset         = 2;
+static const char TXT_RawRSSI[] = ";R=";
+static const char TXT_RawFP2[] = ";A=";
+byte CC1101_writeReg_offset = 2;
 #else
-static const char TXT_VERSION[]     = "V 1.12 cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.13 cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "data: ";
-static const char TXT_RawRSSI[]     = "; RSSI=";
-static const char TXT_RawFP2[]      = "; FREQAFC=";
-byte CC1101_writeReg_offset         = 0;
+static const char TXT_RawRSSI[] = "; RSSI=";
+static const char TXT_RawFP2[] = "; FREQAFC=";
+byte CC1101_writeReg_offset = 0;
 #endif
 
 /* varible´s for Toggle */
@@ -192,12 +192,12 @@ boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
 unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
 
 /* varible´s for other */
-uint8_t buffer[75];     /* buffer cc110x */
-#define BUFFER_MAX 70   /* !!! maximum number of characters to send !!! */
-int8_t freqErr = 0;     /* for automatic Frequency Synthesizer Control */
-int8_t freqOffAcc = 0;  /* for automatic Frequency Synthesizer Control */
-float freqErrAvg = 0;   /* for automatic Frequency Synthesizer Control */
-boolean freqAfc = 0;    // AFC on or off
+uint8_t buffer[75];    /* buffer cc110x */
+#define BUFFER_MAX 70  /* !!! maximum number of characters to send !!! */
+int8_t freqErr = 0;    /* for automatic Frequency Synthesizer Control */
+int8_t freqOffAcc = 0; /* for automatic Frequency Synthesizer Control */
+float freqErrAvg = 0;  /* for automatic Frequency Synthesizer Control */
+boolean freqAfc = 0;   // AFC on or off
 uint32_t msgCount = 0;
 byte client_now;
 
@@ -220,14 +220,72 @@ void setup() {
     ; /* wait for serial port to connect. Needed for native USB */
   }
 #endif
-
   pinMode(GDO0, OUTPUT);
   pinMode(GDO2, INPUT);
   pinMode(LED, OUTPUT);
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
-  EEPROM.begin(EEPROM_SIZE);                                     /* Puffergröße die verwendet werden soll */
+  /* interner Flash-Speicher */
+  if (!LittleFS.begin()) {
+    Serial.println(F("LittleFS mount failed, formatting filesystem"));
+    LittleFS.format();
+    return;  // ???
+  } else {
+    Serial.println(F("Starting LittleFS"));
+  }
+  File logfile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
+  if (logfile) {
+    String logText = String(getUptime());
+    logText += F(" - Systemstart (");
+#if defined(ARDUINO_ARCH_ESP8266)
+    logText += ESP.getResetReason();
+#endif
+#if defined(ARDUINO_ARCH_ESP32)
+    esp_reset_reason_t reset_reason = esp_reset_reason();
+    logText += reset_reason;
+    logText += F(" - ");
+    switch (reset_reason) {
+      case ESP_RST_UNKNOWN:
+        logText += F("UNKNOWN");
+        break;
+      case ESP_RST_POWERON:
+        logText += F("POWERON");
+        break;
+      case ESP_RST_EXT:
+        logText += F("external pin");
+        break;
+      case ESP_RST_SW:
+        logText += F("software restart");
+        break;
+      case ESP_RST_PANIC:
+        logText += F("software exception/panic");
+        break;
+      case ESP_RST_INT_WDT:
+        logText += F("interrupt watchdog");
+        break;
+      case ESP_RST_TASK_WDT:
+        logText += F("task watchdog");
+        break;
+      case ESP_RST_WDT:
+        logText += F("other watchdog");
+        break;
+      case ESP_RST_DEEPSLEEP:
+        logText += F("after deep sleep");
+        break;
+      case ESP_RST_BROWNOUT:
+        logText += F("brownout");
+        break;
+      case ESP_RST_SDIO:
+        logText += F("SDIO");
+        break;
+    }
+#endif
+    logText += F(")");
+    logfile.println(logText);
+    logfile.close(); /* Schließen der Datei */
+  }
 
+  EEPROM.begin(EEPROM_SIZE); /* Puffergröße die verwendet werden soll */
   eip = EEPROMread_ipaddress(EEPROM_ADDR_IP);
   esnm = EEPROMread_ipaddress(EEPROM_ADDR_NETMASK);
   esgw = EEPROMread_ipaddress(EEPROM_ADDR_GATEWAY);
@@ -263,15 +321,6 @@ void setup() {
   }
   if (EEPROMread(EEPROM_ADDR_AP) == 0) {
     start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
-  }
-
-  /* interner Flash-Speicher */
-  if (!LittleFS.begin()) {
-    Serial.println(F("LittleFS mount failed, formatting filesystem"));
-    LittleFS.format();
-    return;
-  } else {
-    Serial.println(F("Starting LittleFS"));
   }
 
   /* Arduino OTA Update – Update über WLAN */
@@ -318,14 +367,6 @@ void setup() {
   // EEPROMclear();
   // EEPROMread_table();
 
-  //#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-  //  File logfile = LittleFS.open("/files/log.txt", "w");    /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
-  //  if (logfile) {
-  //    logfile.println(F("Systemstart"));                    /* Daten in die Datei schreiben */
-  //    logfile.close();                                      /* Schließen der Datei */
-  //  }
-  //#endif
-
   CC1101_init();
 }
 
@@ -371,10 +412,8 @@ void loop() {
     freqErr = CC1101_readReg(CC1101_FREQEST, READ_BURST);  // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     msgCount++;
     if (freqAfc == 1) {
-      freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0); // Mittelwert über Abweichung
+      freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung
       freqOffAcc += round(freqErrAvg);
-    }
-    if (freqAfc == 1) {
       CC1101_writeReg(CC1101_FSCTRL0, freqOffAcc);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
     }
     String msg = "";
@@ -387,7 +426,7 @@ void loop() {
 #endif
     CC1101_readBurstReg(buffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO / read RSSI and build message */
 #ifdef SIGNALduino_comp
-    msg += char(2);     // STX
+    msg += char(2);  // STX
 #endif
     msg += TXT_RawPreamble;                                   // "MN;D=" | "data: "
     for (byte i = 0; i < activated_mode_packet_length; i++) { /* RawData */
@@ -396,16 +435,16 @@ void loop() {
       html_raw += onlyDecToHex2Digit(buffer[i]);
 #endif
     }
-    msg += TXT_RawRSSI; // ";R=" | "; RSSI="
+    msg += TXT_RawRSSI;  // ";R=" | "; RSSI="
     msg += rssi;
     msg += TXT_RawFP2;  // ";A=" | "; ..."
     msg += freqErr;
     msg += ';';
 
 #ifdef SIGNALduino_comp
-    msg += char(3);     // ETX
+    msg += char(3);  // ETX
 #else
-    msg += char(13);    // CR
+    msg += char(13);  // CR
 #endif
     msg += char(10);    // LF
     MSG_OUTPUTALL(msg); /* output msg to all */
@@ -1133,10 +1172,17 @@ void Telnet() {
     for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
       if (!TelnetClient[i]) { /* find free socket */
         TelnetClient[i] = TelnetServer.available();
-
         Serial.print(F("Telnet client "));
         Serial.print(TelnetClient[i].remoteIP());
         Serial.println(F(" connected new session"));
+        File logfile = LittleFS.open("/files/log.txt", "a");  // open logfile for append to end of file
+        if (logfile) {
+          logfile.print(getUptime());
+          logfile.print(F(" - Telnet client "));
+          logfile.print(TelnetClient[i].remoteIP());
+          logfile.println(F(" connected"));
+        }
+        logfile.close();         // close logfile
         TelnetClient[i].flush(); /* clear input buffer, else you get strange characters */
         TelnetClient[i].print(F("Telnet session ("));
         TelnetClient[i].print(i);

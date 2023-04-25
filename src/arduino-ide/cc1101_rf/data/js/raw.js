@@ -14,11 +14,14 @@ function getData() {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      if(this.responseText != "{}") {
-        // Push the data in array
-        var time = new Date().toLocaleTimeString();
-        var txt = this.responseText;
-        var obj = JSON.parse(txt);
+      // Push the data in array
+      var time = new Date().toLocaleTimeString();
+      var txt = this.responseText;
+      var obj = JSON.parse(txt);
+      var keyCount = Object.keys(obj).length;   // count JSON objects
+      document.getElementById("RAW_MODE").innerHTML = obj.RAW_MODE;
+
+      if(keyCount == 4) {   // if data received, object contains 4 elements | no received, object contains 1 element
         // Update Data Table
         var table = document.getElementById("dataTable");
         var row = table.insertRow(1);   // Add after headings
@@ -42,7 +45,7 @@ function getData() {
           cell3.style.textAlign = "right";
         }else{
           cell3.style.textAlign = "right";
-				}
+        }
         cell4.innerHTML = obj.RAW_afc;
         cell4.style.textAlign = "right";
       }
