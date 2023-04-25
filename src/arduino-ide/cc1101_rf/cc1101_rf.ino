@@ -202,12 +202,12 @@ boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
 unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
 
 /* varible´s for other */
-uint8_t buffer[75];    /* buffer cc110x */
-#define BUFFER_MAX 70  /* !!! maximum number of characters to send !!! */
-int8_t freqErr = 0;    /* for automatic Frequency Synthesizer Control */
-int8_t freqOffAcc = 0; /* for automatic Frequency Synthesizer Control */
-float freqErrAvg = 0;  /* for automatic Frequency Synthesizer Control */
-boolean freqAfc = 0;   // AFC on or off
+uint8_t buffer[75];                           /* buffer cc110x */
+#define BUFFER_MAX 70                         /* !!! maximum number of characters to send !!! */
+int8_t freqErr = 0;                           /* for automatic Frequency Synthesizer Control */
+int8_t freqOffAcc = 0;                        /* for automatic Frequency Synthesizer Control */
+float freqErrAvg = 0;                         /* for automatic Frequency Synthesizer Control */
+boolean freqAfc = 0;                          /* AFC on or off */
 uint32_t msgCount = 0;
 byte client_now;
 
@@ -307,22 +307,14 @@ void setup() {
   }
 
 #ifdef debug
-  Serial.print(F("DB setup, read EEPROM - WIFI SSID         "));
-  Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
-  Serial.print(F("DB setup, read EEPROM - WIFI Passwort     "));
-  Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
-  Serial.print(F("DB setup, read EEPROM - WIFI DHCP         "));
-  Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
-  Serial.print(F("DB setup, read EEPROM - WIFI AP           "));
-  Serial.println(EEPROMread(EEPROM_ADDR_AP));
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr IP       "));
-  Serial.println(eip);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr Gateway  "));
-  Serial.println(esgw);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr DNS      "));
-  Serial.println(edns);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr NetMask  "));
-  Serial.println(esnm);
+  Serial.print(F("DB setup, read EEPROM - WIFI SSID         ")); Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
+  Serial.print(F("DB setup, read EEPROM - WIFI Passwort     ")); Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
+  Serial.print(F("DB setup, read EEPROM - WIFI DHCP         ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
+  Serial.print(F("DB setup, read EEPROM - WIFI AP           ")); Serial.println(EEPROMread(EEPROM_ADDR_AP));
+  Serial.print(F("DB setup, read EEPROM - WIFI Adr IP       ")); Serial.println(eip);
+  Serial.print(F("DB setup, read EEPROM - WIFI Adr Gateway  ")); Serial.println(esgw);
+  Serial.print(F("DB setup, read EEPROM - WIFI Adr DNS      ")); Serial.println(edns);
+  Serial.print(F("DB setup, read EEPROM - WIFI Adr NetMask  ")); Serial.println(esnm);
 #endif
 
   OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
@@ -371,12 +363,11 @@ void setup() {
   Serial.println(F("-> found board with WLAN"));
 #else
   Serial.println(F("-> found unknown board"));
-#endif
-#endif
+#endif    // END microcontrollers
+#endif    // END debug
 
   // EEPROMclear();
   // EEPROMread_table();
-
   CC1101_init();
 }
 
@@ -389,16 +380,15 @@ void loop() {
 
   if (Serial.available() > 0) { /* Serial Input´s */
     String input = Serial.readString();
-    input.trim(); /* String, strip off any leading/trailing space and \r \n */
+    input.trim();                                           /* String, strip off any leading/trailing space and \r \n */
     char BUFFER_Serial[input.length() + 1];
-    input.toCharArray(BUFFER_Serial, input.length() + 1); /* String to char in buf */
+    input.toCharArray(BUFFER_Serial, input.length() + 1);   /* String to char in buf */
 
     if (input.length() > 0 && input.length() <= BUFFER_MAX) {
 #ifdef debug
-      MSG_OUTPUT(F("DB loop, Serial.available > 0 "));
-      MSG_OUTPUTLN(input);
+      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(input);
 #endif
-      client_now = 255; /* current client is set where data is received */
+      client_now = 255;                                     /* current client is set where data is received */
       InputCommand(BUFFER_Serial);
     }
   }
@@ -406,14 +396,12 @@ void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   ArduinoOTA.handle(); /* OTA Updates */
   Telnet();            /* Telnet Input´s  */
-
   HttpServer.handleClient();
 #endif
 
   /* only for test !!! HangOver ??? */
   //#ifdef debug_cc110x_ms
-  //MSG_OUTPUTALL(F("DB CC1101_MARCSTATE "));
-  //MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
+  //MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
   //#endif
 
   if ((digitalRead(GDO2) == HIGH) && (CC1101_found == true)) { /* Received data | RX */
@@ -430,9 +418,8 @@ void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     html_raw = ""; /* reset for Webserver data */
 #endif
-#ifdef debug_cc110x_ms
-    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE "));
-    MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
     CC1101_readBurstReg(buffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO / read RSSI and build message */
 #ifdef SIGNALduino_comp
@@ -445,16 +432,16 @@ void loop() {
       html_raw += onlyDecToHex2Digit(buffer[i]);
 #endif
     }
-    msg += TXT_RawRSSI;  // ";R=" | "; RSSI="
+    msg += TXT_RawRSSI; // ";R=" | "; RSSI="
     msg += rssi;
     msg += TXT_RawFP2;  // ";A=" | "; ..."
     msg += freqErr;
     msg += ';';
 
 #ifdef SIGNALduino_comp
-    msg += char(3);  // ETX
+    msg += char(3);     // ETX
 #else
-    msg += char(13);  // CR
+    msg += char(13);    // CR
 #endif
     msg += char(10);    // LF
     MSG_OUTPUTALL(msg); /* output msg to all */
@@ -471,9 +458,8 @@ void loop() {
         MSG_OUTPUTALLLN("loop, ERROR read CC1101_MARCSTATE, READ_BURST !");
       }
     }
-#ifdef debug_cc110x_ms
-    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE "));
-    MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
     digitalWrite(LED, LOW); /* LED off */
   }
@@ -509,10 +495,8 @@ void ToggleOnOff(unsigned long Intervall) {
       activated_mode_nr = ToggleCnt + 1;
       ToggleValues = RegistersCntMax - 1;
 #ifdef debug
-      MSG_OUTPUT(F("DB Toggle | ToggleAll activated_mode_nr "));
-      MSG_OUTPUT(activated_mode_nr);
-      MSG_OUTPUT(F(", ToggleValues "));
-      MSG_OUTPUTLN(ToggleValues);
+      MSG_OUTPUT(F("DB Toggle | ToggleAll activated_mode_nr ")); MSG_OUTPUT(activated_mode_nr);
+      MSG_OUTPUT(F(", ToggleValues ")); MSG_OUTPUTLN(ToggleValues);
 #endif
     } else {
       if (ToggleValues <= 1) {
@@ -529,10 +513,10 @@ void ToggleOnOff(unsigned long Intervall) {
     CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
     CC1101_writeRegFor(Registers[activated_mode_nr].reg_val, Registers[activated_mode_nr].length, Registers[activated_mode_nr].name);
     activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    CC1101_cmdStrobe(CC1101_SFRX); /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+    CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
     delay(10);
     // Führen Sie zuerst eine Kalibrierung durch, wenn Sie von IDLE kommen
-    CC1101_cmdStrobe(CC1101_SRX); /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
+    CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
 
     ToggleCnt++;
     if (ToggleCnt >= ToggleValues) {
@@ -551,14 +535,11 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
   input += "\0";
 
 #ifdef debug
-  MSG_OUTPUT(F("DB InputCommand, String "));
-  MSG_OUTPUTLN(input);
+  MSG_OUTPUT(F("DB InputCommand, String ")); MSG_OUTPUTLN(input);
 
   for (byte i = 0; i < input.length(); i++) {
-    MSG_OUTPUT(F("DB InputCommand ["));
-    MSG_OUTPUT(i);
-    MSG_OUTPUT(F("] = "));
-    MSG_OUTPUTLN(buf_input[i]);
+    MSG_OUTPUT(F("DB InputCommand [")); MSG_OUTPUT(i);
+    MSG_OUTPUT(F("] = ")); MSG_OUTPUTLN(buf_input[i]);
   }
 #endif
 
@@ -654,8 +635,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                   Freq_offset = 0;  // reset FrequencOffset
                 }
 
-                MSG_OUTPUT(F("set register to "));
-                MSG_OUTPUTLN(Registers[int_substr1_serial].name);
+                MSG_OUTPUT(F("set register to ")); MSG_OUTPUTLN(Registers[int_substr1_serial].name);
 
                 activated_mode_name = Registers[int_substr1_serial].name;
                 activated_mode_nr = int_substr1_serial;
@@ -667,9 +647,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
                 CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
 
-#ifdef debug_cc110x_ms
-                MSG_OUTPUTALL(F("DB CC1101_MARCSTATE "));
-                MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+                MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 
 #ifdef debug
@@ -702,17 +681,13 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
               unsigned long IntTime = input.substring(3).toInt();
 
               if (isNumeric(input.substring(3)) == 1 && (IntTime > ToggleTimeMax)) { /* command tos<n> > ToggleTimeMax -> max limit */
-                MSG_OUTPUT(F("Toggle STOPPED, time too long [min "));
-                MSG_OUTPUT(ToggleTimeMin);
-                MSG_OUTPUT(F(", max "));
-                MSG_OUTPUT(ToggleTimeMax);
-                MSG_OUTPUTLN(']');
+                MSG_OUTPUT(F("Toggle STOPPED, time too long [min ")); MSG_OUTPUT(ToggleTimeMin);
+                MSG_OUTPUT(F(", max ")); MSG_OUTPUT(ToggleTimeMax); MSG_OUTPUTLN(']');
 
                 ToggleTime = 0;
                 commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime >= ToggleTimeMin)) { /* command tos<n> >= ToggleTime OK */
-                MSG_OUTPUT(F("Toggle starts changing every "));
-                MSG_OUTPUT(input.substring(3));
+                MSG_OUTPUT(F("Toggle starts changing every ")); MSG_OUTPUT(input.substring(3));
                 MSG_OUTPUTLN(F(" milliseconds"));
 
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, IntTime); /* write to EEPROM */
@@ -729,8 +704,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
                 commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime < ToggleTimeMin)) { /* command tos<n> < ToggleTimeMin -> min limit */
-                MSG_OUTPUT(F("Toggle STOPPED, time to short [min "));
-                MSG_OUTPUT(ToggleTimeMin);
+                MSG_OUTPUT(F("Toggle STOPPED, time to short [min ")); MSG_OUTPUT(ToggleTimeMin);
                 MSG_OUTPUTLN(']');
 
                 ToggleTime = 0;
@@ -740,9 +714,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
               ToggleAll = false;
               if (input.substring(3, 4).toInt() <= 3) { /* command tob<0-3> */
 #ifdef debug
-                MSG_OUTPUT(F("DB Input | cmd tob "));
-                MSG_OUTPUT(input.substring(3));
-                MSG_OUTPUTLN(F(" accepted"));
+                MSG_OUTPUT(F("DB Input | cmd tob ")); MSG_OUTPUT(input.substring(3)); MSG_OUTPUTLN(F(" accepted"));
 #endif
 
                 if (isNumeric(input.substring(4)) == 1) {
@@ -750,20 +722,15 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                     ToggleArray[input.substring(3, 4).toInt()] = 255;                     /* 255 is max value and reset value */
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, 255); /* 255 is max value and reset value */
 
-                    MSG_OUTPUT(F("ToggleBank "));
-                    MSG_OUTPUT(input.substring(3, 4).toInt());
-                    MSG_OUTPUTLN(F(" reset"));
+                    MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4).toInt()); MSG_OUTPUTLN(F(" reset"));
 
                     commandCHECK = true;
                   } else if (input.substring(4).toInt() < RegistersCntMax) { /* command tob<0-3><n> -> set togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, input.substring(4).toInt());
 
-                    MSG_OUTPUT(F("ToggleBank "));
-                    MSG_OUTPUT(input.substring(3, 4));
-                    MSG_OUTPUT(F(" set to "));
-                    MSG_OUTPUT(Registers[input.substring(4).toInt()].name);
-                    MSG_OUTPUTLN(F(" mode"));
+                    MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4)); MSG_OUTPUT(F(" set to "));
+                    MSG_OUTPUT(Registers[input.substring(4).toInt()].name); MSG_OUTPUTLN(F(" mode"));
 
                     commandCHECK = true;
                   }
@@ -951,18 +918,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         }
 
         if (CC1101_found == true) {
-          MSG_OUTPUT(F("CC110x_MARCSTATE    "));
-          MSG_OUTPUTLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);  // MARCSTATE – Main Radio Control State Machine State
-          MSG_OUTPUT(F("CC110x_Freq.Afc     "));
-          MSG_OUTPUTLN(freqAfc == 1 ? F("on (1)") : F("off (0)"));
-          MSG_OUTPUT(F("CC110x_Freq.Offset  "));
-          MSG_OUTPUT(Freq_offset, 3);
-          MSG_OUTPUTLN(F(" MHz"));
+          MSG_OUTPUT(F("CC110x_MARCSTATE    ")); MSG_OUTPUTLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);  // MARCSTATE – Main Radio Control State Machine State
+          MSG_OUTPUT(F("CC110x_Freq.Afc     ")); MSG_OUTPUTLN(freqAfc == 1 ? F("on (1)") : F("off (0)"));
+          MSG_OUTPUT(F("CC110x_Freq.Offset  ")); MSG_OUTPUT(Freq_offset, 3); MSG_OUTPUTLN(F(" MHz"));
         }
-        MSG_OUTPUT(F("ReceiveMode         "));
-        MSG_OUTPUTLN(activated_mode_name);
-        MSG_OUTPUT(F("ToggleAll (Scan)    "));
-        MSG_OUTPUTLN(ToggleAll == 1 ? F("on") : F("off"));
+        MSG_OUTPUT(F("ReceiveMode         ")); MSG_OUTPUTLN(activated_mode_name);
+        MSG_OUTPUT(F("ToggleAll (Scan)    ")); MSG_OUTPUTLN(ToggleAll == 1 ? F("on") : F("off"));
         MSG_OUTPUT(F("ToggleBank 0-3      { "));
 
         for (byte i = 0; i < 4; i++) {
@@ -991,9 +952,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           if (i < 10) {
             MSG_OUTPUT(' ');
           }
-          MSG_OUTPUT(i);
-          MSG_OUTPUT(F(" - "));
-          MSG_OUTPUTLN(Registers[i].name);
+          MSG_OUTPUT(i); MSG_OUTPUT(F(" - ")); MSG_OUTPUTLN(Registers[i].name);
         }
       } else {
         commandCHECK = false;
@@ -1031,13 +990,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             ptr = strtok(text, delimiter);  // Initialisieren u. erster Teilstring
             uint8_t rep = 1;
             byte datavalid = 1;
-            char* senddata = {};  // NULL-Pointer to a memory address
+            char* senddata = {};            // NULL-Pointer to a memory address
 
             while (ptr != NULL) {
               if (strstr(ptr, "R=")) {
 #ifdef debug
-                MSG_OUTPUT(F("DB Input | SN; found "));
-                MSG_OUTPUTLN(ptr);
+                MSG_OUTPUT(F("DB Input | SN; found ")); MSG_OUTPUTLN(ptr);
 #endif
                 if ((String(ptr).substring(2)).toInt() != 0) { /* repeats */
                   rep = (String(ptr).substring(2)).toInt();
@@ -1047,10 +1005,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 }
               } else if (strstr(ptr, "D=")) { /* datapart */
 #ifdef debug
-                MSG_OUTPUT(F("DB Input | SN; found "));
-                MSG_OUTPUT(ptr);
-                MSG_OUTPUT(F(" with length "));
-                MSG_OUTPUTLN(String(ptr + 2).length());
+                MSG_OUTPUT(F("DB Input | SN; found ")); MSG_OUTPUT(ptr);
+                MSG_OUTPUT(F(" with length ")); MSG_OUTPUTLN(String(ptr + 2).length());
 #endif
                 ptr = ptr + 2; /* cut D= */
 
@@ -1075,8 +1031,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             if (datavalid == 1) {
               digitalWrite(LED, HIGH);  // LED on
 #ifdef debug
-              MSG_OUTPUT(F("DB Input | SN; valid and ready to send with repeats="));
-              MSG_OUTPUTLN(rep);
+              MSG_OUTPUT(F("DB Input | SN; valid and ready to send with repeats=")); MSG_OUTPUTLN(rep);
               Serial.println(senddata);
 #endif
               /*
@@ -1116,11 +1071,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
           if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2]) && isHexadecimalDigit(buf_input[3]) && isHexadecimalDigit(buf_input[4])) {
 #ifdef debug
-            MSG_OUTPUT(F("DB Serial Input | cmd W with adr="));
-            MSG_OUTPUT_DecToHEX_lz(adr_dec);
-            MSG_OUTPUT(F(" and value="));
-            MSG_OUTPUT_DecToHEX_lz(val_dec);
-            MSG_OUTPUTLN("");
+            MSG_OUTPUT(F("DB Serial Input | cmd W with adr=")); MSG_OUTPUT_DecToHEX_lz(adr_dec);
+            MSG_OUTPUT(F(" and value=")); MSG_OUTPUT_DecToHEX_lz(val_dec); MSG_OUTPUTLN("");
 #endif
             CC1101_writeReg(adr_dec - CC1101_writeReg_offset, val_dec);  // write in cc1101 | adr - 2 because of sduino firmware
             EEPROMwrite(adr_dec - CC1101_writeReg_offset, val_dec);      // write in flash
@@ -1137,8 +1089,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           /* command WS34 ... | from 0x30 to 0x3D */
 #ifdef debug
           String val = String(buf_input[2]) + String(buf_input[3]);
-          MSG_OUTPUT(F("DB Input | cmd WS with value="));
-          MSG_OUTPUTLN(val);
+          MSG_OUTPUT(F("DB Input | cmd WS with value=")); MSG_OUTPUTLN(val);
 #endif
           if (buf_input[3] == '4') {
             CC1101_cmdStrobe(CC1101_SRX);
@@ -1230,7 +1181,7 @@ void Telnet() {
 #endif
         client_now = i; /* current telnet client is set where data is received */
         String input = TelnetClient[i].readString();
-        input.trim(); /* String, strip off any leading/trailing space and \r \n */
+        input.trim();   /* String, strip off any leading/trailing space and \r \n */
         char BUFFER_Telnet[input.length() + 1];
         input.toCharArray(BUFFER_Telnet, input.length() + 1); /* String to char in buf */
 
