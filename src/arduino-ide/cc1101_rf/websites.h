@@ -167,14 +167,10 @@ void web_cc110x_modes() {
 
 #ifdef debug_html
   Serial.println(F("###########################"));
-  Serial.print(F("DB web_cc1101_modes, submit "));
-  Serial.println(submit);
-  Serial.print(F("DB web_cc1101_modes, tb "));
-  Serial.println(tb);
-  Serial.print(F("DB web_cc1101_modes, tgtime "));
-  Serial.println(tgtime);
-  Serial.print(F("DB web_cc1101_modes, count "));
-  Serial.println(countargs);
+  Serial.print(F("DB web_cc1101_modes, submit ")); Serial.println(submit);
+  Serial.print(F("DB web_cc1101_modes, tb ")); Serial.println(tb);
+  Serial.print(F("DB web_cc1101_modes, tgtime ")); Serial.println(tgtime);
+  Serial.print(F("DB web_cc1101_modes, count ")); Serial.println(countargs);
 #endif
 
   if (countargs != 0) {
@@ -182,8 +178,7 @@ void web_cc110x_modes() {
       InputCmd = "m" + submit;
 
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_modes, set reception "));
-      Serial.println(submit);
+      Serial.print(F("DB web_cc1101_modes, set reception ")); Serial.println(submit);
 #endif
       web_status = F("<td class=\"in grn\">");
       web_status += String(Registers[submit.toInt()].name) + F(" &#10004;</td>");
@@ -195,8 +190,7 @@ void web_cc110x_modes() {
       }
       InputCmd = "tos" + tgtime;
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_modes, set toggletime to "));
-      Serial.println(tgtime);
+      Serial.print(F("DB web_cc1101_modes, set toggletime to ")); Serial.println(tgtime);
 #endif
       if (tgtime.toInt() >= ToggleTimeMin && tgtime.toInt() <= ToggleTimeMax) {
         web_status = F("<tr><td class=\"in grn\">toggle started &#10004;</td>");
@@ -218,10 +212,8 @@ void web_cc110x_modes() {
       tb_val = tb.substring(2).toInt();   /* 0 and 1 */
 
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_modes, set togglebank "));
-      Serial.print(tb_nr);
-      Serial.print(F(" to "));
-      Serial.println(tb_val);
+      Serial.print(F("DB web_cc1101_modes, set togglebank ")); Serial.print(tb_nr);
+      Serial.print(F(" to ")); Serial.println(tb_val);
 #endif
 
       web_status = F("<tr><td class=\"in grn\">");
@@ -345,10 +337,10 @@ void web_cc110x_detail_export() {
 
 
 void web_cc110x_detail_import() {
-  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
-  String imp = HttpServer.arg("imp");        // String der Register inklusive Werte
+  String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
+  String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   String website;
-  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String Part = "";
   String PartAdr = "";
   String PartVal = "";
@@ -360,12 +352,9 @@ void web_cc110x_detail_import() {
   if (countargs != 0) {
 #ifdef debug_html
     Serial.println(F("###########################"));
-    Serial.print(F("DB web_cc110x_detail_import, submit     "));
-    Serial.println(submit);
-    Serial.print(F("DB web_cc110x_detail_import, countargs  "));
-    Serial.println(countargs);
-    Serial.print(F("DB web_cc110x_detail_import, imp        "));
-    Serial.println(imp);
+    Serial.print(F("DB web_cc110x_detail_import, submit     ")); Serial.println(submit);
+    Serial.print(F("DB web_cc110x_detail_import, countargs  ")); Serial.println(countargs);
+    Serial.print(F("DB web_cc110x_detail_import, imp        ")); Serial.println(imp);
 #endif
 
     if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
@@ -379,14 +368,10 @@ void web_cc110x_detail_import() {
           Adr = hexToDec(PartAdr);
           Val = hexToDec(PartVal);
 #ifdef debug_html
-          Serial.print(F("DB web_cc110x_detail_import, cc110x adr: "));
-          Serial.print(PartAdr);
-          Serial.print(' ');
-          Serial.println(Adr);
-          Serial.print(F("DB web_cc110x_detail_import, cc110x val: "));
-          Serial.print(PartVal);
-          Serial.print(' ');
-          Serial.println(Val);
+          Serial.print(F("DB web_cc110x_detail_import, cc110x adr: ")); Serial.print(PartAdr);
+          Serial.print(' '); Serial.println(Adr);
+          Serial.print(F("DB web_cc110x_detail_import, cc110x val: ")); Serial.print(PartVal);
+          Serial.print(' '); Serial.println(Val);
 #endif
           if (Adr > 0x2E) {
             break;
@@ -447,18 +432,12 @@ void web_cc110x_detail() {
   if (countargs != 0) {
 #ifdef debug_html
     Serial.println(F("###########################"));
-    Serial.print(F("DB web_cc1101_detail, submit     "));
-    Serial.println(submit);
-    Serial.print(F("DB web_cc1101_detail, countargs  "));
-    Serial.println(countargs);
-    Serial.print(F("DB web_cc1101_detail, freq       "));
-    Serial.println(freq);
-    Serial.print(F("DB web_cc1101_detail, freqOff    "));
-    Serial.println(freqOff);
-    Serial.print(F("DB web_cc1101_detail, datarate   "));
-    Serial.println(datar);
-    Serial.print(F("DB web_cc1101_detail, deviation  "));
-    Serial.println(dev);
+    Serial.print(F("DB web_cc1101_detail, submit     ")); Serial.println(submit);
+    Serial.print(F("DB web_cc1101_detail, countargs  ")); Serial.println(countargs);
+    Serial.print(F("DB web_cc1101_detail, freq       ")); Serial.println(freq);
+    Serial.print(F("DB web_cc1101_detail, freqOff    ")); Serial.println(freqOff);
+    Serial.print(F("DB web_cc1101_detail, datarate   ")); Serial.println(datar);
+    Serial.print(F("DB web_cc1101_detail, deviation  ")); Serial.println(dev);
     Serial.print(F("DB web_cc1101_detail, modulation "));
     Serial.println(mod);
 #endif
@@ -500,10 +479,8 @@ void web_cc110x_detail() {
       }
     } else if (submit == "bbandw") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set bandwidth pushed with "));
-      Serial.println(bandw);
-      Serial.print(F("DB web_cc1101_detail, register 0x10 value is "));
-      Serial.println(web_regData[16]);
+      Serial.print(F("DB web_cc1101_detail, button set bandwidth pushed with ")); Serial.println(bandw);
+      Serial.print(F("DB web_cc1101_detail, register 0x10 value is ")); Serial.println(web_regData[16]);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Bandwidth set &#10004;</td></tr>");
       int value = web_Bandw_cal(bandw.toInt(), (hexToDec(web_regData[16]) & 0x0f)); /* input complete | input split */
@@ -511,8 +488,7 @@ void web_cc110x_detail() {
       EEPROMwrite(16, value);                                                       // write in flash
     } else if (submit == "bdatarate") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set datarate pushed with "));
-      Serial.println(datar);
+      Serial.print(F("DB web_cc1101_detail, button set datarate pushed with ")); Serial.println(datar);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">DataRate set &#10004;</td></tr>");
       return_val = web_Datarate_set(datar.toFloat());
@@ -524,8 +500,7 @@ void web_cc110x_detail() {
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set deviation pushed with "));
-      Serial.println(dev);
+      Serial.print(F("DB web_cc1101_detail, button set deviation pushed with ")); Serial.println(dev);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Deviation set &#10004;</td></tr>");
       return_val = web_Devi_set(dev.toFloat());
@@ -533,8 +508,7 @@ void web_cc110x_detail() {
       EEPROMwrite(21, hexToDec(return_val));      // write in flash
     } else if (submit == "bmod") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set modulation pushed with "));
-      Serial.println(mod);
+      Serial.print(F("DB web_cc1101_detail, button set modulation pushed with ")); Serial.println(mod);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
       CC1101_writeReg(18, web_Mod_set(mod));  // write in cc1101
@@ -547,12 +521,9 @@ void web_cc110x_detail() {
 
       for (byte i = 0; i <= 46; i++) { /* all registers */
 #ifdef debug_html
-        Serial.print(F("DB web_cc1101_detail, regData["));
-        Serial.print(i);
-        Serial.print(F("] = "));
-        Serial.println(web_regData[i]);
+        Serial.print(F("DB web_cc1101_detail, regData[")); Serial.print(i);
+        Serial.print(F("] = ")); Serial.println(web_regData[i]);
 #endif
-
         /* compare value with value to be written */
         temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
         temp.toUpperCase();
@@ -564,19 +535,16 @@ void web_cc110x_detail() {
           if (i > 40) {
             Serial.println(F("DB web_cc1101_detail, test register"));
           }
-          Serial.print(F("DB web_cc1101_detail, regData["));
-          Serial.print(i);
-          Serial.print(F("] value has changed "));
-          Serial.print(temp);
-          Serial.print(F(" -> "));
-          Serial.println(web_regData[i]);
+          Serial.print(F("DB web_cc1101_detail, regData[")); Serial.print(i);
+          Serial.print(F("] value has changed ")); Serial.print(temp);
+          Serial.print(F(" -> ")); Serial.println(web_regData[i]);
 #endif
           if (i == 6) { /* ToDo - probably not optimal -> if register 6 is changed (dependencies) ??? */
             activated_mode_packet_length = hexToDec(web_regData[i]);
           }
           /* write value to registe */
-          CC1101_writeReg(i, hexToDec(web_regData[i]));  // write in cc1101
-          EEPROMwrite(i, hexToDec(web_regData[i]));      // write in flash
+          CC1101_writeReg(i, hexToDec(web_regData[i]));   // write in cc1101
+          EEPROMwrite(i, hexToDec(web_regData[i]));       // write in flash
         }
       }
     }
@@ -593,8 +561,7 @@ void web_cc110x_detail() {
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\"></head>");
   html_head_table(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
-               "<table>"
-               "<thead><tr>"
+               "<table><thead><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
@@ -694,7 +661,6 @@ void web_cc110x_detail() {
   }
 
   website += F("</tbody></table></form></body></html>");
-
   HttpServer.send(200, "text/html", website);
 }
 
@@ -702,8 +668,7 @@ void web_cc110x_detail() {
 void web_log() {
   String website;
   html_meta(website);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\">"
-               "</head>");
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
   html_head_table(website);
 
   File logfile = LittleFS.open("/files/log.txt", "r");
@@ -725,7 +690,6 @@ void web_log() {
     }
     website += F("</html>");
   }
-
   HttpServer.send(200, "text/html", website);
 }
 
@@ -734,10 +698,10 @@ void web_raw() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String sd = HttpServer.arg("sd");          // welche Daten genutzt werden sollen
-  String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
+  String sd = HttpServer.arg("sd");         // welche Daten genutzt werden sollen
+  String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String website;
-  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
   html_meta(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
@@ -752,12 +716,9 @@ void web_raw() {
 
   if (countargs != 0) {
 #ifdef debug_html
-    Serial.print(F("DB web_raw, countargs "));
-    Serial.println(countargs);
-    Serial.print(F("DB web_raw, submit "));
-    Serial.println(submit);
-    Serial.print(F("DB web_raw, sd "));
-    Serial.println(sd);
+    Serial.print(F("DB web_raw, countargs ")); Serial.println(countargs);
+    Serial.print(F("DB web_raw, submit ")); Serial.println(submit);
+    Serial.print(F("DB web_raw, sd ")); Serial.println(sd);
 #endif
 
     if (submit == "send") { /* SEND DATA */
@@ -781,22 +742,19 @@ void web_raw() {
   }
 
   website += F("</table><br>");
-  website += F("<div>"
-               "<table id=\"dataTable\">"
-               "<thead>"
+  website += F("<div><table id=\"dataTable\"><thead>"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"RAW_MODE\">");
   website += activated_mode_name;
   website += F("</span></th><th class=\"dd\">RSSI in dB</th><th class=\"dd\">Offset in kHz</th></tr>"
-               "</thead>"
-               "</table>"
-               "</div>"
+               "</thead></table></div>"
                "</body></html>");
-
   HttpServer.send(200, "text/html", website);
 }
 
 
 void web_val_raw() {
+  /* {"RAW_MODE":"Lacrosse_mode1"}
+     {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
   String website = "";
   int16_t offset = (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000);
 
@@ -839,30 +797,20 @@ void web_wlan() {
   String qssid = HttpServer.arg("setssid");     // Auswahl SSID
   String submit = HttpServer.arg("submit");     // welcher Button wurde betätigt
   String website;
-  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();        // Anzahl Argumente
   used_ssid_mac = WiFi.BSSIDstr();
 
 #ifdef debug_html
-  Serial.print(F("DB web_wlan, setssid    "));
-  Serial.println(qssid);
-  Serial.print(F("DB web_wlan, hiddenssid "));
-  Serial.println(hssid);
-  Serial.print(F("DB web_wlan, pw         "));
-  Serial.println(qpass);
-  Serial.print(F("DB web_wlan, dhcp       "));
-  Serial.println(qdhcp);
-  Serial.print(F("DB web_wlan, ip         "));
-  Serial.println(qip);
-  Serial.print(F("DB web_wlan, dns        "));
-  Serial.println(qdns);
-  Serial.print(F("DB web_wlan, sn         "));
-  Serial.println(qsnm);
-  Serial.print(F("DB web_wlan, gw         "));
-  Serial.println(qsgw);
-  Serial.print(F("DB web_wlan, submit     "));
-  Serial.println(submit);
-  Serial.print(F("DB web_wlan, countargs  "));
-  Serial.println(countargs);
+  Serial.print(F("DB web_wlan, setssid    ")); Serial.println(qssid);
+  Serial.print(F("DB web_wlan, hiddenssid ")); Serial.println(hssid);
+  Serial.print(F("DB web_wlan, pw         ")); Serial.println(qpass);
+  Serial.print(F("DB web_wlan, dhcp       ")); Serial.println(qdhcp);
+  Serial.print(F("DB web_wlan, ip         ")); Serial.println(qip);
+  Serial.print(F("DB web_wlan, dns        ")); Serial.println(qdns);
+  Serial.print(F("DB web_wlan, sn         ")); Serial.println(qsnm);
+  Serial.print(F("DB web_wlan, gw         ")); Serial.println(qsgw);
+  Serial.print(F("DB web_wlan, submit     ")); Serial.println(submit);
+  Serial.print(F("DB web_wlan, countargs  ")); Serial.println(countargs);
   Serial.println(F("DB web_wlan, scan networks ..."));
 #endif
 
@@ -891,13 +839,11 @@ void web_wlan() {
   website += F("<tr><td class=\"b1\" colspan=\"6\"></td></tr>");
   website += F("<thead><tr><th colspan=\"6\">WLAN - available networks</th></tr>"
                "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr></thead>");
-
   WifiNetworks = WiFi.scanNetworks();  // Scanne Netzwerke
 
   for (uint8_t i = 0; i < WifiNetworks; ++i) {
     WifiMAC = WLAN_MAC_String(WiFi.BSSID(i));
     WifiEncryptionType = WLAN_encryptionType(WiFi.encryptionType(i));
-
     /* Tabelle WLAN - available networks */
     website += F("<tr><td class=\"ra1\"><input type=\"radio\" name=\"setssid\" value=\"");
     website += WiFi.SSID(i);
@@ -916,28 +862,22 @@ void web_wlan() {
     }
 
 #ifdef debug_html
-    Serial.print(' ');
-    Serial.print(i + 1);
-    Serial.print(' ');
-    Serial.print(WiFi.SSID(i));
-    Serial.print(' ');
-    Serial.print(WifiMAC);
-    Serial.print(' ');
-    Serial.print(WiFi.channel(i));
-    Serial.print(' ');
-    Serial.print(WiFi.RSSI(i));
-    Serial.print(' ');
-    Serial.println(WifiEncryptionType);
+    Serial.print(' '); Serial.print(i + 1);
+    Serial.print(' '); Serial.print(WiFi.SSID(i));
+    Serial.print(' '); Serial.print(WifiMAC);
+    Serial.print(' '); Serial.print(WiFi.channel(i));
+    Serial.print(' '); Serial.print(WiFi.RSSI(i));
+    Serial.print(' '); Serial.println(WifiEncryptionType);
 #endif
 
     website += F("</td><td class=\"ssid\">");
     website += WiFi.SSID(i) + F("</td><td class=\"fb\">") + WifiMAC + F("</td><td class=\"wch\">") + WiFi.channel(i) + F("</td><td class=\"wrs");
-    if (WiFi.RSSI(i) > -40) {  // WLAN RSSI good
+    if (WiFi.RSSI(i) > -40) {         // WLAN RSSI good
       website += F(" wrsgrn\">");
     } else if (WiFi.RSSI(i) < -65) {  // WLAN RSSI very bad
       website += F(" wrsred\">");
     } else {
-      website += F("\">");  // WLAN RSSI middle
+      website += F("\">");            // WLAN RSSI middle
     }
     website += WiFi.RSSI(i);
     website += F(" db</td><td class=\"alig_c\">");
@@ -955,14 +895,13 @@ void web_wlan() {
                "<td class=\"inp\" colspan=\"3\"><button class=\"btn\" onclick=\"wlan_conn()\" type=\"submit\" name=\"submit\" value=\"connect\">connect</button></td>"
                "</tr>"
                "<tr><td colspan=\"6\" class=\"b1\"><span id=\"StatCon\"></span></td></tr>");
-
   /* Tabelle Setting IP - network */
   website += F("<thead><tr><th colspan=\"6\">Setting IP - network</th></tr></thead>");
 
   if (WLAN_AP) {
     ipadr = WiFi.softAPIP();  // IP
   } else {
-    ipadr = WiFi.localIP();  // IP
+    ipadr = WiFi.localIP();   // IP
   }
 
   /* Tabelle Setting IP - network | IP DHCP */
@@ -1021,8 +960,7 @@ void web_wlan() {
       /* statische IP übernehmen */
       if (str2ip((char*)qip.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
-        Serial.print(F("DB web_wlan, static IP "));
-        Serial.println(qip);
+        Serial.print(F("DB web_wlan, static IP ")); Serial.println(qip);
 #endif
         EEPROMwrite_ipaddress(EEPROM_ADDR_IP, qip);  // write IPAddress to EEPROM
         eip = EEPROMread_ipaddress(EEPROM_ADDR_IP);
@@ -1033,8 +971,7 @@ void web_wlan() {
       /* Standard-Gateway übernehmen */
       if (str2ip((char*)qsgw.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
 #ifdef debug_html
-        Serial.print(F("DB web_wlan, Standard-Gateway "));
-        Serial.println(qsgw);
+        Serial.print(F("DB web_wlan, Standard-Gateway ")); Serial.println(qsgw);
 #endif
         EEPROMwrite_ipaddress(EEPROM_ADDR_GATEWAY, qsgw);  // write IPAddress to EEPROM
         esgw = EEPROMread_ipaddress(EEPROM_ADDR_GATEWAY);
@@ -1043,22 +980,20 @@ void web_wlan() {
       }
 
       /* statischen Domain Name Server übernehmen */
-      if (str2ip((char*)qdns.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
+      if (str2ip((char*)qdns.c_str(), ipaddress)) {     // convert String to Array of 4 Bytes
 #ifdef debug_html
-        Serial.print(F("DB web_wlan, static Domain Name Server "));
-        Serial.println(qdns);
+        Serial.print(F("DB web_wlan, static Domain Name Server ")); Serial.println(qdns);
 #endif
-        EEPROMwrite_ipaddress(EEPROM_ADDR_DNS, qdns);  // write IPAddress to EEPROM
+        EEPROMwrite_ipaddress(EEPROM_ADDR_DNS, qdns);   // write IPAddress to EEPROM
         edns = EEPROMread_ipaddress(EEPROM_ADDR_DNS);
       } else {
         /* Invalid domain name server! */
       }
 
       /* Subnetmask übernehmen */
-      if (str2ip((char*)qsnm.c_str(), ipaddress)) {  // convert String to Array of 4 Bytes
+      if (str2ip((char*)qsnm.c_str(), ipaddress)) {     // convert String to Array of 4 Bytes
 #ifdef debug_html
-        Serial.print(F("DB web_wlan, subnet mask "));
-        Serial.println(qsnm);
+        Serial.print(F("DB web_wlan, subnet mask ")); Serial.println(qsnm);
 #endif
         EEPROMwrite_ipaddress(EEPROM_ADDR_NETMASK, qsnm);  // write IPAddress to EEPROM
         esnm = EEPROMread_ipaddress(EEPROM_ADDR_NETMASK);
@@ -1076,11 +1011,9 @@ void web_wlan() {
 #ifdef debug_html
     Serial.println(F("DB web_wlan, send HTML (connect)"));
 #endif
-
     website = F("<!DOCTYPE html>WLAN - an attempt is made to establish a connection to SSID ");
     website += qssid;
     website += F("<br>If the attempt fails, the old settings are loaded.</html>");
-
     HttpServer.send(200, "text/html", website);
     delay(250);
 
@@ -1145,7 +1078,6 @@ void web_val_status() {
   website += F("\",\"WLANdB\":\"");
   website += WiFi.RSSI();
   website += +F("\"}");
-
   HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
 }
 
