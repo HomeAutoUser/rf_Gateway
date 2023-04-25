@@ -862,12 +862,9 @@ void web_wlan() {
     }
 
 #ifdef debug_html
-    Serial.print(' '); Serial.print(i + 1);
-    Serial.print(' '); Serial.print(WiFi.SSID(i));
-    Serial.print(' '); Serial.print(WifiMAC);
-    Serial.print(' '); Serial.print(WiFi.channel(i));
-    Serial.print(' '); Serial.print(WiFi.RSSI(i));
-    Serial.print(' '); Serial.println(WifiEncryptionType);
+    Serial.print(' '); Serial.print(i + 1); Serial.print(' '); Serial.print(WiFi.SSID(i));
+    Serial.print(' '); Serial.print(WifiMAC); Serial.print(' '); Serial.print(WiFi.channel(i));
+    Serial.print(' '); Serial.print(WiFi.RSSI(i)); Serial.print(' '); Serial.println(WifiEncryptionType);
 #endif
 
     website += F("</td><td class=\"ssid\">");
