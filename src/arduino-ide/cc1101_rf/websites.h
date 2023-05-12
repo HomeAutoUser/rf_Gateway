@@ -22,7 +22,6 @@ void html_meta(String& html) { /* added meta to html */
            "<html lang=\"de\">"
            "<head>"
            "<meta charset=\"utf-8\">"
-           "<meta http-equiv=\"Content-Type\" content=\"text/html\">"
            "<meta http-equiv=\"Content-language\" content=\"de\">"
            "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/>"
            "<meta http-equiv=\"Pragma\" content=\"no-cache\"/>"
@@ -237,6 +236,7 @@ void web_cc110x_modes() {
 
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_modes.css\">"
+               "<script src=\"cc110x_modes.js\"></script>"
                "</head>");
   html_head_table(website);
   website += F("<body>"
@@ -297,7 +297,7 @@ void web_cc110x_modes() {
                "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" value=\"9_0\">reset togglebank & STOP</button>"
                "</td></tr></tbody></table></body></html>");
 
-  HttpServer.send(200, "text / html", website);
+  HttpServer.send(200, "text/html", website);
 }
 
 
@@ -576,24 +576,24 @@ void web_cc110x_detail() {
                                   CC1101_readReg(14, READ_BURST),
                                   CC1101_readReg(15, READ_BURST)
                                  ), 3);
-  website += F(" MHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"7\" name=\"freq\" value=\"");
+  website += F(" MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" name=\"freq\" value=\"");
   website += freq;
   website += F("\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>");  // end Frequency
 
-  website += F("<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input name=\"afc\" type=\"checkbox\" value=\"1\"");
+  website += F("<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   if (freqAfc == 1) {
     website += F(" checked");
   }
 
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
-  website += F(" MHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"6\" name=\"freq_off\" value=\"");
+  website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
   website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>");  // end Frequency Offset
 
   website += F("<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\">");
   website += web_Bandw_read();
-  website += F(" kHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
+  website += F(" kHz</td><td class=\"ce\"><input aria-label=\"Bw\" size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
   website += String(web_Bandw_read(), 0);
   website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"  // end Bandwidth
                "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\">");
@@ -608,7 +608,7 @@ void web_cc110x_detail() {
   website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"  // end Deviation
                "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\">");
   website += web_Mod_read();
-  website += F("<td class=\"ce\"><select id=\"modulation\" name=\"modulation\">");
+  website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\">");
 
   for (byte i = 0; i <= 7; i++) {
     if (i == 2 || i == 5 || i == 6) {
@@ -1079,6 +1079,14 @@ void web_val_status() {
 }
 
 
+void web_val_cc110x_modes() {
+  String website = F("{\"activated_mode_name\":\"");
+  website += activated_mode_name;
+  website += +F("\"}");
+  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
+}
+
+
 void routing_websites() {
   HttpServer.on("/", web_index);
   HttpServer.on("/cc110x", web_cc110x);
@@ -1090,8 +1098,9 @@ void routing_websites() {
   HttpServer.on("/index.html", web_index);
   HttpServer.on("/log", web_log);
   HttpServer.on("/raw", web_raw);
-  HttpServer.on("/request_status", web_val_status);
+  HttpServer.on("/request_cc110x_modes", web_val_cc110x_modes);
   HttpServer.on("/request_raw", web_val_raw);
+  HttpServer.on("/request_status", web_val_status);
   HttpServer.on("/wlan", web_wlan);
   HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css");
   HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css");
@@ -1099,6 +1108,7 @@ void routing_websites() {
   HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css");
   HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css");
   HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css");
+  HttpServer.serveStatic("/cc110x_modes.js", LittleFS, "/js/cc110x_modes.js");
   HttpServer.serveStatic("/favicon.ico", LittleFS, "/favicon.ico");
   HttpServer.serveStatic("/help", LittleFS, "/html/help.html");
   HttpServer.serveStatic("/help.css", LittleFS, "/css/help.css");
