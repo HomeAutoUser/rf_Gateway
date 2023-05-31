@@ -1,4 +1,4 @@
-# cc1101_rf_Gateway uC v1.0.14 with cc110x support 
+# cc1101_rf_Gateway uC v1.0.15 with cc110x support 
 
 ### Getting started
 
@@ -13,8 +13,12 @@ If you are using the Arduino IDE, you have to copy all the libs into your sketch
 
 ### Using cc1101_rf_Gateway in FHEM
 
--> will be added
-
+1. check if you have the current SIGNALduino source in the update list
+ (source: https://raw.githubusercontent.com/RFD-FHEM/RFFHEM/master/controls_signalduino.txt)
+2. update your FHEM
+3. define one SIGNALduino device
+ (define <name> SIGNALduino <device>)
+4. check the reading 'state' and if communication is successful it says 'opened'
 
 ### Tested microcontrollers
 

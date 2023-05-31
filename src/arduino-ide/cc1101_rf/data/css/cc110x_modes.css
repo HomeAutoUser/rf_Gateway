@@ -5,7 +5,7 @@
 
 /* all inactive buttons */
 .btn {
- background-color: #3399ff;
+ background-color: #3399FF;
  color: white;
  padding: 2px 6px;
  margin: 0px 4px 0px 4px;
@@ -16,7 +16,7 @@
 
 /* all active buttons */
 .btn2 {
- background-color: #009933;
+ background-color: #33b06b;
  color: white;
  padding: 2px 6px;
  margin: 0px 4px 0px 4px;
@@ -26,7 +26,7 @@
 }
 
 .btn:hover {
- background-color: #ffff00;
+ background-color: #FFFF00;
  color: black;
 }
 
@@ -56,5 +56,11 @@ input {
 }
 
 a:link.CC110x, a:visited.CC110x {
- color: #cc00cc;
+ color: #CC00CC;
+}
+
+/* backgroud color of button "enable/active reception" */
+:root {
+  --mod_active: #33b06b;
+  --mod_enable: #FFFFFF;
 }
