@@ -13,11 +13,9 @@ If you are using the Arduino IDE, you have to copy all the libs into your sketch
 
 ### Using cc1101_rf_Gateway in FHEM
 
-1. check if you have the current SIGNALduino source in the update list
- (source: https://raw.githubusercontent.com/RFD-FHEM/RFFHEM/master/controls_signalduino.txt)
+1. check if you have the current SIGNALduino source in the update list <br> ( source: https://raw.githubusercontent.com/RFD-FHEM/RFFHEM/master/controls_signalduino.txt )
 2. update your FHEM
-3. define one SIGNALduino device
- (define <name> SIGNALduino <device>)
+3. define one SIGNALduino device <br> ( define \<name\> SIGNALduino \<device\> )
 4. check the reading 'state' and if communication is successful it says 'opened'
 
 ### Tested microcontrollers
