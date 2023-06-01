@@ -3,7 +3,23 @@
 ### Getting started
 
 
-System to receive digital signals and provide them to other systems for demodulation. Currently tested with 433 MHz, but not limited to that frequency or media.
+System to receive digital signals and provide them to other systems for demodulation. A CC1101 is used as receiver. The cabling is analogue and compatible with the SIGNALduino. You can toggle up to 4 reception modes with a minimum time of 30 seconds. It can be operated via the WEB interface or the uC command (telnet). Standard operation is possible via FHEM. <br>Current reception modes are (values can be compiled in or compiled out yourself) :
+  - CC110x Factory Default (standard values according to data sheet)
+  - Avantek
+  - Bresser_5in1
+  - Bresser_6in1
+  - Bresser_7in1
+  - Fine_Offset_WH51_434
+  - Fine_Offset_WH51_868
+  - Fine_Offset_WH57_434
+  - Fine_Offset_WH57_868
+  - Inkbird_IBS_P01R
+  - KOPP_FC
+  - Lacrosse_mode1
+  - Lacrosse_mode2
+  - PCA301
+  - Rojaflex
+  - ... some development´s
 
 
 Just clone the repo and open the project file with Visual Studio (only available for windows) or VSCode.
@@ -45,3 +61,13 @@ First, sorry. This software is not perfect.
 5. Commit your changes (git commit -am "<some description>")
 6 .Push to a developer branch (git push dev-<xyz >my_branch)
 7. Open a Pull Request, put some useful informations there, what your extension does and why we should add it, reference to the open issues which are fixed whith this pull requet.
+
+  
+### some pictures with WEB interface on a ESP8266 (WEB interface only on uC with WLAN)
+  (pictures from version 1.0.15 | reception can be compiled differently)
+  ![HOME](./screenshots/picture1.png)
+  ![CC110x](./screenshots/picture2.png)
+  ![CC110x register](./screenshots/picture3.png)
+  ![CC110x reception](./screenshots/picture4.png)
+  ![RAW data](./screenshots/picture5.png)
+  ![WLAN](./screenshots/picture6.png)
