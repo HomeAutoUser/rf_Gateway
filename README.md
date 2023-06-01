@@ -66,8 +66,13 @@ First, sorry. This software is not perfect.
 ### some pictures with WEB interface on a ESP8266 (WEB interface only on uC with WLAN)
   (pictures from version 1.0.15 | reception can be compiled differently)
   ![HOME](./screenshots/picture1.png)
+  -
   ![CC110x](./screenshots/picture2.png)
+  -
   ![CC110x register](./screenshots/picture3.png)
+  -
   ![CC110x reception](./screenshots/picture4.png)
+  -
   ![RAW data](./screenshots/picture5.png)
+  -
   ![WLAN](./screenshots/picture6.png)
