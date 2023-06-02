@@ -9,31 +9,31 @@
 /* Pins and other specific controller settings */
 #if defined(ARDUINO_ARCH_ESP8266)
 #define EEPROM_SIZE   512
-#define GDO0          4           // GDO0     => ESP8266 (Pin TX out)
-#define GDO2          5           // GDO2     => ESP8266 (Pin RX in)
+#define GDO0          4           // GDO0     => ESP8266 (Pin TX out - PIN_SEND)
+#define GDO2          5           // GDO2     => ESP8266 (Pin RX in  - PIN_RECEIVE)
 #define LED           16          // LED      => ESP8266 (OK msg & WIFI)
 #elif defined(ARDUINO_ARCH_ESP32)
 #define EEPROM_SIZE   512
-#define GDO0          4           // GDO0     => ESP32 (Pin TX out)
-#define GDO2          13          // GDO2     => ESP32 (Pin RX in)
+#define GDO0          4           // GDO0     => ESP32 (Pin TX out - PIN_SEND)
+#define GDO2          13          // GDO2     => ESP32 (Pin RX in  - PIN_RECEIVE)
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
 #elif defined(ARDUINO_RADINOCC1101)
 #define EEPROM_SIZE   512
-#define GDO0          9           // GDO0     => Radino (Pin TX out)
-#define GDO2          7           // GDO2     => Radino (Pin RX in)
+#define GDO0          9           // GDO0     => Radino (Pin TX out - PIN_SEND)
+#define GDO2          7           // GDO2     => Radino (Pin RX in  - PIN_RECEIVE)
 #define LED           13          // LED      => Radino (OK msg)
 #define digitalPinToInterrupt(p) ((p) == 0 ? 2 : ((p) == 1 ? 3 : ((p) == 2 ? 1 : ((p) == 3 ? 0 : ((p) == 7 ? 4 : NOT_AN_INTERRUPT)))))
 #define PIN_MARK433   4
 #define SS            8
 #elif defined(ARDUINO_AVR_PRO)
 #define EEPROM_SIZE   512
-#define GDO0          3           // GDO0     => Arduino Pro Mini (Pin TX out)
-#define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in)
+#define GDO0          3           // GDO0     => Arduino Pro Mini (Pin TX out - PIN_SEND)
+#define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #else
 #define EEPROM_SIZE   512
-#define GDO0          3           // GDO0     => Arduino Nano (Pin TX out)
-#define GDO2          2           // GDO2     => Arduino Nano (Pin RX in)
+#define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
+#define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Nano (OK msg)
 #endif
 
@@ -69,6 +69,7 @@
 #define KOPP_FC                 1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
+#define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
 
@@ -77,7 +78,6 @@
 //#define HomeMatic               1
 //#define Lacrosse_mode3          1
 //#define MAX                     1
-//#define OOK_MS                  1
 //#define WMBus_S                 1
 //#define WMBus_T                 1
 /* under development END */

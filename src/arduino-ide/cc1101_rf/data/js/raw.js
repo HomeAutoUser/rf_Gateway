@@ -1,7 +1,7 @@
 ﻿/*
-  color theme style for all websites - cc1101_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser>
-  URL: https://github.com/
+  JavaScript for website RAW data /raw - cc110x_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
+  URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
 */
 
  /* https://randomnerdtutorials.com/esp8266-web-server-spiffs-nodemcu/ */

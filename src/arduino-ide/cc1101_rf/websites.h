@@ -22,14 +22,11 @@ void html_meta(String& html) { /* added meta to html */
            "<html lang=\"de\">"
            "<head>"
            "<meta charset=\"utf-8\">"
-           "<meta http-equiv=\"Content-language\" content=\"de\">"
            "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/>"
            "<meta http-equiv=\"Pragma\" content=\"no-cache\"/>"
            "<meta http-equiv=\"Expires\" content=\"0\"/>"
-           "<meta http-equiv=\"X-Content-Type-Options\" content=\"nosniff\">"
-           "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
-           "<meta content=\"X-Content-Type-Options=nosniff\">"
-           "<link rel=\"stylesheet\" type=\"text/css\" href=\"all.css\">"
+           "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+           "<link rel=\"stylesheet\" href=\"all.css\" type=\"text/css\">"
            "<title>cc110x_rf_Gateway</title>");
 }
 
@@ -56,7 +53,7 @@ void web_index() {
   String website;
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
-               "<script src=\"index.js\"></script>"
+               "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
   html_head_table(website);
   website += F("<body><table><thead><tr><th colspan=2>Device - Information</th></tr></thead>"
@@ -157,7 +154,7 @@ void web_cc110x_modes() {
   String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
   String tgtime = HttpServer.arg("tgt");    // toggle time
-  String web_status = F("<tr><td></td>");
+  String web_status = F("<tr id=\"trLast\"><td></td>");
   String website;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
   uint8_t tb_nr;                            // togglebank nr
@@ -236,13 +233,13 @@ void web_cc110x_modes() {
 
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_modes.css\">"
-               "<script src=\"cc110x_modes.js\"></script>"
                "</head>");
   html_head_table(website);
   website += F("<body>"
+               "<script src=\"cc110x_modes.js\" type=\"text/javascript\"></script>"
                "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                //"<body><form method=\"post\">"   /* https://www.w3schools.com/tags/ref_httpmethods.asp */
-               "<table>"
+               "<table id=\"rec_mod\">"
                "<thead><tr>"
                "<th class=\"thf1\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"thf1\"><a href=\"cc110x_detail\">detail information</a></th>"
@@ -273,18 +270,18 @@ void web_cc110x_modes() {
     website += F("</td><td class=\"ac\"><button class=");
 
     if (activated_mode_name == Registers[i].name) {
-      website += F("\"btn2\" type=\"submit\" name=\"submit\" value=\"");
-      website += i;
-      website += F("\">enabled");
+      website += F("\"btn2\"");
     } else {
-      website += F("\"btn\" type=\"submit\" name=\"submit\" value=\"");
-      website += i;
-      website += F("\">enable");
+      website += F("\"btn\"");
     }
-    website += F(" reception</button></td></tr>");
+
+    website += F(" type=\"submit\" name=\"submit\" id=\"bt");
+    website += i;
+    website += F("\" value=\"");
+    website += i;
+    website += F("\">enable reception</button></td></tr>");
   }
 
-  website += F("<tr>");
   website += web_status + F("<td class=\"ac\">toggletime&nbsp;");
   website += F("<input name=\"tgt\" type=\"text\" size=\"7\" maxlength=\"7\" pattern=\"^[\\d]{1,7}$\" placeholder=\"");
 
@@ -294,7 +291,7 @@ void web_cc110x_modes() {
     website += F("(ms)");
   }
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
-               "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" value=\"9_0\">reset togglebank & STOP</button>"
+               "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
                "</td></tr></tbody></table></body></html>");
 
   HttpServer.send(200, "text/html", website);
@@ -598,12 +595,12 @@ void web_cc110x_detail() {
   website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"  // end Bandwidth
                "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\">");
   website += String(web_Datarate_read(), 2);
-  website += F(" kBaud</td><td class=\"ce\"><input size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
+  website += F(" kBaud</td><td class=\"ce\"><input aria-label=\"datra\" size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
   website += String(web_Datarate_read(), 2);
   website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"  // end DataRate
                "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\">");
   website += String(web_Devi_read(), 2);
-  website += F(" kHz</td><td class=\"ce\"><input size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
+  website += F(" kHz</td><td class=\"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
   website += String(web_Devi_read(), 2);
   website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"  // end Deviation
                "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\">");
@@ -706,7 +703,7 @@ void web_raw() {
   html_meta(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
-               "<script src=\"raw.js\"></script>"
+               "<script src=\"raw.js\" type=\"text/javascript\"></script>"
                "</head>");
   html_head_table(website);
   website += F("<table>"
@@ -823,7 +820,7 @@ void web_wlan() {
                "<thead>"
                "<tr><th colspan=\"6\">WLAN - Device status</th></tr>"
                "<tr><th colspan=\"4\" class=\"fw\">Mode</td><th colspan=\"2\">MAC</th></tr>"
-               "<script src=\"wlan.js\"></script>"
+               "<script src=\"wlan.js\" type=\"text/javascript\"></script>"
                "</thead>"
                "<tbody>"
                "<tr><td class=\"alig_c\" colspan=\"4\">");
@@ -845,7 +842,7 @@ void web_wlan() {
     WifiMAC = WLAN_MAC_String(WiFi.BSSID(i));
     WifiEncryptionType = WLAN_encryptionType(WiFi.encryptionType(i));
     /* Tabelle WLAN - available networks */
-    website += F("<tr><td class=\"ra1\"><input type=\"radio\" name=\"setssid\" value=\"");
+    website += F("<tr><td class=\"ra1\"><input aria-label=\"na1\" type=\"radio\" name=\"setssid\" value=\"");
     website += WiFi.SSID(i);
 
 #ifdef debug_html
@@ -883,7 +880,7 @@ void web_wlan() {
 
   /* Tabelle WLAN - available networks, letzte Zeile für SSID-Eingabe */
   website += F("<tr>"
-               "<td class=\"ra1\"><input name=\"setssid\" type=\"radio\" value=\"hidden\"></td>"
+               "<td class=\"ra1\"><input aria-label=\"n2\" name=\"setssid\" type=\"radio\" value=\"hidden\"></td>"
                "<td class=\"inp\" colspan=\"2\"><input pattern=\"^[\\da-zA-Z-]{1,32}$\" placeholder=\"your hidden ssid\" name=\"hiddenssid\" type=\"text\" maxlength=\"32\" size=\"32\"></td>"
                "<td class=\"inp\" colspan=\"3\"><input placeholder=\"your password\" name=\"pw\" type=\"password\" maxlength=\"64\" size=\"25\"></td>"
                "</tr>"
@@ -902,7 +899,7 @@ void web_wlan() {
   }
 
   /* Tabelle Setting IP - network | IP DHCP */
-  website += F("<tr><td class=\"ra1\"><input type=\"radio\" name=\"dhcp\" value=\"1\"");
+  website += F("<tr><td class=\"ra1\"><input aria-label=\"n3\" type=\"radio\" name=\"dhcp\" value=\"1\"");
   if (used_dhcp == 1) {
     website += F("checked");
   }
@@ -912,30 +909,30 @@ void web_wlan() {
   website += F("</td></tr>");
 
   /* Tabelle Setting IP - network | IP statisch */
-  website += F("<tr><td class=\"ra1\"><input type=\"radio\" name=\"dhcp\" value=\"0\"");
+  website += F("<tr><td class=\"ra1\"><input aria-label=\"n4\" type=\"radio\" name=\"dhcp\" value=\"0\"");
   if (used_dhcp == 0) {
     website += F("checked");
   }
   website += F("></td><td colspan=\"2\">IP - adress static</td>"
-               "<td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"ip\" type=\"text\" id=\"ip\" value=\"");
+               "<td class=\"inp\" colspan=\"3\"><input aria-label=\"n4\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"ip\" type=\"text\" id=\"ip\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
 
   ipadr = WiFi.gatewayIP(); /* Tabelle Setting IP - network | domain name server */
-  website += F("<tr><td class=\"alig_r\" colspan=\"3\">domain name server</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"dns\" type=\"text\" id=\"dns\" value=\"");
+  website += F("<tr><td class=\"alig_r\" colspan=\"3\">domain name server</td><td class=\"inp\" colspan=\"3\"><input aria-label=\"n5\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"dns\" type=\"text\" id=\"dns\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
 
   ipadr = WiFi.gatewayIP(); /* Tabelle Setting IP - network | Standard-Gateway */
-  website += F("<tr><td class=\"alig_r\" colspan=\"3\">default gateway</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"gw\" type=\"text\" id=\"gw\" value=\"");
+  website += F("<tr><td class=\"alig_r\" colspan=\"3\">default gateway</td><td class=\"inp\" colspan=\"3\"><input aria-label=\"n6\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"gw\" type=\"text\" id=\"gw\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
 
   ipadr = WiFi.subnetMask(); /* Tabelle Setting IP - network | Subnetzkaske */
-  website += F("<tr><td class=\"alig_r\" colspan=\"3\">subnet mask</td><td class=\"inp\" colspan=\"3\"><input pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"sn\" type=\"text\" id=\"sn\" value=\"");
+  website += F("<tr><td class=\"alig_r\" colspan=\"3\">subnet mask</td><td class=\"inp\" colspan=\"3\"><input aria-label=\"n7\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"sn\" type=\"text\" id=\"sn\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
   website += F("\"></td></tr>");
@@ -1080,7 +1077,9 @@ void web_val_status() {
 
 
 void web_val_cc110x_modes() {
-  String website = F("{\"activated_mode_name\":\"");
+  String website = F("{\"activated_mode_nr\":\"");
+  website += activated_mode_nr;
+  website += +F("\", \"activated_mode_name\":\"");
   website += activated_mode_name;
   website += +F("\"}");
   HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request

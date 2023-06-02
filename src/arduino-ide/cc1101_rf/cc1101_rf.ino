@@ -93,11 +93,21 @@
 */
 
 #include <Arduino.h>
+#include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include "config.h"
 #include "cc110x.h"
 #include "macros.h"
 #include "functions.h"
 #include "register.h"
+
+/* Settings for OOK messages without Sync Pulse (MU) */
+#define MsgLenMin               24      // message minimum length
+#define MsgLenMax               254     // message maximum length
+#define PatMaxCnt               8       // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
+#define PatTol                  0.20    // pattern tolerance
+#define FIFO_LENGTH             160     // 90 from SIGNALduino FW
+#include "SimpleFIFO.h"
+SimpleFIFO<int, FIFO_LENGTH> FiFo;      // store FIFO_LENGTH # ints
 
 /* --- all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------------- */
 #ifdef ARDUINO_ARCH_ESP8266
@@ -106,7 +116,7 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 ESP8266WebServer HttpServer(80);
-ADC_MODE(ADC_VCC);  // vcc read
+ADC_MODE(ADC_VCC);                  // vcc read
 #endif
 /* --- END - all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------- */
 
@@ -181,13 +191,13 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[] = "V 1.15 SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.16 SIGNALduino compatible cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "MN;D=";
 static const char TXT_RawRSSI[] = ";R=";
 static const char TXT_RawFP2[] = ";A=";
 byte CC1101_writeReg_offset = 2;
 #else
-static const char TXT_VERSION[] = "V 1.15 cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.16 cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "data: ";
 static const char TXT_RawRSSI[] = "; RSSI=";
 static const char TXT_RawFP2[] = "; FREQAFC=";
@@ -200,6 +210,29 @@ byte ToggleValues = 0;                        /* Toggle, registervalue */
 byte ToggleCnt = 0;                           /* Toggle, register counter for loop */
 boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
 unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
+
+/* Settings for OOK messages without Sync Pulse (MU) */
+int t_maxP = 32000;                           // Zeitdauer maximum für gültigen Puls in µs
+int t_minP = 75;                              // Zeitdauer minimum für gültigen Puls in µs
+unsigned long lastTime = 0;                   // Zeit, letzte Aktion
+int ArPaT[PatMaxCnt];                         // Pattern Array für Zeiten
+signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
+byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
+byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
+byte MsgLen;                                  // Todo, kann durch message.valcount ersetzt werden
+int first;                                    // Pointer to first buffer entry
+int last;                                     // Pointer to last buffer entry
+String MsgData;
+byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
+byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
+
+/* predefinitions of the functions */
+inline void doDetect();
+void MSGBuild();
+void PatReset();
+void decode(const int pulse);
+void findpatt(int val);
+/* END - Settings for OOK messages without Sync Pulse (MU) - END */
 
 /* varible´s for other */
 uint8_t buffer[75];                           /* buffer cc110x */
@@ -215,6 +248,30 @@ byte client_now;
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #include "websites.h"
 #endif
+
+
+/* --------------------------------------------------------------------------------------------------------------------------------- void Interupt */
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+IRAM_ATTR void Interupt() {     /* Pulseauswertung */
+#else
+void Interupt() {
+#endif
+  const unsigned long Time = micros();
+  const signed long duration = Time - lastTime;
+  lastTime = Time;
+  if (duration >= t_minP) {       // kleinste zulässige Pulslänge
+    int sDuration;
+    if (duration < t_maxP) {      // größte zulässige Pulslänge, max = 32000
+      sDuration = int(duration);  // das wirft bereits hier unnötige Nullen raus und vergrössert den Wertebereich
+    } else {
+      sDuration = t_maxP;         // Maximalwert
+    }
+    if (digitalReadFast(GDO2)) {  // Wenn jetzt high ist, dann muss vorher low gewesen sein, und dafuer gilt die gemessene Dauer.
+      sDuration = -sDuration;
+    }
+    FiFo.enqueue(sDuration);      // add an sDuration
+  }                               // else => trash
+}
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {

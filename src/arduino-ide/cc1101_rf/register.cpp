@@ -1127,6 +1127,81 @@ const uint8_t Config_KOPP_FC[] PROGMEM = {
 };
 #endif
 
+#ifdef OOK_MU_433
+const uint8_t Config_OOK_MU_433[] PROGMEM = {
+  /*
+    Address Config = No address check
+    Base Frequency = 433.919830 
+    CRC Autoflush = false 
+    CRC Enable = false 
+    Carrier Frequency = 433.919830 
+    Channel Number = 0 
+    Channel Spacing = 349.914551 
+    Data Format = Asynchronous serial mode 
+    Data Rate = 5.60379 
+    Deviation = 1.586914 
+    Device Address = 0 
+    Manchester Enable = false 
+    Modulation Format = ASK/OOK 
+    PA Ramping = false 
+    Packet Length = 61 
+    Packet Length Mode = Infinite packet length mode 
+    Preamble Count = 4 
+    RX Filter BW = 325.000000 
+    Sync Word Qualifier Mode = No preamble/sync 
+    TX Power = unknown 
+    Whitening = false 
+  */
+  0x0D,  // IOCFG2              GDO2 Output Pin Configuration
+  0x2E,  // IOCFG1              GDO1 Output Pin Configuration
+  0x2D,  // IOCFG0              GDO0 Output Pin Configuration
+  0x47,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0xD3,  // SYNC1               Sync Word, High Byte
+  0x91,  // SYNC0               Sync Word, Low Byte
+  0x3D,  // PKTLEN              Packet Length
+  0x04,  // PKTCTRL1            Packet Automation Control
+  0x32,  // PKTCTRL0            Packet Automation Control
+  0x00,  // ADDR                Device Address
+  0x00,  // CHANNR              Channel Number
+  0x06,  // FSCTRL1             Frequency Synthesizer Control
+  0x00,  // FSCTRL0             Frequency Synthesizer Control
+  0x10,  // FREQ2               Frequency Control Word, High Byte
+  0xB0,  // FREQ1               Frequency Control Word, Middle Byte
+  0x71,  // FREQ0               Frequency Control Word, Low Byte
+  0x57,  // MDMCFG4             Modem Configuration
+  0xC4,  // MDMCFG3             Modem Configuration
+  0x30,  // MDMCFG2             Modem Configuration
+  0x23,  // MDMCFG1             Modem Configuration
+  0xB9,  // MDMCFG0             Modem Configuration
+  0x00,  // DEVIATN             Modem Deviation Setting
+  0x07,  // MCSM2               Main Radio Control State Machine Configuration
+  0x00,  // MCSM1               Main Radio Control State Machine Configuration
+  0x18,  // MCSM0               Main Radio Control State Machine Configuration
+  0x14,  // FOCCFG              Frequency Offset Compensation Configuration
+  0x6C,  // BSCFG               Bit Synchronization Configuration
+  0x00,  // AGCCTRL2            AGC Control // 24 dB
+  0x00,  // AGCCTRL1            AGC Control
+  0x91,  // AGCCTRL0            AGC Control
+  0x87,  // WOREVT1             High Byte Event0 Timeout
+  0x6B,  // WOREVT0             Low Byte Event0 Timeout
+  0xF8,  // WORCTRL             Wake On Radio Control
+  0xB6,  // FREND1              Front End RX Configuration
+  0x11,  // FREND0              Front End TX Configuration
+  0xE9,  // FSCAL3              Frequency Synthesizer Calibration (x)
+  0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
+  0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
+  0x1F,  // FSCAL0              Frequency Synthesizer Calibration (x)
+  0x41,  // RCCTRL1             RC Oscillator Configuration       (x)
+  0x00,  // RCCTRL0             RC Oscillator Configuration       (x)
+  //0x59,  // FSTEST              Frequency Synthesizer Calibration Control
+  //0x7F,  // PTEST               Production Test
+  //0x3F,  // AGCTEST             AGC Test
+  //0x88,  // TEST2               Various Test Settings
+  //0x31,  // TEST1               Various Test Settings
+  //0x09,  // TEST0               Various Test Settings
+};
+#endif
+
 #ifdef PCA301
 const uint8_t Config_PCA301[] PROGMEM = {
   /*
@@ -1515,81 +1590,6 @@ const uint8_t Config_MAX[] PROGMEM = {
 };
 #endif
 
-#ifdef OOK_MS
-const uint8_t Config_OOK_MS[] PROGMEM = {
-  /*
-    Address Config = No address check
-    Base Frequency = 433.919830
-    CRC Autoflush = false
-    CRC Enable = false
-    Carrier Frequency = 433.919830
-    Channel Number = 0
-    Channel Spacing = 199.951172
-    Data Format = Normal mode
-    Data Rate = 5.60379
-    Deviation = 47.607422
-    Device Address = 0
-    Manchester Enable = true
-    Modulation Format = ASK/OOK
-    PA Ramping = false
-    Packet Length = 5
-    Packet Length Mode = Fixed packet length mode. Length configured in PKTLEN register
-    Preamble Count = 2
-    RX Filter BW = 270.833333
-    Sync Word Qualifier Mode = No preamble/sync
-    TX Power = unknown
-    Whitening = true
-  */
-  0x01,  // IOCFG2        GDO2 Output Pin Configuration
-  0x2E,  // IOCFG1        GDO1 Output Pin Configuration
-  0x2E,  // IOCFG0        GDO0 Output Pin Configuration
-  0x07,  // FIFOTHR       RX FIFO and TX FIFO Thresholds
-  0xAE,  // SYNC1         Sync Word, High Byte
-  0x24,  // SYNC0         Sync Word, Low Byte
-  0x05,  // PKTLEN        Packet Length
-  0x04,  // PKTCTRL1      Packet Automation Control
-  0x40,  // PKTCTRL0      Packet Automation Control
-  0x00,  // ADDR          Device Address
-  0x00,  // CHANNR        Channel Number
-  0x0F,  // FSCTRL1       Frequency Synthesizer Control
-  0x00,  // FSCTRL0       Frequency Synthesizer Control
-  0x10,  // FREQ2         Frequency Control Word, High Byte
-  0xB0,  // FREQ1         Frequency Control Word, Middle Byte
-  0x71,  // FREQ0         Frequency Control Word, Low Byte
-  0x67,  // MDMCFG4       Modem Configuration
-  0xC4,  // MDMCFG3       Modem Configuration
-  0x38,  // MDMCFG2       Modem Configuration
-  0x02,  // MDMCFG1       Modem Configuration
-  0xF8,  // MDMCFG0       Modem Configuration
-  0x47,  // DEVIATN       Modem Deviation Setting
-  0x07,  // MCSM2         Main Radio Control State Machine Configuration
-  0x3C,  // MCSM1         Main Radio Control State Machine Configuration
-  0x04,  // MCSM0         Main Radio Control State Machine Configuration
-  0x36,  // FOCCFG        Frequency Offset Compensation Configuration
-  0x6C,  // BSCFG         Bit Synchronization Configuration
-  0x03,  // AGCCTRL2      AGC Control
-  0x40,  // AGCCTRL1      AGC Control
-  0x91,  // AGCCTRL0      AGC Control
-  0x87,  // WOREVT1       High Byte Event0 Timeout
-  0x6B,  // WOREVT0       Low Byte Event0 Timeout
-  0xF8,  // WORCTRL       Wake On Radio Control
-  0x56,  // FREND1        Front End RX Configuration
-  0x11,  // FREND0        Front End TX Configuration
-  0xEA,  // FSCAL3        Frequency Synthesizer Calibration (x)
-  0x2A,  // FSCAL2        Frequency Synthesizer Calibration (x)
-  0x00,  // FSCAL1        Frequency Synthesizer Calibration (x)
-  0x1F,  // FSCAL0        Frequency Synthesizer Calibration (x)
-  0x41,  // RCCTRL1       RC Oscillator Configuration       (x)
-  0x00,  // RCCTRL0       RC Oscillator Configuration       (x)
-  //0x59,  // FSTEST      Frequency Synthesizer Calibration Control
-  //0x7F,  // PTEST       Production Test
-  //0x3F,  // AGCTEST     AGC Test
-  //0x88,  // TEST2       Various Test Settings
-  //0x31,  // TEST1       Various Test Settings
-  //0x09,  // TEST0       Various Test Settings
-};
-#endif
-
 #ifdef WMBus_S
 const uint8_t Config_WMBus_S[] PROGMEM = {
   /*
@@ -1798,6 +1798,9 @@ struct Data Registers[] = {
 #ifdef Lacrosse_mode2
   { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
 #endif
+#ifdef OOK_MU_433
+  { Config_OOK_MU_433,  sizeof(Config_OOK_MU_433) / sizeof(Config_OOK_MU_433[0]), "OOK_MU_433", 5  },
+#endif
 #ifdef PCA301
   { Config_PCA301,  sizeof(Config_PCA301) / sizeof(Config_PCA301[0]), "PCA301", 32  },
 #endif
@@ -1814,9 +1817,6 @@ struct Data Registers[] = {
 #endif
 #ifdef MAX
   { Config_MAX,  sizeof(Config_MAX) / sizeof(Config_MAX[0]), "under dev - MAX", 12  },
-#endif
-#ifdef OOK_MS
-  { Config_OOK_MS,  sizeof(Config_OOK_MS) / sizeof(Config_OOK_MS[0]), "under dev - OOK_MS", 5  },
 #endif
 #ifdef WMBus_S
   { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "under dev - WMBus_S", 12  },

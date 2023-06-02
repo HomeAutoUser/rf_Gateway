@@ -1,7 +1,7 @@
 ﻿/*
-  color theme style for all websites - cc1101_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser>
-  URL: https://github.com/
+  JavaScript for website HOME / - cc110x_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
+  URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
 */
 
 /* https://randomnerdtutorials.com/esp8266-web-server-spiffs-nodemcu/ */
@@ -9,6 +9,7 @@ setInterval(function ( ) {
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
+      /* {"CC1101":"yes","RAM":"31024","Uptime":"7485","dd":"0","hh":"2","mm":"4","ss":"45","MSGcnt":"1330","WLANdB":"-61"} */
       var txt = this.responseText;
       var obj = JSON.parse(txt);
       document.getElementById("RAM").innerHTML = obj.RAM;
@@ -34,4 +35,4 @@ setInterval(function ( ) {
   };
   xhttp.open("GET", "/request_status", true);
   xhttp.send();
-}, 10000 );
+}, 5000 );
