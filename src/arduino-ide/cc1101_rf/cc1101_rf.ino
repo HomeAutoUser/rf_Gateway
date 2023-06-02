@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 40140 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1788     initialized variables
-  ╠══ RODATA   5932     constants
-  ╚══ BSS      31680    zeroed variables
+  ╠══ DATA     1804     initialized variables
+  ╠══ RODATA   5976     constants
+  ╚══ BSS      32360    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 60980 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28212    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 423860 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 424300 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     423860   code in flash
+  ╚══ IROM     424300   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 936386 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -275,6 +275,7 @@ void Interupt() {
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
+  MsgData.reserve(255);
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
   Serial.println();
@@ -288,8 +289,10 @@ void setup() {
   }
 #endif
   pinMode(GDO0, OUTPUT);
+  digitalWriteFast(GDO0, LOW);
   pinMode(GDO2, INPUT);
   pinMode(LED, OUTPUT);
+  digitalWriteFast(LED, LOW);
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
   /* interner Flash-Speicher */
@@ -462,7 +465,7 @@ void loop() {
   //#endif
 
   if ((digitalRead(GDO2) == HIGH) && (CC1101_found == true)) { /* Received data | RX */
-    digitalWrite(LED, HIGH);                                   /* LED on */
+    digitalWriteFast(LED, HIGH);    /* LED on */
     int rssi = CC1101_readRSSI();
     freqErr = CC1101_readReg(CC1101_FREQEST, READ_BURST);  // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     msgCount++;
@@ -518,7 +521,7 @@ void loop() {
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
-    digitalWrite(LED, LOW); /* LED off */
+    digitalWriteFast(LED, LOW); /* LED off */
   }
 }
 
@@ -1086,7 +1089,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
             /* SEND */
             if (datavalid == 1) {
-              digitalWrite(LED, HIGH);  // LED on
+              digitalWriteFast(LED, HIGH);  // LED on
 #ifdef debug
               MSG_OUTPUT(F("DB Input | SN; valid and ready to send with repeats=")); MSG_OUTPUTLN(rep);
               Serial.println(senddata);
@@ -1103,7 +1106,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 delay(100);
               }
               CC1101_setReceiveMode(); /* enable RX */
-              digitalWrite(LED, LOW);  // LED off
+              digitalWriteFast(LED, LOW);  // LED off
             }
           }
         } else {

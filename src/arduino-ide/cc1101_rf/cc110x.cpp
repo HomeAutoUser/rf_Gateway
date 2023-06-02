@@ -9,9 +9,9 @@
   macros
  * ********/
 
-#define cc1101_Select() digitalWrite(SS, LOW)      // Select (SPI) CC1101
-#define cc1101_Deselect() digitalWrite(SS, HIGH)   // Deselect (SPI) CC1101
-#define wait_Miso() while (digitalRead(MISO) > 0)  // Wait until SPI MISO line goes low
+#define cc1101_Select() digitalWriteFast(SS, LOW)       // Select (SPI) CC1101
+#define cc1101_Deselect() digitalWriteFast(SS, HIGH)    // Deselect (SPI) CC1101
+#define wait_Miso() while (digitalRead(MISO) > 0)       // Wait until SPI MISO line goes low
 
 /* output DEC to HEX with a leading zero to serial without ln */
 #define SerialPrintDecToHex(dec) \

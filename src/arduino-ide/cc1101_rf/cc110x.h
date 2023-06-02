@@ -6,6 +6,7 @@
 */
 
 #include <Arduino.h>
+#include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include <EEPROM.h>
 #include <SPI.h>
 
