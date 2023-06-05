@@ -157,7 +157,7 @@ void web_cc110x_modes() {
   String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
   String tgtime = HttpServer.arg("tgt");    // toggle time
-  String web_status = F("<tr><td></td>");
+  String web_status = F("<tr id=\"trLast\"><td></td>");
   String website;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
   uint8_t tb_nr;                            // togglebank nr
@@ -273,15 +273,16 @@ void web_cc110x_modes() {
     website += F("</td><td class=\"ac\"><button class=");
 
     if (activated_mode_name == Registers[i].name) {
-      website += F("\"btn2\" type=\"submit\" name=\"submit\" value=\"");
-      website += i;
-      website += F("\">enabled");
+      website += F("\"btn2\"");
     } else {
-      website += F("\"btn\" type=\"submit\" name=\"submit\" value=\"");
-      website += i;
-      website += F("\">enable");
+      website += F("\"btn\"");
     }
-    website += F(" reception</button></td></tr>");
+
+    website += F(" type=\"submit\" name=\"submit\" id=\"bt");
+    website += i;
+    website += F("\" value=\"");
+    website += i;
+    website += F("\">enable reception</button></td></tr>");
   }
 
   website += F("<tr>");
