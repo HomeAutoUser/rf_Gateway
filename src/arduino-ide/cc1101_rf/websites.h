@@ -285,7 +285,6 @@ void web_cc110x_modes() {
     website += F("\">enable reception</button></td></tr>");
   }
 
-  website += F("<tr>");
   website += web_status + F("<td class=\"ac\">toggletime&nbsp;");
   website += F("<input name=\"tgt\" type=\"text\" size=\"7\" maxlength=\"7\" pattern=\"^[\\d]{1,7}$\" placeholder=\"");
 
@@ -295,7 +294,7 @@ void web_cc110x_modes() {
     website += F("(ms)");
   }
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
-               "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" value=\"9_0\">reset togglebank & STOP</button>"
+               "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
                "</td></tr></tbody></table></body></html>");
 
   HttpServer.send(200, "text/html", website);
