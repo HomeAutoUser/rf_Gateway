@@ -1355,7 +1355,7 @@ void MSGBuild() {     /* Nachrichtenausgabe */
     html_raw = html_raw.substring(1);
 #endif
     msgMU += char(3); msgMU += char(10);
-    Serial.print(msgMU);
+    MSG_OUTPUTALL(msgMU);
     digitalWriteFast(LED, LOW);  // LED off
   }
   PatReset();
