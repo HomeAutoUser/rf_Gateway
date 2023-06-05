@@ -42,11 +42,11 @@
 #define ToggleTimeMin   15000     //   15000 milliseconds ->  15 seconds
 #define ToggleTimeMax   1800000   // 3600000 milliseconds -> 0.5 hour
 
-
 /* Definitions for program code */
 //#define debug             1    // to debug other
 //#define debug_cc110x      1    // to debug CC1101 routines
 //#define debug_cc110x_ms   1    // to debug CC1101 Marcstate
+//#define debug_cc110x_MU   1    // to debug CC1101 decoder OOK
 //#define debug_eeprom      1    // to debug all EEPROM
 //#define debug_html        1    // to all HTML handling
 

@@ -8,7 +8,7 @@
 
 setInterval(function() {
   getData();
-}, 1000);    // milliseconds update rate
+}, 250);    // milliseconds update rate
 
 function getData() {
   var xhttp = new XMLHttpRequest();
