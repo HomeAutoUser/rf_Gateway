@@ -242,7 +242,7 @@ void web_cc110x_modes() {
   website += F("<body>"
                "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                //"<body><form method=\"post\">"   /* https://www.w3schools.com/tags/ref_httpmethods.asp */
-               "<table>"
+               "<table id=\"rec_mod\">"
                "<thead><tr>"
                "<th class=\"thf1\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"thf1\"><a href=\"cc110x_detail\">detail information</a></th>"
