@@ -57,6 +57,7 @@
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
 */
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define Avantek                 1
 #define Bresser_5in1            1
 #define Bresser_6in1            1
@@ -72,6 +73,12 @@
 #define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
+#else
+#define Bresser_5in1            1
+#define Lacrosse_mode1          1
+#define Lacrosse_mode2          1
+#define OOK_MU_433              1
+#endif
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 /* under development */

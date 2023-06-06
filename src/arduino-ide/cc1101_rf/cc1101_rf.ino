@@ -7,34 +7,34 @@
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Nano OHNE debug´s (keine DEV Protokolle) | FreeRam -> 637
-  Der Sketch verwendet 24518 Bytes (79%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26000 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s (keine DEV Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 26638 Bytes (92%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 1203 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s (keine DEV Protokolle) | FreeRam -> 575
-  Der Sketch verwendet 24606 Bytes (80%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26086 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40140 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40516 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1804     initialized variables
-  ╠══ RODATA   5976     constants
-  ╚══ BSS      32360    zeroed variables
-  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 60980 / 65536 bytes (93%)
+  ╠══ DATA     1812     initialized variables
+  ╠══ RODATA   5992     constants
+  ╚══ BSS      32712    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61524 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
-  ╚══ IRAM     28212    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 424300 / 1048576 bytes (40%)
+  ╚══ IRAM     28756    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 426032 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     424300   code in flash
+  ╚══ IROM     426032   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 936386 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 44916 Bytes (13%) des dynamischen Speichers, 282764 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 46180 Bytes (14%) des dynamischen Speichers, 281500 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
 
@@ -219,7 +219,7 @@ int ArPaT[PatMaxCnt];                         // Pattern Array für Zeiten
 signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
 byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
 byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
-byte MsgLen;                                  // Todo, kann durch message.valcount ersetzt werden
+byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
 int first;                                    // Pointer to first buffer entry
 int last;                                     // Pointer to last buffer entry
 String msg;                                   // RAW (only serial/telnet, not HTML output)
@@ -231,6 +231,7 @@ bool valid;
 
 /* predefinitions of the functions */
 inline void doDetect();
+void Interupt_Variant(byte nr);
 void MSGBuild();
 void PatReset();
 void decode(const int pulse);
@@ -278,6 +279,22 @@ void Interupt() {
       FiFo.enqueue(sDuration);      // add an sDuration
     }                               // else => trash
   }
+}
+/* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
+void Interupt_Variant(byte nr) {
+  CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
+  CC1101_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+  CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+  delay(10);
+
+  MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+
+  if (MOD_FORMAT != 3) {
+    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+  } else {
+    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+  }
+  CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
 }
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
@@ -556,6 +573,7 @@ void ToggleOnOff(unsigned long Intervall) {
   static unsigned long tEin;
 
   if (millis() - tEin > Intervall) { /* Abfragen, ob Zeit zum Einschalten erreicht */
+    detachInterrupt(digitalPinToInterrupt(GDO2));
     tEin = millis();                 /* Zeit merken, an der Eingeschaltet wurde. */
 
 #ifdef debug
@@ -584,23 +602,8 @@ void ToggleOnOff(unsigned long Intervall) {
     //MSG_OUTPUT(  F("Toggle (output all)    | switched to "));
     //MSG_OUTPUTLN(Registers[activated_mode_nr].name);
 
-    // TODO optimierung da selber abauf in cas 'm !!!!
-
-    CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-    CC1101_writeRegFor(Registers[activated_mode_nr].reg_val, Registers[activated_mode_nr].length, Registers[activated_mode_nr].name);
     activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
-    delay(10);
-    // Führen Sie zuerst eine Kalibrierung durch, wenn Sie von IDLE kommen
-
-    MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-    if (MOD_FORMAT != 3) {
-      attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-    } else {
-      attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-    }
-    CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
-
+    Interupt_Variant(activated_mode_nr);
     ToggleCnt++;
     if (ToggleCnt >= ToggleValues) {
       ToggleCnt = 0;
@@ -703,9 +706,9 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       } else {
         /* command m<n>, check of decimal */
         if (isNumeric(input.substring(1)) == 1) {
+          detachInterrupt(digitalPinToInterrupt(GDO2));
           ToggleAll = false;
           ToggleTime = 0;                                       // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
-          detachInterrupt(digitalPinToInterrupt(GDO2));
           byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
           if (int_substr1_serial > RegistersCntMax) {
             commandCHECK = false;
@@ -724,19 +727,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 activated_mode_name = Registers[int_substr1_serial].name;
                 activated_mode_nr = int_substr1_serial;
                 activated_mode_packet_length = Registers[int_substr1_serial].packet_length;
-
-                CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-                CC1101_writeRegFor(Registers[int_substr1_serial].reg_val, Registers[int_substr1_serial].length, Registers[int_substr1_serial].name);
-                CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-                CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
-
-                MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-                if (MOD_FORMAT != 3) {
-                  attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-                } else {
-                  attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-                }
-                CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
+                Interupt_Variant(int_substr1_serial);
 
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
                 MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
