@@ -6,17 +6,17 @@
   Der Sketch verwendet 29330 Bytes (95%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino Nano OHNE debug´s (keine DEV Protokolle) | FreeRam -> 637
+  - Arduino Nano OHNE debug´s | FreeRam -> 637
   Der Sketch verwendet 26000 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino radino CC1101 OHNE debug´s (keine DEV Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
-
-  - Arduino Pro / Arduino Pro Mini OHNE debug´s (keine DEV Protokolle) | FreeRam -> 575
+  - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
   Der Sketch verwendet 26086 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+
+  - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
+  Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
   . Variables and constants in RAM (global, static), used 40516 / 80192 bytes (50%)
@@ -95,6 +95,7 @@
 #include <Arduino.h>
 #include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include "config.h"
+int RSSI_dez;                           // for the output on web server
 #include "cc110x.h"
 #include "macros.h"
 #include "functions.h"
@@ -161,7 +162,6 @@ const char* ssid_ap = WLAN_ssid_ap;
 const char* password_ap = WLAN_password_ap;
 String OwnStationHostname = WLAN_hostname;
 String html_raw;          // for the output on web server
-int RSSI_dez;             // for the output on web server
 String used_ssid;         // for the output on web server
 String used_ssid_mac;     // for the output on web server
 String used_ssid_pass;    // for the output on web server

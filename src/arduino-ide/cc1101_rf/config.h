@@ -50,7 +50,6 @@
 //#define debug_eeprom      1    // to debug all EEPROM
 //#define debug_html        1    // to all HTML handling
 
-
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp        1       // for compatibility in FHEM
 
@@ -73,21 +72,13 @@
 #define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
-#else
-#define Bresser_5in1            1
-#define Lacrosse_mode1          1
-#define Lacrosse_mode2          1
-#define OOK_MU_433              1
-#endif
 
-#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 /* under development */
 //#define HomeMatic               1
 //#define Lacrosse_mode3          1
 //#define MAX                     1
 //#define WMBus_S                 1
 //#define WMBus_T                 1
-/* under development END */
 
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                           // maximum number of Telnet clients
@@ -95,6 +86,11 @@
 #define WLAN_ssid_ap            "cc110x_rf_Gateway"         // AP - SSID
 #define WLAN_password_ap        "config-gateway"            // AP - Passwort
 #define WLAN_hostname           "cc110x_rf_Gateway"         // Hostname
+#else
+#define Bresser_5in1            1
+#define Lacrosse_mode1          1
+#define Lacrosse_mode2          1
+#define OOK_MU_433              1
 #endif
 
 /* varible´s for Serial & TelNet TimeOut´s | sets the maximum milliseconds to wait for data. */
@@ -106,12 +102,10 @@
 #define Prog_Ident2             0x22
 
 /* varible´s for SerialSpeed´s */
-#if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
-#define SerialSpeed             57600
-#endif
-
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define SerialSpeed             115200
+#else
+#define SerialSpeed             57600
 #endif
 
 /* EEPROM adresses */

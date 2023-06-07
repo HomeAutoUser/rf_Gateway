@@ -52,7 +52,7 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
 }
 
 
-String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F */
+String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
   float f;
   int f2;
   int f1;
@@ -72,6 +72,7 @@ String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E
   return String(onlyDecToHex2Digit(f2)) + String(onlyDecToHex2Digit(f1)) + String(onlyDecToHex2Digit(f0));
 }
 
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 float web_Bandw_read() {    /* bandwidth calculation - 0x10 | 26000/(8 * (4+(($r{"10"}>>4)&3)) * (1 << (($r{"10"}>>6)&3))) */
   float Bandw;
   int Bandw1;
@@ -372,7 +373,7 @@ String web_SyncQualiMode_read() {
       break;
   }
 }
-
+#endif
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */
   unsigned int stringLength = str.length();

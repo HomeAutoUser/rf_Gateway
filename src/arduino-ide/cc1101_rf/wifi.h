@@ -11,9 +11,6 @@
 #ifdef ARDUINO_ARCH_ESP32
 static esp_wps_config_t config;
 #define ESP_WPS_MODE WPS_TYPE_PBC
-//#define ESP_MANUFACTURER  "ESPRESSIF"
-//#define ESP_MODEL_NUMBER  "ESP32"
-//#define ESP_MODEL_NAME    "ESPRESSIF IOT"
 #define ESP_DEVICE_NAME WLAN_hostname
 #endif
 
@@ -79,7 +76,6 @@ void start_WLAN_STATION(String qssid, String qpass) {
   WiFi.begin(qssid.c_str(), qpass.c_str()); /* WIFI connect to ssid with password */
 
   Serial.print(F("WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
-
   delay(50);
 
   unsigned long startTime = millis(); /* ... Give ESP 60 seconds to connect to station. */
@@ -135,9 +131,6 @@ void start_WLAN_STATION(String qssid, String qpass) {
 void ESP32_wpsInitConfig() {
   config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;
   config.wps_type = ESP_WPS_MODE;
-  //  strcpy(config.factory_info.manufacturer, ESP_MANUFACTURER);
-  //  strcpy(config.factory_info.model_number, ESP_MODEL_NUMBER);
-  //  strcpy(config.factory_info.model_name, ESP_MODEL_NAME);
   strcpy(config.factory_info.device_name, ESP_DEVICE_NAME);
 }
 
