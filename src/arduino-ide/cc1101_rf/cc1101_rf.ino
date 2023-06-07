@@ -254,6 +254,21 @@ byte client_now;
 #endif
 
 
+/* void predefinitions */
+inline void doDetect();
+void InputCommand(char* buf_input);
+void Interupt_Variant(byte nr);
+void MSGBuild();
+void PatReset();
+void ToggleOnOff(unsigned long Intervall);
+void decode(const int pulse);
+void findpatt(int val);
+
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+void Telnet();
+#endif
+
+
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt */
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
 IRAM_ATTR void Interupt() {     /* Pulseauswertung */
