@@ -1,6 +1,6 @@
 ﻿/*
-  color theme style for website <NAME> - cc1101_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser>
+  color theme style for website CC110x|receive modes /cc110x_modes - cc110x_rf_Gateway
+  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
 */
 
 /* all inactive buttons */
@@ -61,6 +61,6 @@ a:link.CC110x, a:visited.CC110x {
 
 /* backgroud color of button "enable/active reception" */
 :root {
-  --mod_active: #33b06b;
+  --mod_active: #ccffcc;
   --mod_enable: #FFFFFF;
 }

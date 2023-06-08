@@ -6,35 +6,35 @@
   Der Sketch verwendet 29330 Bytes (95%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino Nano OHNE debug´s (keine DEV Protokolle) | FreeRam -> 637
-  Der Sketch verwendet 24518 Bytes (79%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - Arduino Nano OHNE debug´s | FreeRam -> 637
+  Der Sketch verwendet 26000 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino radino CC1101 OHNE debug´s (keine DEV Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 26638 Bytes (92%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 1203 Bytes des dynamischen Speichers.
+  - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
+  Der Sketch verwendet 26086 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino Pro / Arduino Pro Mini OHNE debug´s (keine DEV Protokolle) | FreeRam -> 575
-  Der Sketch verwendet 24606 Bytes (80%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
+  Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 40516 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1788     initialized variables
-  ╠══ RODATA   5932     constants
-  ╚══ BSS      31680    zeroed variables
-  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 60980 / 65536 bytes (93%)
+  ╠══ DATA     1812     initialized variables
+  ╠══ RODATA   5992     constants
+  ╚══ BSS      32712    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61524 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
-  ╚══ IRAM     28212    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 423860 / 1048576 bytes (40%)
+  ╚══ IRAM     28756    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 426032 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     423860   code in flash
+  ╚══ IROM     426032   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 936386 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 44916 Bytes (13%) des dynamischen Speichers, 282764 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 46180 Bytes (14%) des dynamischen Speichers, 281500 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
 
@@ -93,11 +93,22 @@
 */
 
 #include <Arduino.h>
+#include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include "config.h"
+int RSSI_dez;                           // for the output on web server
 #include "cc110x.h"
 #include "macros.h"
 #include "functions.h"
 #include "register.h"
+
+/* Settings for OOK messages without Sync Pulse (MU) */
+#define MsgLenMin               24      // message minimum length
+#define MsgLenMax               254     // message maximum length
+#define PatMaxCnt               8       // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
+#define PatTol                  0.20    // pattern tolerance
+#define FIFO_LENGTH             160     // 90 from SIGNALduino FW
+#include "SimpleFIFO.h"
+SimpleFIFO<int, FIFO_LENGTH> FiFo;      // store FIFO_LENGTH # ints
 
 /* --- all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------------- */
 #ifdef ARDUINO_ARCH_ESP8266
@@ -106,7 +117,7 @@
 #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 ESP8266WebServer HttpServer(80);
-ADC_MODE(ADC_VCC);  // vcc read
+ADC_MODE(ADC_VCC);                  // vcc read
 #endif
 /* --- END - all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------- */
 
@@ -151,7 +162,6 @@ const char* ssid_ap = WLAN_ssid_ap;
 const char* password_ap = WLAN_password_ap;
 String OwnStationHostname = WLAN_hostname;
 String html_raw;          // for the output on web server
-int RSSI_dez;             // for the output on web server
 String used_ssid;         // for the output on web server
 String used_ssid_mac;     // for the output on web server
 String used_ssid_pass;    // for the output on web server
@@ -181,13 +191,13 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[] = "V 1.15 SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.16 SIGNALduino compatible cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "MN;D=";
 static const char TXT_RawRSSI[] = ";R=";
 static const char TXT_RawFP2[] = ";A=";
 byte CC1101_writeReg_offset = 2;
 #else
-static const char TXT_VERSION[] = "V 1.15 cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.16 cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "data: ";
 static const char TXT_RawRSSI[] = "; RSSI=";
 static const char TXT_RawFP2[] = "; FREQAFC=";
@@ -201,6 +211,33 @@ byte ToggleCnt = 0;                           /* Toggle, register counter for lo
 boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
 unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
 
+/* Settings for OOK messages without Sync Pulse (MU) */
+int t_maxP = 32000;                           // Zeitdauer maximum für gültigen Puls in µs
+int t_minP = 75;                              // Zeitdauer minimum für gültigen Puls in µs
+unsigned long lastTime = 0;                   // Zeit, letzte Aktion
+int ArPaT[PatMaxCnt];                         // Pattern Array für Zeiten
+signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
+byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
+byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
+byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
+int first;                                    // Pointer to first buffer entry
+int last;                                     // Pointer to last buffer entry
+String msg;                                   // RAW (only serial/telnet, not HTML output)
+byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
+byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
+byte MOD_FORMAT;                              // Marker - Modulation
+byte FSK_RAW;                                 // Marker - FSK Modulation RAW interrupt
+bool valid;
+
+/* predefinitions of the functions */
+inline void doDetect();
+void Interupt_Variant(byte nr);
+void MSGBuild();
+void PatReset();
+void decode(const int pulse);
+void findpatt(int val);
+/* END - Settings for OOK messages without Sync Pulse (MU) - END */
+
 /* varible´s for other */
 uint8_t buffer[75];                           /* buffer cc110x */
 #define BUFFER_MAX 70                         /* !!! maximum number of characters to send !!! */
@@ -208,7 +245,7 @@ int8_t freqErr = 0;                           /* for automatic Frequency Synthes
 int8_t freqOffAcc = 0;                        /* for automatic Frequency Synthesizer Control */
 float freqErrAvg = 0;                         /* for automatic Frequency Synthesizer Control */
 boolean freqAfc = 0;                          /* AFC on or off */
-uint32_t msgCount = 0;
+uint32_t msgCount = 0;                        /* message counter over all received messages */
 byte client_now;
 
 /* now all websites, all settings are available here */
@@ -216,8 +253,67 @@ byte client_now;
 #include "websites.h"
 #endif
 
+
+/* void predefinitions */
+inline void doDetect();
+void InputCommand(char* buf_input);
+void Interupt_Variant(byte nr);
+void MSGBuild();
+void PatReset();
+void ToggleOnOff(unsigned long Intervall);
+void decode(const int pulse);
+void findpatt(int val);
+
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+void Telnet();
+#endif
+
+
+/* --------------------------------------------------------------------------------------------------------------------------------- void Interupt */
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+IRAM_ATTR void Interupt() {     /* Pulseauswertung */
+#else
+void Interupt() {
+#endif
+  if (MOD_FORMAT != 3) { /* not OOK */
+    FSK_RAW = 1;
+  } else { /* OOK */
+    const unsigned long Time = micros();
+    const signed long duration = Time - lastTime;
+    lastTime = Time;
+    if (duration >= t_minP) {       // kleinste zulässige Pulslänge
+      int sDuration;
+      if (duration < t_maxP) {      // größte zulässige Pulslänge, max = 32000
+        sDuration = int(duration);  // das wirft bereits hier unnötige Nullen raus und vergrössert den Wertebereich
+      } else {
+        sDuration = t_maxP;         // Maximalwert
+      }
+      if (digitalReadFast(GDO2)) {  // Wenn jetzt high ist, dann muss vorher low gewesen sein, und dafuer gilt die gemessene Dauer.
+        sDuration = -sDuration;
+      }
+      FiFo.enqueue(sDuration);      // add an sDuration
+    }                               // else => trash
+  }
+}
+/* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
+void Interupt_Variant(byte nr) {
+  CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
+  CC1101_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+  CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+  delay(10);
+
+  MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+
+  if (MOD_FORMAT != 3) {
+    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+  } else {
+    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+  }
+  CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
+}
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
+  msg.reserve(255);
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
   Serial.println();
@@ -231,8 +327,10 @@ void setup() {
   }
 #endif
   pinMode(GDO0, OUTPUT);
+  digitalWriteFast(GDO0, LOW);
   pinMode(GDO2, INPUT);
   pinMode(LED, OUTPUT);
+  digitalWriteFast(LED, LOW);
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
   /* interner Flash-Speicher */
@@ -404,8 +502,16 @@ void loop() {
   //MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
   //#endif
 
-  if ((digitalRead(GDO2) == HIGH) && (CC1101_found == true)) { /* Received data | RX */
-    digitalWrite(LED, HIGH);                                   /* LED on */
+  /* OOK */
+  while (FiFo.count() > 0 ) {         // Puffer auslesen und an Dekoder uebergeben
+    int aktVal = FiFo.dequeue();      // get next element
+    decode(aktVal);
+  }
+
+  /* not OOK */
+  if ( (FSK_RAW == 1) && (CC1101_found == true) ) { /* Received data | RX (not OOK !!!) */
+    FSK_RAW = 0;
+    digitalWriteFast(LED, HIGH);    /* LED on */
     int rssi = CC1101_readRSSI();
     freqErr = CC1101_readReg(CC1101_FREQEST, READ_BURST);  // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     msgCount++;
@@ -414,7 +520,7 @@ void loop() {
       freqOffAcc += round(freqErrAvg);
       CC1101_writeReg(CC1101_FSCTRL0, freqOffAcc);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
     }
-    String msg = "";
+    msg = "";
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     html_raw = ""; /* reset for Webserver data */
 #endif
@@ -461,7 +567,7 @@ void loop() {
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
-    digitalWrite(LED, LOW); /* LED off */
+    digitalWriteFast(LED, LOW); /* LED off */
   }
 }
 
@@ -482,6 +588,7 @@ void ToggleOnOff(unsigned long Intervall) {
   static unsigned long tEin;
 
   if (millis() - tEin > Intervall) { /* Abfragen, ob Zeit zum Einschalten erreicht */
+    detachInterrupt(digitalPinToInterrupt(GDO2));
     tEin = millis();                 /* Zeit merken, an der Eingeschaltet wurde. */
 
 #ifdef debug
@@ -510,14 +617,8 @@ void ToggleOnOff(unsigned long Intervall) {
     //MSG_OUTPUT(  F("Toggle (output all)    | switched to "));
     //MSG_OUTPUTLN(Registers[activated_mode_nr].name);
 
-    CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-    CC1101_writeRegFor(Registers[activated_mode_nr].reg_val, Registers[activated_mode_nr].length, Registers[activated_mode_nr].name);
     activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
-    delay(10);
-    // Führen Sie zuerst eine Kalibrierung durch, wenn Sie von IDLE kommen
-    CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
-
+    Interupt_Variant(activated_mode_nr);
     ToggleCnt++;
     if (ToggleCnt >= ToggleValues) {
       ToggleCnt = 0;
@@ -620,6 +721,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       } else {
         /* command m<n>, check of decimal */
         if (isNumeric(input.substring(1)) == 1) {
+          detachInterrupt(digitalPinToInterrupt(GDO2));
           ToggleAll = false;
           ToggleTime = 0;                                       // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
           byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
@@ -640,12 +742,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 activated_mode_name = Registers[int_substr1_serial].name;
                 activated_mode_nr = int_substr1_serial;
                 activated_mode_packet_length = Registers[int_substr1_serial].packet_length;
-
-                CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-                CC1101_writeRegFor(Registers[int_substr1_serial].reg_val, Registers[int_substr1_serial].length, Registers[int_substr1_serial].name);
-                CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-                CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
-                CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
+                Interupt_Variant(int_substr1_serial);
 
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
                 MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
@@ -1029,7 +1126,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
             /* SEND */
             if (datavalid == 1) {
-              digitalWrite(LED, HIGH);  // LED on
+              digitalWriteFast(LED, HIGH);  // LED on
 #ifdef debug
               MSG_OUTPUT(F("DB Input | SN; valid and ready to send with repeats=")); MSG_OUTPUTLN(rep);
               Serial.println(senddata);
@@ -1046,7 +1143,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 delay(100);
               }
               CC1101_setReceiveMode(); /* enable RX */
-              digitalWrite(LED, LOW);  // LED off
+              digitalWriteFast(LED, LOW);  // LED off
             }
           }
         } else {
@@ -1193,3 +1290,143 @@ void Telnet() {
   }
 }
 #endif
+
+
+/* for OOK modulation */
+void decode(const int pulse) {    /* Pulsübernahme und Weitergabe */
+  if (MsgLen > 0) {
+    last = first;
+  } else {
+    last = 0;
+  }
+  first = pulse;
+  doDetect();
+}
+
+
+inline void doDetect() {      /* Pulsprüfung und Weitergabe an Patternprüfung */
+  valid = (MsgLen == 0 || last == 0 || (first ^ last) < 0);   // true if a and b have opposite signs
+  valid &= (MsgLen == MsgLenMax) ? false : true;
+  valid &= ( (first > -t_maxP) && (first < t_maxP) );         // if low maxPulse detected, start processMessage()
+#ifdef debug_cc110x_MU
+  Serial.print(F("PC:")); Serial.print(PatNmb); Serial.print(F(" ML:")); Serial.print(MsgLen); Serial.print(F(" v:")); Serial.print(valid);
+  Serial.print(F(" | ")); Serial.print(first); Serial.print(F("    ")); Serial.println(last);
+#endif
+  if (valid) {
+    findpatt(first);
+  } else {
+#ifdef debug_cc110x_MU
+    Serial.println(F("-- RESET --"));
+#endif
+    MSGBuild();
+  }
+}
+
+
+void MSGBuild() {     /* Nachrichtenausgabe */
+  if (MsgLen >= MsgLenMin) {
+    digitalWriteFast(LED, HIGH);  // LED on
+    uint8_t CP_PaNum = 0;
+    int16_t PulseAvgMin = 32767;
+    String msgMU = "";
+    uint8_t rssi = CC1101_readReg(0x34, 0xC0); // not converted
+
+    msgMU += char(2); msgMU += F("MU");
+    for (uint8_t i = 0; i <= PatNmb; i++) {
+      int16_t PulseAvg = ArPaSu[i] / ArPaCnt[i];
+      msgMU += F(";P"); msgMU += i; msgMU += F("="); msgMU += PulseAvg;
+      // search Clockpulse (CP=) - das funktioniert noch nicht richtig! --> kein richtiger Einfall ;-) TODO
+      if (ArPaSu[i] > 0) { // HIGH-Pulse
+        if (PulseAvg < PulseAvgMin) { // kürzeste Zeit
+          PulseAvgMin = PulseAvg;     // kürzeste Zeit übernehmen
+          CP_PaNum = i;
+        }
+        if (ArPaCnt[i] > ArPaCnt[CP_PaNum]) {
+          CP_PaNum = i;               // ClockPulse übernehmen
+        }
+      }
+    }
+    msgMU += F(";D="); msgMU += msg; msgMU += F(";CP="); msgMU += CP_PaNum;
+    msgMU += F(";R="); msgMU += rssi; msgMU += ';';
+    if (MsgLen == MsgLenMax) {  /* max. Nachrichtenlänge erreicht */
+      msgMU += F("O;");
+    } else if (TiOv != 0) {     /* Timeoverflow größer 32000 -> Zwangstrennung */
+      msgMU += F("p;");
+    } else if (PatMAX == 1) {   /* max. Pattern erreicht und neuer unbekannter würde folgen */
+      msgMU += F("e;");
+    }
+    msgMU += F("w="); msgMU += valid; msgMU += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    html_raw = msgMU;
+    html_raw = html_raw.substring(1);
+#endif
+    msgMU += char(3); msgMU += char(10);
+    MSG_OUTPUTALL(msgMU);
+    digitalWriteFast(LED, LOW);  // LED off
+  }
+  PatReset();
+}
+
+
+void findpatt(int val) {      /* Patterneinsortierung */
+  for (uint8_t i = 0; i < PatMaxCnt; i++) {
+    if (MsgLen == 0) {  /* ### nach RESET ### */
+      msg = i;
+      ArPaCnt[i] = 1;
+      ArPaT[i] = val;
+      ArPaSu[i] = val;
+      MsgLen++;
+#ifdef debug_cc110x_MU
+      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" msgL0: ")); Serial.print(val);
+      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
+#endif
+      break;
+      /* ### in Tolleranz und gefunden ### */
+    } else if ( (val > 0 && val > ArPaT[i] * (1 - PatTol) && val < ArPaT[i] * (1 + PatTol)) ||
+                (val < 0 && val < ArPaT[i] * (1 - PatTol) && val > ArPaT[i] * (1 + PatTol)) ) {
+      msg += i;
+      ArPaCnt[i]++;
+      ArPaSu[i] += val;
+      MsgLen++;
+#ifdef debug_cc110x_MU
+      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa T: ")); Serial.print(val);
+      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
+#endif
+      break;
+    } else if (i < (PatMaxCnt - 1) && ArPaT[i + 1] == 0 ) { /* ### nächste freie Pattern ### */
+      msg += i + 1;
+      PatNmb++;
+      ArPaCnt[i + 1]++;
+      ArPaT[i + 1] = val;
+      ArPaSu[i + 1] += val;
+      MsgLen++;
+#ifdef debug_cc110x_MU
+      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa f: ")); Serial.print(val);
+      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
+#endif
+      break;
+    } else if (i == (PatMaxCnt - 1)) {  /* ### Anzahl vor definierter Pattern ist erreicht ### */
+#ifdef debug_cc110x_MU
+      Serial.print(F("PC max! | MsgLen: ")); Serial.print(MsgLen); Serial.print(F(" | MsgLenMin: ")); Serial.println(MsgLenMin);
+#endif
+      PatMAX = 1;
+      MSGBuild();
+      break;
+    }
+  }
+}
+
+
+void PatReset() {     /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
+  msg = "";
+  MsgLen = 0;
+  PatMAX = 0;
+  PatNmb = 0;
+  TiOv = 0;
+
+  for (uint8_t i = 0; i < PatMaxCnt; i++) {
+    ArPaCnt[i] = 0;
+    ArPaSu[i] = 0;
+    ArPaT[i] = 0;
+  }
+}

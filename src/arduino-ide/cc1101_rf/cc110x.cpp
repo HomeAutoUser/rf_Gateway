@@ -9,9 +9,9 @@
   macros
  * ********/
 
-#define cc1101_Select() digitalWrite(SS, LOW)      // Select (SPI) CC1101
-#define cc1101_Deselect() digitalWrite(SS, HIGH)   // Deselect (SPI) CC1101
-#define wait_Miso() while (digitalRead(MISO) > 0)  // Wait until SPI MISO line goes low
+#define cc1101_Select() digitalWriteFast(SS, LOW)       // Select (SPI) CC1101
+#define cc1101_Deselect() digitalWriteFast(SS, HIGH)    // Deselect (SPI) CC1101
+#define wait_Miso() while (digitalRead(MISO) > 0)       // Wait until SPI MISO line goes low
 
 /* output DEC to HEX with a leading zero to serial without ln */
 #define SerialPrintDecToHex(dec) \
@@ -284,11 +284,13 @@ void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_
 #endif
 
     if (i == 15 && Freq_offset != 0.00) { /* 0D 0E 0F - attention to the frequency offset !!! */
+
       String ret = web_Freq_set(
                      String(web_Freq_read(CC1101_readReg(13, READ_BURST),
                                           CC1101_readReg(14, READ_BURST),
                                           CC1101_readReg(15, READ_BURST)),
                             3));
+                            
 #ifdef debug_cc110x
       Serial.println(F("CC110x_Freq.Offset mod register 0x0D 0x0E 0x0F"));
       Serial.print(F("CC110x_Freq.Offset calculated "));
