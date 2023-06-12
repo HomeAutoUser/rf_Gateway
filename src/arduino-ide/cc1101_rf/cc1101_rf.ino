@@ -133,6 +133,8 @@ WebServer HttpServer(80);
 /* --- all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------------- */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #include <ArduinoOTA.h>
+#include <WebSocketsServer.h>
+WebSocketsServer webSocket = WebSocketsServer(81);
 
 /* https://unsinnsbasis.de/littlefs-esp32/
    https://unsinnsbasis.de/littlefs-esp32-teil2/
@@ -191,13 +193,13 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[] = "V 1.16 SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "MN;D=";
 static const char TXT_RawRSSI[] = ";R=";
 static const char TXT_RawFP2[] = ";A=";
 byte CC1101_writeReg_offset = 2;
 #else
-static const char TXT_VERSION[] = "V 1.16 cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway ";
 static const char TXT_RawPreamble[] = "data: ";
 static const char TXT_RawRSSI[] = "; RSSI=";
 static const char TXT_RawFP2[] = "; FREQAFC=";
@@ -236,6 +238,7 @@ void MSGBuild();
 void PatReset();
 void decode(const int pulse);
 void findpatt(int val);
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 /* END - Settings for OOK messages without Sync Pulse (MU) - END */
 
 /* varible´s for other */
@@ -450,8 +453,11 @@ void setup() {
 
   Serial.println(F("Starting HttpServer"));
   routing_websites(); /* load all routes to site´s */
-
   HttpServer.begin();
+
+  Serial.println(F("Starting WebSocket"));
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
 #endif
 
 #ifdef debug
@@ -472,6 +478,11 @@ void setup() {
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
 
 void loop() {
+  webSocket.loop();
+  if (millis() % 1000 == 0) {   /* WebSocket Verarbeitung */
+    WebSocket_index();
+  }
+
   if (ToggleTime > 0) { /* Toggle Option */
     ToggleOnOff(ToggleTime);
   }
@@ -551,6 +562,9 @@ void loop() {
 #endif
     msg += char(10);    // LF
     MSG_OUTPUTALL(msg); /* output msg to all */
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_raw();
+#endif
     if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) {
       CC1101_cmdStrobe(CC1101_SFRX);
     }
@@ -597,6 +611,8 @@ void ToggleOnOff(unsigned long Intervall) {
     MSG_OUTPUT(F(" ToggleValues="));
     MSG_OUTPUTLN(ToggleValues);
 #endif
+
+    WebSocket_cc110x();   /* WebSocket Verarbeitung */
 
     if (ToggleAll == true) {
       activated_mode_nr = ToggleCnt + 1;
@@ -1289,7 +1305,44 @@ void Telnet() {
     }
   }
 }
-#endif
+
+//=====================================================
+//function process event: new data received from client
+//=====================================================
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+  switch (type) {
+    case WStype_PING: /* pong will be send automatically */
+      Serial.printf("WebSocket [%u] connected - Ping!\n", num);
+      break;
+    case WStype_PONG: /* // answer to a ping we send */
+      Serial.printf("WebSocket [%u] connected - Pong!\n", num);
+      break;
+    case WStype_DISCONNECTED:
+      Serial.printf("WebSocket [%u] Disconnected!\n", num);
+      break;
+    case WStype_CONNECTED:
+      {
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("WebSocket [%u] connected - from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        webSocket.sendTXT(num, "Connected"); /* send message to client */
+      }
+      break;
+    case WStype_TEXT: /*  */
+      // webSocket.sendTXT(num, "message here"); /* send message to client */
+      // webSocket.broadcastTXT("message here"); /* send data to all connected clients */
+      break;
+    case WStype_BIN: /* binary files receive */
+      // webSocket.sendBIN(num, payload, length); /* send message to client */
+      break;
+    case WStype_ERROR:
+    case WStype_FRAGMENT_TEXT_START:
+    case WStype_FRAGMENT_BIN_START:
+    case WStype_FRAGMENT:
+    case WStype_FRAGMENT_FIN:
+      break;
+  }
+}
+#endif /* END - ESP8266 & ESP 32*/
 
 
 /* for OOK modulation */
@@ -1359,6 +1412,7 @@ void MSGBuild() {     /* Nachrichtenausgabe */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     html_raw = msgMU;
     html_raw = html_raw.substring(1);
+    WebSocket_raw();
 #endif
     msgMU += char(3); msgMU += char(10);
     MSG_OUTPUTALL(msgMU);

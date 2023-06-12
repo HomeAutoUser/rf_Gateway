@@ -107,6 +107,7 @@ void web_cc110x() {
 
   html_meta(website);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x.css\">"
+               "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
                "</head>");
   html_head_table(website);
   website += F("<body>"
@@ -125,10 +126,13 @@ void web_cc110x() {
   website += cc1101_foundTxt + F("</td></tr>");
 
   if (CC1101_found) {
-    website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
-    website += String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX) + F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX) + F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\">") + web_Marcstate_read() + F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\">") + activated_mode_name + F("</td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\">{");
-
+    website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
+    website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX);
+    website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"chip_MS\">") + web_Marcstate_read();
+    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"chip_ReMo\">") + activated_mode_name;
+    website += F("</span></td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\"><span id=\"ToggleBank\">{");
     website += F("&emsp;");
+
     for (byte i = 0; i < 4; i++) {
       if (ToggleArray[i] == 255) {
         website += '-';
@@ -137,9 +141,9 @@ void web_cc110x() {
       }
       website += F("&emsp;");
     }
-    website += F("}</td></tr><tr><td>ToggleTime (ms)</td><td colspan=\"2\">");
+    website += F("}</span></td></tr><tr><td>ToggleTime (ms)</td><td colspan=\"2\"><span id=\"ToggleTime\">");
     website += ToggleTime;
-    website += F("</td></tr>");
+    website += F("</span></td></tr>");
   }
 
   website += F("</tbody></table></body></html>");
@@ -749,9 +753,8 @@ void web_raw() {
 }
 
 
-void web_val_raw() {
-  /* {"RAW_MODE":"Lacrosse_mode1"}
-     {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
+void WebSocket_raw() {
+  /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
   String website = "";
   int16_t offset = (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000);
 
@@ -767,12 +770,8 @@ void web_val_raw() {
     website += activated_mode_name;
     website += F("\"}");
     html_raw = "";
-  } else {
-    website = F("{\"RAW_MODE\":\"");
-    website += activated_mode_name;
-    website += F("\"}");
   }
-  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
+  webSocket.broadcastTXT(website);
 }
 
 
@@ -1050,7 +1049,7 @@ void web_wlan() {
 }
 
 
-void web_val_status() {
+void WebSocket_index() {
   /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
   unsigned long Uptime = getUptime();
   String website = F("{\"CC1101\":\"");
@@ -1072,7 +1071,33 @@ void web_val_status() {
   website += F("\",\"WLANdB\":\"");
   website += WiFi.RSSI();
   website += +F("\"}");
-  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
+  webSocket.broadcastTXT(website);
+}
+
+
+void WebSocket_cc110x() {
+  /* {"chip_MS":"0D = RX","chip_ReMo":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","ToggleTime":"30000"} */
+  String website = F("{\"chip_MS\":\"");
+  website += web_Marcstate_read();
+  website += F("\",\"chip_ReMo\":\"");
+  website += activated_mode_name;
+  website += F("\",\"ToggleBank\":\"{&emsp;");
+
+  for (byte i = 0; i < 4; i++) {
+    if (ToggleArray[i] == 255) {
+      website += '-';
+    } else {
+      website += ToggleArray[i];
+    }
+    if (i != 3) {
+      website += F("&emsp;");
+    }
+  }
+
+  website += F("&emsp;}\",\"ToggleTime\":\"");
+  website += ToggleTime;
+  website += +F("\"}");
+  webSocket.broadcastTXT(website);
 }
 
 
@@ -1098,11 +1123,11 @@ void routing_websites() {
   HttpServer.on("/log", web_log);
   HttpServer.on("/raw", web_raw);
   HttpServer.on("/request_cc110x_modes", web_val_cc110x_modes);
-  HttpServer.on("/request_raw", web_val_raw);
-  HttpServer.on("/request_status", web_val_status);
   HttpServer.on("/wlan", web_wlan);
   HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css");
+  HttpServer.serveStatic("/all.js", LittleFS, "/js/all.js");
   HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css");
+  HttpServer.serveStatic("/cc110x.js", LittleFS, "/js/cc110x.js");
   HttpServer.serveStatic("/cc110x_detail.css", LittleFS, "/css/cc110x_detail.css");
   HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css");
   HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css");
