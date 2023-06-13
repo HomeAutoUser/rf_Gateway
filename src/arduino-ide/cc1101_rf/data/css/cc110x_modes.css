@@ -61,6 +61,6 @@ a:link.CC110x, a:visited.CC110x {
 
 /* backgroud color of button "enable/active reception" */
 :root {
-  --mod_active: #ccffcc;
-  --mod_enable: #FFFFFF;
+  --bt_reception_active: #ccffcc;
+  --bt_reception_enable: #FFFFFF;
 }

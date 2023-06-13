@@ -12,6 +12,24 @@ extern void InputCommand(char* buf_input);
 extern String onlyDecToHex2Digit(byte Dec);
 extern boolean freqAfc;
 
+/* predefinitions of the functions */
+void WebSocket_cc110x();
+void WebSocket_cc110x_modes();
+void WebSocket_index();
+void WebSocket_raw();
+void html_head_table(String& html);
+void html_meta(String& html);
+void routing_websites();
+void web_cc110x();
+void web_cc110x_detail();
+void web_cc110x_detail_export();
+void web_cc110x_detail_import();
+void web_cc110x_modes();
+void web_index();
+void web_log();
+void web_raw();
+void web_wlan();
+
 /* Display of all websites from the web server
   https://wiki.selfhtml.org/wiki/HTML/Tutorials/Grundger%C3%BCst
   https://divtable.com/table-styler/
@@ -149,6 +167,7 @@ void web_cc110x() {
   website += F("</tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
 }
+
 
 void web_cc110x_modes() {
   if (!CC1101_found) {
@@ -755,23 +774,22 @@ void web_raw() {
 
 void WebSocket_raw() {
   /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
-  String website = "";
-  int16_t offset = (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000);
-
-  if (html_raw != "") {
-    website = F("{\"RAW\":\"");
-    html_raw.toUpperCase();
-    website += html_raw;
-    website += F("\", \"RAW_rssi\":\"");
-    website += RSSI_dez;
-    website += F("\", \"RAW_afc\":\"");
-    website += offset;
-    website += F("\", \"RAW_MODE\":\"");
-    website += activated_mode_name;
-    website += F("\"}");
-    html_raw = "";
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/raw")) {
+      String website = F("{\"RAW\":\"");
+      html_raw.toUpperCase();
+      website += html_raw;
+      website += F("\", \"RAW_rssi\":\"");
+      website += RSSI_dez;
+      website += F("\", \"RAW_afc\":\"");
+      website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
+      website += F("\", \"RAW_MODE\":\"");
+      website += activated_mode_name;
+      website += F("\"}");
+      html_raw = "";
+      webSocket.sendTXT(num, website);
+    }
   }
-  webSocket.broadcastTXT(website);
 }
 
 
@@ -1051,63 +1069,75 @@ void web_wlan() {
 
 void WebSocket_index() {
   /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
-  unsigned long Uptime = getUptime();
-  String website = F("{\"CC1101\":\"");
-  CC1101_found ? website += F("yes") : website += F("no");
-  website += F("\",\"RAM\":\"");
-  website += freeRam();
-  website += F("\",\"Uptime\":\"");
-  website += Uptime;
-  website += F("\",\"dd\":\"");
-  website += elapsedDays(Uptime);
-  website += F("\",\"hh\":\"");
-  website += numberOfHours(Uptime);
-  website += F("\",\"mm\":\"");
-  website += numberOfMinutes(Uptime);
-  website += F("\",\"ss\":\"");
-  website += numberOfSeconds(Uptime);
-  website += F("\",\"MSGcnt\":\"");
-  website += msgCount;
-  website += F("\",\"WLANdB\":\"");
-  website += WiFi.RSSI();
-  website += +F("\"}");
-  webSocket.broadcastTXT(website);
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/")) {
+      unsigned long Uptime = getUptime();
+      String website = F("{\"CC1101\":\"");
+      CC1101_found ? website += F("yes") : website += F("no");
+      website += F("\",\"RAM\":\"");
+      website += freeRam();
+      website += F("\",\"Uptime\":\"");
+      website += Uptime;
+      website += F("\",\"dd\":\"");
+      website += elapsedDays(Uptime);
+      website += F("\",\"hh\":\"");
+      website += numberOfHours(Uptime);
+      website += F("\",\"mm\":\"");
+      website += numberOfMinutes(Uptime);
+      website += F("\",\"ss\":\"");
+      website += numberOfSeconds(Uptime);
+      website += F("\",\"MSGcnt\":\"");
+      website += msgCount;
+      website += F("\",\"WLANdB\":\"");
+      website += WiFi.RSSI();
+      website += +F("\"}");
+      webSocket.sendTXT(num, website);
+    }
+  }
 }
 
 
 void WebSocket_cc110x() {
   /* {"chip_MS":"0D = RX","chip_ReMo":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","ToggleTime":"30000"} */
-  String website = F("{\"chip_MS\":\"");
-  website += web_Marcstate_read();
-  website += F("\",\"chip_ReMo\":\"");
-  website += activated_mode_name;
-  website += F("\",\"ToggleBank\":\"{&emsp;");
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/cc110x")) {
+      String website = F("{\"chip_MS\":\"");
+      website += web_Marcstate_read();
+      website += F("\",\"chip_ReMo\":\"");
+      website += activated_mode_name;
+      website += F("\",\"ToggleBank\":\"{&emsp;");
 
-  for (byte i = 0; i < 4; i++) {
-    if (ToggleArray[i] == 255) {
-      website += '-';
-    } else {
-      website += ToggleArray[i];
-    }
-    if (i != 3) {
-      website += F("&emsp;");
+      for (byte i = 0; i < 4; i++) {
+        if (ToggleArray[i] == 255) {
+          website += '-';
+        } else {
+          website += ToggleArray[i];
+        }
+        if (i != 3) {
+          website += F("&emsp;");
+        }
+      }
+
+      website += F("&emsp;}\",\"ToggleTime\":\"");
+      website += ToggleTime;
+      website += +F("\"}");
+      webSocket.sendTXT(num, website);
     }
   }
-
-  website += F("&emsp;}\",\"ToggleTime\":\"");
-  website += ToggleTime;
-  website += +F("\"}");
-  webSocket.broadcastTXT(website);
 }
 
 
-void web_val_cc110x_modes() {
-  String website = F("{\"activated_mode_nr\":\"");
-  website += activated_mode_nr;
-  website += +F("\", \"activated_mode_name\":\"");
-  website += activated_mode_name;
-  website += +F("\"}");
-  HttpServer.send(200, "text/plain", website);  // Send value, JSON to client ajax request
+void WebSocket_cc110x_modes() {
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/cc110x_modes")) {
+      String website = F("{\"activated_mode_nr\":\"");
+      website += activated_mode_nr;
+      website += +F("\", \"activated_mode_name\":\"");
+      website += activated_mode_name;
+      website += +F("\"}");
+      webSocket.sendTXT(num, website);
+    }
+  }
 }
 
 
@@ -1122,7 +1152,6 @@ void routing_websites() {
   HttpServer.on("/index.html", web_index);
   HttpServer.on("/log", web_log);
   HttpServer.on("/raw", web_raw);
-  HttpServer.on("/request_cc110x_modes", web_val_cc110x_modes);
   HttpServer.on("/wlan", web_wlan);
   HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css");
   HttpServer.serveStatic("/all.js", LittleFS, "/js/all.js");

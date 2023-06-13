@@ -7,6 +7,11 @@
 
 */
 
+var store = document.querySelector(':root');        /* Get the CSS root element */
+var value = getComputedStyle(store);                /* Get the styles (properties and values) for the root */
+var color1 = value.getPropertyValue('--rssi_good');
+var color2 = value.getPropertyValue('--rssi_bad');
+
 var js = document.createElement("script");
 js.src = '/all.js';
 document.head.appendChild(js);
@@ -23,7 +28,7 @@ function onMessage(event) {
     var keyCount = Object.keys(obj).length;   // count JSON objects
     document.getElementById("RAW_MODE").innerHTML = obj.RAW_MODE;
 
-    if(keyCount == 4) {   // if data received, object contains 4 elements | no received, object contains 1 element
+    if(keyCount == 4) {   // if data received, object contains 4 elements | security check
       // Update Data Table
       var table = document.getElementById("dataTable");
       var row = table.insertRow(1);   // Add after headings
@@ -40,10 +45,10 @@ function onMessage(event) {
       // RSSI & Style
       cell3.innerHTML = obj.RAW_rssi;
       if(obj.RAW_rssi <= -80) {
-        cell3.style.color = "#ff0000";
+        cell3.style.color = color2;
         cell3.style.textAlign = "right";
       }else if(obj.RAW_rssi > -50) {
-        cell3.style.color = "#28a428";
+        cell3.style.color = color1;
         cell3.style.textAlign = "right";
       }else{
         cell3.style.textAlign = "right";

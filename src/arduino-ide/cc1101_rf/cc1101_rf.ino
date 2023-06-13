@@ -135,6 +135,7 @@ WebServer HttpServer(80);
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
 WebSocketsServer webSocket = WebSocketsServer(81);
+String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
 
 /* https://unsinnsbasis.de/littlefs-esp32/
    https://unsinnsbasis.de/littlefs-esp32-teil2/
@@ -478,10 +479,12 @@ void setup() {
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
 
 void loop() {
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   webSocket.loop();
   if (millis() % 1000 == 0) {   /* WebSocket Verarbeitung */
     WebSocket_index();
   }
+#endif
 
   if (ToggleTime > 0) { /* Toggle Option */
     ToggleOnOff(ToggleTime);
@@ -612,7 +615,10 @@ void ToggleOnOff(unsigned long Intervall) {
     MSG_OUTPUTLN(ToggleValues);
 #endif
 
-    WebSocket_cc110x();   /* WebSocket Verarbeitung */
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_cc110x();             /* WebSocket Verarbeitung */
+    WebSocket_cc110x_modes();
+#endif
 
     if (ToggleAll == true) {
       activated_mode_nr = ToggleCnt + 1;
@@ -1318,12 +1324,14 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       Serial.printf("WebSocket [%u] connected - Pong!\n", num);
       break;
     case WStype_DISCONNECTED:
-      Serial.printf("WebSocket [%u] Disconnected!\n", num);
+      Serial.printf("WebSocket [%u] disconnected!\n", num);
+      webSocketSite[num] = "";
       break;
     case WStype_CONNECTED:
       {
         IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("WebSocket [%u] connected - from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        Serial.printf("WebSocket [%u] connected - from %d.%d.%d.%d%s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        webSocketSite[num] = (char * )payload;
         webSocket.sendTXT(num, "Connected"); /* send message to client */
       }
       break;
@@ -1412,6 +1420,7 @@ void MSGBuild() {     /* Nachrichtenausgabe */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     html_raw = msgMU;
     html_raw = html_raw.substring(1);
+    CC1101_readRSSI();
     WebSocket_raw();
 #endif
     msgMU += char(3); msgMU += char(10);
