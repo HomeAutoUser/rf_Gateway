@@ -618,6 +618,7 @@ void ToggleOnOff(unsigned long Intervall) {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_cc110x();             /* WebSocket Verarbeitung */
     WebSocket_cc110x_modes();
+    WebSocket_cc110x_detail();
 #endif
 
     if (ToggleAll == true) {

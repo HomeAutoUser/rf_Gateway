@@ -15,6 +15,7 @@ extern boolean freqAfc;
 /* predefinitions of the functions */
 void WebSocket_cc110x();
 void WebSocket_cc110x_modes();
+void WebSocket_cc110x_detail();
 void WebSocket_index();
 void WebSocket_raw();
 void html_head_table(String& html);
@@ -446,7 +447,7 @@ void web_cc110x_detail() {
   String temp;
   String web_status = F("<tr><td class=\"in\" colspan=\"6\">current values ​​readed &#10004;</td></tr>");
   String website;
-  uint8_t countargs = HttpServer.args();  // Anzahl Argumente
+  uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
 
   if (countargs != 0) {
@@ -492,10 +493,10 @@ void web_cc110x_detail() {
       return_val = web_Freq_set(freq);
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Frequency & Frequency Offset set &#10004;</td></tr>");
 
-      for (byte i = 0; i < 3; i++) { /* write value to register 0D,0E,0F */
+      for (byte i = 0; i < 3; i++) {    /* write value to register 0D,0E,0F */
         byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 13, value);  // write in cc1101
-        EEPROMwrite(i + 13, value);      // write in flash
+        CC1101_writeReg(i + 13, value); // write in cc1101
+        EEPROMwrite(i + 13, value);     // write in flash
       }
     } else if (submit == "bbandw") {
 #ifdef debug_html
@@ -513,10 +514,10 @@ void web_cc110x_detail() {
       web_status = F("<tr><td class=\"in\" colspan=\"6\">DataRate set &#10004;</td></tr>");
       return_val = web_Datarate_set(datar.toFloat());
 
-      for (byte i = 0; i < 2; i++) { /* write value to register 0D,0E,0F */
+      for (byte i = 0; i < 2; i++) {    /* write value to register 0D,0E,0F */
         byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 16, value);  // write in cc1101
-        EEPROMwrite(i + 16, value);      // write in flash
+        CC1101_writeReg(i + 16, value); // write in cc1101
+        EEPROMwrite(i + 16, value);     // write in flash
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
@@ -531,8 +532,8 @@ void web_cc110x_detail() {
       Serial.print(F("DB web_cc1101_detail, button set modulation pushed with ")); Serial.println(mod);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
-      CC1101_writeReg(18, web_Mod_set(mod));  // write in cc1101
-      EEPROMwrite(18, web_Mod_set(mod));      // write in flash
+      CC1101_writeReg(18, web_Mod_set(mod));      // write in cc1101
+      EEPROMwrite(18, web_Mod_set(mod));          // write in flash
     } else if (submit == "breg") {
 #ifdef debug_html
       Serial.println(F("DB web_cc1101_detail, button set registers pushed"));
@@ -578,7 +579,9 @@ void web_cc110x_detail() {
   temp = "";
 
   html_meta(website);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\"></head>");
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\">"
+               "<script src=\"cc110x_detail.js\" type=\"text/javascript\"></script>"
+               "</head>");
   html_head_table(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table><thead><tr>"
@@ -586,7 +589,7 @@ void web_cc110x_detail() {
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
-               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\">");
+               "<tr><td colspan=\"2\">Frequency (should | is )</td><td class=\"di\" colspan=\"2\">");
   website += String(web_Freq_read(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 13),
                                   pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 14),
                                   pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 15)
@@ -657,7 +660,7 @@ void web_cc110x_detail() {
 
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\">0x");
-    temp = onlyDecToHex2Digit(i); /* register */
+    temp = onlyDecToHex2Digit(i);                 /* register */
     temp.toUpperCase();
     website += temp;
     website += F("&emsp;");
@@ -666,14 +669,14 @@ void web_cc110x_detail() {
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     temp.toUpperCase();
     website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"0x");
-    website += onlyDecToHex2Digit(i); /* registername for GET / POST */
+    website += onlyDecToHex2Digit(i);             /* registername for GET / POST */
     website += F("\" value=\"");
-    website += temp; /* value for GET / POST */
+    website += temp;                              /* value for GET / POST */
     website += F("\" type=\"text\" maxlength=\"2\" pattern=\"^[\\da-fA-F]{1,2}$\" placeholder=\"");
-    website += temp; /* placeholder */
+    website += temp;                              /* placeholder */
     website += F("\"></td><td colspan=\"4\">");
-    website += regExplanation[i]; /* description */
-    if (i == 6) {
+    website += regExplanation[i];                 /* description */
+    if (i == 6) {                                 /* PKTLEN */
       website += F(" = ");
       website += String(CC1101_readReg(0x06, READ_BURST));
     }
@@ -1141,6 +1144,18 @@ void WebSocket_cc110x_modes() {
 }
 
 
+void WebSocket_cc110x_detail() {
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/cc110x_detail")) {
+      String website = F("{\"ToggleTime\":\"");
+      website += ToggleTime;
+      website += +F("\"}");
+      webSocket.sendTXT(num, website);
+    }
+  }
+}
+
+
 void routing_websites() {
   HttpServer.on("/", web_index);
   HttpServer.on("/cc110x", web_cc110x);
@@ -1158,6 +1173,7 @@ void routing_websites() {
   HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css");
   HttpServer.serveStatic("/cc110x.js", LittleFS, "/js/cc110x.js");
   HttpServer.serveStatic("/cc110x_detail.css", LittleFS, "/css/cc110x_detail.css");
+  HttpServer.serveStatic("/cc110x_detail.js", LittleFS, "/js/cc110x_detail.js");
   HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css");
   HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css");
   HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css");
