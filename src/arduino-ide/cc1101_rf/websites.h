@@ -18,8 +18,6 @@ void WebSocket_cc110x_modes();
 void WebSocket_cc110x_detail();
 void WebSocket_index();
 void WebSocket_raw();
-void html_head_table(String& html);
-void html_meta(String& html);
 void routing_websites();
 void web_cc110x();
 void web_cc110x_detail();
@@ -36,45 +34,42 @@ void web_wlan();
   https://divtable.com/table-styler/
 */
 
-void html_meta(String& html) { /* added meta to html */
-  html = F("<!DOCTYPE html>"
-           "<html lang=\"de\">"
-           "<head>"
-           "<meta charset=\"utf-8\">"
-           "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/>"
-           "<meta http-equiv=\"Pragma\" content=\"no-cache\"/>"
-           "<meta http-equiv=\"Expires\" content=\"0\"/>"
-           "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-           "<link rel=\"stylesheet\" href=\"all.css\" type=\"text/css\">"
-           "<title>cc110x_rf_Gateway</title>");
-}
+
+const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to html */
+                                   "<html lang=\"de\">"
+                                   "<head>"
+                                   "<meta charset=\"utf-8\">"
+                                   "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/>"
+                                   "<meta http-equiv=\"Pragma\" content=\"no-cache\"/>"
+                                   "<meta http-equiv=\"Expires\" content=\"0\"/>"
+                                   "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+                                   "<link rel=\"stylesheet\" href=\"all.css\" type=\"text/css\">"
+                                   "<title>cc110x_rf_Gateway</title>"
+                                 };
 
 
-void html_head_table(String& html) { /* added table on head with all links */
-  html += F("<table>"
-            "<tr><th class=\"hth\" colspan=\"6\">cc110x_rf_Gateway</th></tr>"
-            "<tr>"
-            "<td class=\"htd\"><a href=\"/\" class=\"HOME\">HOME</a></td>"
-            "<td class=\"htd\"><a href=\"cc110x\" class=\"CC110x\">CC110x</a></td>"
-            "<td class=\"htd\"><a href=\"help\" class=\"Help\">Help</a></td>"
-            "<td class=\"htd\"><a href=\"log\" class=\"Logfile\">Logfile</a></td>"
-            "<td class=\"htd\">");
-  if (CC1101_found) {
-    html += F("<a href=\"raw\" class=\"RAW\">RAW data</a>");
-  }
-  html += F("</td><td class=\"htd\"><a href=\"wlan\" class=\"WLAN\">WLAN</a></td></tr>"
-            "</table><br>");
-}
+const char html_head_table[] PROGMEM = { "<table>"          /* added table on head with all links */
+                                         "<tr><th class=\"hth\" colspan=\"6\">cc110x_rf_Gateway</th></tr>"
+                                         "<tr>"
+                                         "<td class=\"htd\"><a href=\"/\" class=\"HOME\">HOME</a></td>"
+                                         "<td class=\"htd\"><a href=\"cc110x\" class=\"CC110x\">CC110x</a></td>"
+                                         "<td class=\"htd\"><a href=\"help\" class=\"Help\">Help</a></td>"
+                                         "<td class=\"htd\"><a href=\"log\" class=\"Logfile\">Logfile</a></td>"
+                                         "<td class=\"htd\">"
+                                         "<a href=\"raw\" class=\"RAW\">RAW data</a>"
+                                         "</td><td class=\"htd\"><a href=\"wlan\" class=\"WLAN\">WLAN</a></td></tr>"
+                                         "</table><br>"
+                                       };
 
 
 void web_index() {
   unsigned long Uptime = getUptime();
   String website;
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<body><table><thead><tr><th colspan=2>Device - Information</th></tr></thead>"
                "<tbody><tr><td class=\"tdf\">Firmware compiled</td><td>");
   website += compile_date;
@@ -119,16 +114,12 @@ void web_index() {
 
 void web_cc110x() {
   String website;
-  String cc1101_foundTxt = F("no");
-  if (CC1101_found) {
-    cc1101_foundTxt = F("yes");
-  }
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x.css\">"
                "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<body>"
                "<table><thead>"
                "<tr>");
@@ -142,7 +133,8 @@ void web_cc110x() {
   }
 
   website += F("</tr></thead><tbody><tr><td>chip detected</td><td td colspan=\"2\">");
-  website += cc1101_foundTxt + F("</td></tr>");
+  CC1101_found ? website += F("yes") : website += F("no");
+  website += F("</td></tr>");
 
   if (CC1101_found) {
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
@@ -255,10 +247,10 @@ void web_cc110x_modes() {
     InputCmd = "";  // reset String
   }
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_modes.css\">"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<body>"
                "<script src=\"cc110x_modes.js\" type=\"text/javascript\"></script>"
                "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
@@ -324,7 +316,7 @@ void web_cc110x_modes() {
 
 void web_cc110x_detail_export() {
   String website;
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_exp.css\"></head>");
 
   String website_p2;
@@ -366,7 +358,7 @@ void web_cc110x_detail_import() {
   String PartAdr = "";
   String PartVal = "";
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_imp.css\"></head>");
   website += F("<body><form method=\"get\">"); /* form method wichtig für Daten von Button´s !!! */
 
@@ -578,11 +570,11 @@ void web_cc110x_detail() {
   }
   temp = "";
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\">"
                "<script src=\"cc110x_detail.js\" type=\"text/javascript\"></script>"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table><thead><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
@@ -674,12 +666,9 @@ void web_cc110x_detail() {
     website += temp;                              /* value for GET / POST */
     website += F("\" type=\"text\" maxlength=\"2\" pattern=\"^[\\da-fA-F]{1,2}$\" placeholder=\"");
     website += temp;                              /* placeholder */
-    website += F("\"></td><td colspan=\"4\">");
-    website += regExplanation[i];                 /* description */
-    if (i == 6) {                                 /* PKTLEN */
-      website += F(" = ");
-      website += String(CC1101_readReg(0x06, READ_BURST));
-    }
+    website += F("\"></td><td colspan=\"4\"><span id=\"n");
+    website += i;
+    website += F("\"></span>");
     website += F("</td></tr>");
   }
 
@@ -690,9 +679,9 @@ void web_cc110x_detail() {
 
 void web_log() {
   String website;
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
-  html_head_table(website);
+  website += String(html_head_table);
 
   File logfile = LittleFS.open("/files/log.txt", "r");
   if (!logfile) {
@@ -726,12 +715,12 @@ void web_raw() {
   String website;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
                "<script src=\"raw.js\" type=\"text/javascript\"></script>"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<table>"
                "<thead><tr><th colspan=\"3\">send data (with the current register settings)</th></tr></thead>"
                "<tr><td colspan=\"2\" class=\"tdsd\"><input class=\"inp\" size=\"70\" name=\"sd\" type=\"text\" maxlength=\"255\" pattern=\"^[\\da-fA-F]{2,255}$\" placeholder=\"input your hex data to send\"></td>"
@@ -751,7 +740,7 @@ void web_raw() {
           sd.toCharArray(senddata, sd.length() + 1);
           CC1101_setTransmitMode(); /* enable TX */
           CC1101_sendFIFO(senddata);
-          CC1101_setReceiveMode(); /* enable RX */
+          CC1101_setReceiveMode();  /* enable RX */
         } else {
 #ifdef debug_html
           Serial.println(F("DB web_raw, found odd number of nibbles"));
@@ -831,10 +820,10 @@ void web_wlan() {
   Serial.println(F("DB web_wlan, scan networks ..."));
 #endif
 
-  html_meta(website);
+  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"wlan.css\">"
                "</head>");
-  html_head_table(website);
+  website += String(html_head_table);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                     /* START Tabelle gesamt */
                "<thead>"
@@ -1149,7 +1138,12 @@ void WebSocket_cc110x_detail() {
     if (webSocketSite[num] == F("/cc110x_detail")) {
       String website = F("{\"ToggleTime\":\"");
       website += ToggleTime;
+      website += F("\", \"activated_mode_nr\":\"");
+      website += activated_mode_nr;
+      website += +F("\", \"activated_mode_name\":\"");
+      website += activated_mode_name;
       website += +F("\"}");
+
       webSocket.sendTXT(num, website);
     }
   }
@@ -1179,7 +1173,7 @@ void routing_websites() {
   HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css");
   HttpServer.serveStatic("/cc110x_modes.js", LittleFS, "/js/cc110x_modes.js");
   HttpServer.serveStatic("/favicon.ico", LittleFS, "/favicon.ico");
-  HttpServer.serveStatic("/help", LittleFS, "/html/help.html");
+  HttpServer.serveStatic("/help", LittleFS, "/html/help.html"); //TODO Fehler weil ohne WEBSOCKET
   HttpServer.serveStatic("/help.css", LittleFS, "/css/help.css");
   HttpServer.serveStatic("/help.js", LittleFS, "/js/help.js");
   HttpServer.serveStatic("/index.css", LittleFS, "/css/index.css");
