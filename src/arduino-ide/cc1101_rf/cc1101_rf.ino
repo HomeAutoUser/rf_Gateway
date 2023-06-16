@@ -615,12 +615,6 @@ void ToggleOnOff(unsigned long Intervall) {
     MSG_OUTPUTLN(ToggleValues);
 #endif
 
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_cc110x();             /* WebSocket Verarbeitung */
-    WebSocket_cc110x_modes();
-    WebSocket_cc110x_detail();
-#endif
-
     if (ToggleAll == true) {
       activated_mode_nr = ToggleCnt + 1;
       ToggleValues = RegistersCntMax - 1;
@@ -641,11 +635,17 @@ void ToggleOnOff(unsigned long Intervall) {
     //MSG_OUTPUTLN(Registers[activated_mode_nr].name);
 
     activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    Interupt_Variant(activated_mode_nr);
+    Interupt_Variant(activated_mode_nr);    // set receive variant & register
     ToggleCnt++;
     if (ToggleCnt >= ToggleValues) {
       ToggleCnt = 0;
     }
+
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_cc110x();             /* WebSocket Verarbeitung */
+    WebSocket_cc110x_detail();
+    WebSocket_cc110x_modes();
+#endif
   }
 }
 

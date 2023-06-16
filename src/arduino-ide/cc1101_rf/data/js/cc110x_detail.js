@@ -12,10 +12,31 @@ document.head.appendChild(js);
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /*  {"ToggleTime":"30000"} */
+  /*  {"ToggleTime":"30000", "activated_mode_nr":"11", "activated_mode_name":"Lacrosse_mode1", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"89", "11":"5C", "12":"02", "13":"22", "14":"F8", "15":"56", "16":"07", "17":"00", "18":"18", "19":"15", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"45", "2D":"2D", "2E":"D4"}  */
   if(event.data.includes('ToggleTime') ) {
     var obj = JSON.parse(event.data);
     //location.reload(); // Werte schwinden dadurch wieder
+
+    var name;         // to read value from HTML
+    var obj_n;        // value from websocket for new value
+    var reg_val;
+
+    for ( i=0; i<= 46; i++ ) {    /* register values 00 - 2E (0 - 46) */
+      const num = i;
+      const hex = num.toString(16);
+      if (i < 16) {
+        reg_val = '0' + hex;
+      } else {
+        reg_val = hex;
+      }
+
+      name = '0x' + reg_val.toUpperCase();    // notation HTML 
+      obj_n = reg_val.toUpperCase();          // access to object from web socket
+
+      //alert(name);
+      //alert(obj[obj_n]);
+      /* compare old value < HTML value | document.getElementsByName(name)[0].value > with new value < websocket value | obj[obj_n] > */
+    }
   }
 }
 

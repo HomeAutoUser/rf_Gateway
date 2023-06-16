@@ -14,8 +14,8 @@ extern boolean freqAfc;
 
 /* predefinitions of the functions */
 void WebSocket_cc110x();
-void WebSocket_cc110x_modes();
 void WebSocket_cc110x_detail();
+void WebSocket_cc110x_modes();
 void WebSocket_index();
 void WebSocket_raw();
 void routing_websites();
@@ -764,27 +764,6 @@ void web_raw() {
 }
 
 
-void WebSocket_raw() {
-  /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/raw")) {
-      String website = F("{\"RAW\":\"");
-      html_raw.toUpperCase();
-      website += html_raw;
-      website += F("\", \"RAW_rssi\":\"");
-      website += RSSI_dez;
-      website += F("\", \"RAW_afc\":\"");
-      website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
-      website += F("\", \"RAW_MODE\":\"");
-      website += activated_mode_name;
-      website += F("\"}");
-      html_raw = "";
-      webSocket.sendTXT(num, website);
-    }
-  }
-}
-
-
 void web_wlan() {
   /* https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/scan-class.html
      https://links2004.github.io/Arduino/d4/d52/wl__definitions_8h_source.html
@@ -1059,37 +1038,10 @@ void web_wlan() {
 }
 
 
-void WebSocket_index() {
-  /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/")) {
-      unsigned long Uptime = getUptime();
-      String website = F("{\"CC1101\":\"");
-      CC1101_found ? website += F("yes") : website += F("no");
-      website += F("\",\"RAM\":\"");
-      website += freeRam();
-      website += F("\",\"Uptime\":\"");
-      website += Uptime;
-      website += F("\",\"dd\":\"");
-      website += elapsedDays(Uptime);
-      website += F("\",\"hh\":\"");
-      website += numberOfHours(Uptime);
-      website += F("\",\"mm\":\"");
-      website += numberOfMinutes(Uptime);
-      website += F("\",\"ss\":\"");
-      website += numberOfSeconds(Uptime);
-      website += F("\",\"MSGcnt\":\"");
-      website += msgCount;
-      website += F("\",\"WLANdB\":\"");
-      website += WiFi.RSSI();
-      website += +F("\"}");
-      webSocket.sendTXT(num, website);
-    }
-  }
-}
-
-
 void WebSocket_cc110x() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_cc110x running"));
+#endif
   /* {"chip_MS":"0D = RX","chip_ReMo":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","ToggleTime":"30000"} */
   for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
     if (webSocketSite[num] == F("/cc110x")) {
@@ -1112,21 +1064,7 @@ void WebSocket_cc110x() {
 
       website += F("&emsp;}\",\"ToggleTime\":\"");
       website += ToggleTime;
-      website += +F("\"}");
-      webSocket.sendTXT(num, website);
-    }
-  }
-}
-
-
-void WebSocket_cc110x_modes() {
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/cc110x_modes")) {
-      String website = F("{\"activated_mode_nr\":\"");
-      website += activated_mode_nr;
-      website += +F("\", \"activated_mode_name\":\"");
-      website += activated_mode_name;
-      website += +F("\"}");
+      website += F("\"}");
       webSocket.sendTXT(num, website);
     }
   }
@@ -1134,16 +1072,105 @@ void WebSocket_cc110x_modes() {
 
 
 void WebSocket_cc110x_detail() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_cc110x_detail running"));
+#endif
   for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
     if (webSocketSite[num] == F("/cc110x_detail")) {
       String website = F("{\"ToggleTime\":\"");
       website += ToggleTime;
       website += F("\", \"activated_mode_nr\":\"");
       website += activated_mode_nr;
-      website += +F("\", \"activated_mode_name\":\"");
+      website += F("\", \"activated_mode_name\":\"");
       website += activated_mode_name;
-      website += +F("\"}");
+      website += F("\", ");
 
+      for (byte i = 0; i <= 46; i++) { /* all registers */
+        website += F("\"");
+        website += onlyDecToHex2Digit(i);
+        website += F("\":\"");
+        website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
+        if (i == 46) {
+          website += F("\"}");
+        } else {
+          website += F("\", ");
+        }
+      }
+      webSocket.sendTXT(num, website);
+    }
+  }
+}
+
+
+void WebSocket_cc110x_modes() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_cc110x_modes running"));
+#endif
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/cc110x_modes")) {
+      String website = F("{\"activated_mode_nr\":\"");
+      website += activated_mode_nr;
+      website += F("\", \"activated_mode_name\":\"");
+      website += activated_mode_name;
+      website += F("\"}");
+      webSocket.sendTXT(num, website);
+    }
+  }
+}
+
+
+void WebSocket_index() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_index running"));
+#endif
+  /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/")) {
+      unsigned long Uptime = getUptime();
+      String website = F("{\"CC1101\":\"");
+      CC1101_found ? website += F("yes") : website += F("no");
+      website += F("\",\"RAM\":\"");
+      website += freeRam();
+      website += F("\",\"Uptime\":\"");
+      website += Uptime;
+      website += F("\",\"dd\":\"");
+      website += elapsedDays(Uptime);
+      website += F("\",\"hh\":\"");
+      website += numberOfHours(Uptime);
+      website += F("\",\"mm\":\"");
+      website += numberOfMinutes(Uptime);
+      website += F("\",\"ss\":\"");
+      website += numberOfSeconds(Uptime);
+      website += F("\",\"MSGcnt\":\"");
+      website += msgCount;
+      website += F("\",\"WLANdB\":\"");
+      website += WiFi.RSSI();
+      website += F("\"}");
+      webSocket.sendTXT(num, website);
+    }
+  }
+}
+
+
+void WebSocket_raw() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_raw running"));
+#endif
+
+  /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
+  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+    if (webSocketSite[num] == F("/raw")) {
+      String website = F("{\"RAW\":\"");
+      html_raw.toUpperCase();
+      website += html_raw;
+      website += F("\", \"RAW_rssi\":\"");
+      website += RSSI_dez;
+      website += F("\", \"RAW_afc\":\"");
+      website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
+      website += F("\", \"RAW_MODE\":\"");
+      website += activated_mode_name;
+      website += F("\"}");
+      html_raw = "";
       webSocket.sendTXT(num, website);
     }
   }

@@ -49,6 +49,7 @@
 //#define debug_cc110x_MU   1    // to debug CC1101 decoder OOK
 //#define debug_eeprom      1    // to debug all EEPROM
 //#define debug_html        1    // to all HTML handling
+//#define debug_websocket   1    // to all websocket handling
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp        1       // for compatibility in FHEM
