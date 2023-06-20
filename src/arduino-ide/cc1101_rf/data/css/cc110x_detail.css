@@ -54,3 +54,9 @@ a:link.CC110x, a:visited.CC110x {
 .f4 {
  width: 24.8%;
 }
+
+/* color of changed values */
+:root {
+  --val_std: #0000b3;
+  --val_diff: #ff0000;
+}

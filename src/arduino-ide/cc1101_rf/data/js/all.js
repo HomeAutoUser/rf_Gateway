@@ -37,4 +37,3 @@ function onOpen(event) {
 function onClose(event) {
   console.log('Disconnected ' + window.location.host);
 }
-

@@ -14,8 +14,8 @@ int CC1101_readRSSI();
 uint8_t CC1101_readReg(uint8_t regAddr, uint8_t regType);
 uint8_t CC1101_cmdStrobe(uint8_t cmd);
 void CC1101_init();
-void CC1101_readBurstReg(uint8_t * buffer, uint8_t regAddr, uint8_t len);
-void CC1101_writeBurstReg(byte * buffer, byte regAddr, byte len);
+void CC1101_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
+void CC1101_writeBurstReg(byte * uiBuffer, byte regAddr, byte len);
 void CC1101_writeReg(uint8_t regAddr, uint8_t value);
 void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
 void CC1101_setTransmitMode();
@@ -33,7 +33,6 @@ extern byte activated_mode_nr;              // activated protocol in flash
 extern byte activated_mode_packet_length;
 extern unsigned long ToggleTime;
 extern byte ToggleOrder[4];
-extern uint8_t buffer[75];
 
 /** Command strobes */
 #define CC1101_SRES              0x30        // Reset CC1101 chip

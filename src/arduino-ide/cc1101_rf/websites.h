@@ -139,8 +139,8 @@ void web_cc110x() {
   if (CC1101_found) {
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
     website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX);
-    website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"chip_MS\">") + web_Marcstate_read();
-    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"chip_ReMo\">") + activated_mode_name;
+    website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"MS\">") + web_Marcstate_read();
+    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">") + activated_mode_name;
     website += F("</span></td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\"><span id=\"ToggleBank\">{");
     website += F("&emsp;");
 
@@ -152,7 +152,7 @@ void web_cc110x() {
       }
       website += F("&emsp;");
     }
-    website += F("}</span></td></tr><tr><td>ToggleTime (ms)</td><td colspan=\"2\"><span id=\"ToggleTime\">");
+    website += F("}</span></td></tr><tr><td>ToggleTime (ms)</td><td colspan=\"2\"><span id=\"Time\">");
     website += ToggleTime;
     website += F("</span></td></tr>");
   }
@@ -596,9 +596,7 @@ void web_cc110x_detail() {
   website += F("\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>");  // end Frequency
 
   website += F("<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
-  if (freqAfc == 1) {
-    website += F(" checked");
-  }
+  website += (freqAfc == 1 ? " checked" : "");
 
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
@@ -621,9 +619,9 @@ void web_cc110x_detail() {
   website += F(" kHz</td><td class=\"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
   website += String(web_Devi_read(), 2);
   website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"  // end Deviation
-               "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\">");
+               "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"mod\">");
   website += web_Mod_read();
-  website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\">");
+  website += F("</span><td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\">");
 
   for (byte i = 0; i <= 7; i++) {
     if (i == 2 || i == 5 || i == 6) {
@@ -642,7 +640,7 @@ void web_cc110x_detail() {
   website += F("</select></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"  // end Modulation
                "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\">");
   website += web_PackConf_read();
-  website += F("</td></tr><tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\">");
+  website += F("</td></tr><tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span>");
   website += web_SyncQualiMode_read();
   website += F("</td></tr>"
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
@@ -755,7 +753,7 @@ void web_raw() {
 
   website += F("</table><br>");
   website += F("<div><table id=\"dataTable\"><thead>"
-               "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"RAW_MODE\">");
+               "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += activated_mode_name;
   website += F("</span></th><th class=\"dd\">RSSI in dB</th><th class=\"dd\">Offset in kHz</th></tr>"
                "</thead></table></div>"
@@ -888,9 +886,7 @@ void web_wlan() {
 
   /* Tabelle Setting IP - network | IP DHCP */
   website += F("<tr><td class=\"ra1\"><input aria-label=\"n3\" type=\"radio\" name=\"dhcp\" value=\"1\"");
-  if (used_dhcp == 1) {
-    website += F("checked");
-  }
+  website += (used_dhcp == 1 ? " checked" : "");
   website += F("></td><td colspan=\"2\">IP - adress automatically (DHCP)</td><td class=\"inp\" colspan=\"3\">");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
@@ -898,9 +894,7 @@ void web_wlan() {
 
   /* Tabelle Setting IP - network | IP statisch */
   website += F("<tr><td class=\"ra1\"><input aria-label=\"n4\" type=\"radio\" name=\"dhcp\" value=\"0\"");
-  if (used_dhcp == 0) {
-    website += F("checked");
-  }
+  website += (used_dhcp == 0 ? " checked" : "");
   website += F("></td><td colspan=\"2\">IP - adress static</td>"
                "<td class=\"inp\" colspan=\"3\"><input aria-label=\"n4\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"ip\" type=\"text\" id=\"ip\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
@@ -1042,30 +1036,33 @@ void WebSocket_cc110x() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x running"));
 #endif
-  /* {"chip_MS":"0D = RX","chip_ReMo":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","ToggleTime":"30000"} */
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/cc110x")) {
-      String website = F("{\"chip_MS\":\"");
-      website += web_Marcstate_read();
-      website += F("\",\"chip_ReMo\":\"");
-      website += activated_mode_name;
-      website += F("\",\"ToggleBank\":\"{&emsp;");
+  /* {"MS":"08 = STARTCAL","MODE":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;-&emsp;-&emsp;}","Time":"45000"} */
+  if (webSocket.connectedClients() > 0) {
+    String website = F("{\"MS\":\"");
+    website += web_Marcstate_read();
+    website += F("\",\"MODE\":\"");
+    website += activated_mode_name;
+    website += F("\",\"ToggleBank\":\"{&emsp;");
 
-      for (byte i = 0; i < 4; i++) {
-        if (ToggleArray[i] == 255) {
-          website += '-';
-        } else {
-          website += ToggleArray[i];
-        }
-        if (i != 3) {
-          website += F("&emsp;");
-        }
+    for (byte i = 0; i < 4; i++) {
+      if (ToggleArray[i] == 255) {
+        website += '-';
+      } else {
+        website += ToggleArray[i];
       }
+      if (i != 3) {
+        website += F("&emsp;");
+      }
+    }
 
-      website += F("&emsp;}\",\"ToggleTime\":\"");
-      website += ToggleTime;
-      website += F("\"}");
-      webSocket.sendTXT(num, website);
+    website += F("&emsp;}\",\"Time\":\"");
+    website += ToggleTime;
+    website += F("\"}");
+
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/cc110x")) {
+        webSocket.sendTXT(num, website);
+      }
     }
   }
 }
@@ -1075,28 +1072,32 @@ void WebSocket_cc110x_detail() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x_detail running"));
 #endif
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/cc110x_detail")) {
-      String website = F("{\"ToggleTime\":\"");
-      website += ToggleTime;
-      website += F("\", \"activated_mode_nr\":\"");
-      website += activated_mode_nr;
-      website += F("\", \"activated_mode_name\":\"");
-      website += activated_mode_name;
-      website += F("\", ");
+  /* {"Time":"45000", "MODE_id":"12", "MODE":"Lacrosse_mode2", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"C8", "11":"83", "12":"02", "13":"22", "14":"F8", "15":"42", "16":"07", "17":"00", "18":"18", "19":"16", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"41", "2D":"2D", "2E":"D4"} */
+  if (webSocket.connectedClients() > 0) {
+    String website = F("{\"Time\":\"");
+    website += ToggleTime;
+    website += F("\", \"MODE_id\":\"");
+    website += activated_mode_nr;
+    website += F("\", \"MODE\":\"");
+    website += activated_mode_name;
+    website += F("\", ");
 
-      for (byte i = 0; i <= 46; i++) { /* all registers */
-        website += F("\"");
-        website += onlyDecToHex2Digit(i);
-        website += F("\":\"");
-        website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
-        if (i == 46) {
-          website += F("\"}");
-        } else {
-          website += F("\", ");
-        }
+    for (byte i = 0; i <= 46; i++) { /* all registers */
+      website += F("\"");
+      website += onlyDecToHex2Digit(i);
+      website += F("\":\"");
+      website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
+      if (i == 46) {
+        website += F("\"}");
+      } else {
+        website += F("\", ");
       }
-      webSocket.sendTXT(num, website);
+    }
+
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/cc110x_detail")) {
+        webSocket.sendTXT(num, website);
+      }
     }
   }
 }
@@ -1106,14 +1107,24 @@ void WebSocket_cc110x_modes() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x_modes running"));
 #endif
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/cc110x_modes")) {
-      String website = F("{\"activated_mode_nr\":\"");
-      website += activated_mode_nr;
-      website += F("\", \"activated_mode_name\":\"");
-      website += activated_mode_name;
-      website += F("\"}");
-      webSocket.sendTXT(num, website);
+  /* {"MODE":"Lacrosse_mode2", "MODE_id":"12"} */
+  if (webSocket.connectedClients() > 0) {
+    String website = F("{\"MODE\":\"");
+    website += activated_mode_name;
+    website += F("\", \"MODE_id\":\"");
+    website += activated_mode_nr;
+    website += F("\"}");
+
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/cc110x_modes")) {
+        webSocket.sendTXT(num, website);
+      }
+      if (webSocketSite[num] == F("/raw")) {
+        website = F("{\"MODE\":\"");
+        website += activated_mode_name;
+        website += F("\"}");
+        webSocket.sendTXT(num, website);
+      }
     }
   }
 }
@@ -1124,29 +1135,33 @@ void WebSocket_index() {
   Serial.println(F("DB WebSocket_index running"));
 #endif
   /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/")) {
-      unsigned long Uptime = getUptime();
-      String website = F("{\"CC1101\":\"");
-      CC1101_found ? website += F("yes") : website += F("no");
-      website += F("\",\"RAM\":\"");
-      website += freeRam();
-      website += F("\",\"Uptime\":\"");
-      website += Uptime;
-      website += F("\",\"dd\":\"");
-      website += elapsedDays(Uptime);
-      website += F("\",\"hh\":\"");
-      website += numberOfHours(Uptime);
-      website += F("\",\"mm\":\"");
-      website += numberOfMinutes(Uptime);
-      website += F("\",\"ss\":\"");
-      website += numberOfSeconds(Uptime);
-      website += F("\",\"MSGcnt\":\"");
-      website += msgCount;
-      website += F("\",\"WLANdB\":\"");
-      website += WiFi.RSSI();
-      website += F("\"}");
-      webSocket.sendTXT(num, website);
+  if (webSocket.connectedClients() > 0) {
+    unsigned long Uptime = getUptime();
+    String website = F("{\"CC1101\":\"");
+    CC1101_found ? website += F("yes") : website += F("no");
+    website += F("\",\"RAM\":\"");
+    website += freeRam();
+    website += F("\",\"Uptime\":\"");
+    website += Uptime;
+    // "dd":"0","hh":"0","mm":"3","ss":"59" könnte in javascript berechnet werden, spart ca. 200 µS
+    website += F("\",\"dd\":\"");
+    website += elapsedDays(Uptime);
+    website += F("\",\"hh\":\"");
+    website += numberOfHours(Uptime);
+    website += F("\",\"mm\":\"");
+    website += numberOfMinutes(Uptime);
+    website += F("\",\"ss\":\"");
+    website += numberOfSeconds(Uptime);
+    website += F("\",\"MSGcnt\":\"");
+    website += msgCount;
+    website += F("\",\"WLANdB\":\"");
+    website += WiFi.RSSI();
+    website += F("\"}");
+
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/")) {
+        webSocket.sendTXT(num, website);
+      }
     }
   }
 }
@@ -1158,20 +1173,22 @@ void WebSocket_raw() {
 #endif
 
   /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
-  for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-    if (webSocketSite[num] == F("/raw")) {
-      String website = F("{\"RAW\":\"");
-      html_raw.toUpperCase();
-      website += html_raw;
-      website += F("\", \"RAW_rssi\":\"");
-      website += RSSI_dez;
-      website += F("\", \"RAW_afc\":\"");
-      website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
-      website += F("\", \"RAW_MODE\":\"");
-      website += activated_mode_name;
-      website += F("\"}");
-      html_raw = "";
-      webSocket.sendTXT(num, website);
+  if (webSocket.connectedClients() > 0) {
+    String website = F("{\"MODE\":\"");
+    website += activated_mode_name;
+    website += F("\", \"RAW\":\"");
+    html_raw.toUpperCase();
+    website += html_raw;
+    website += F("\", \"RSSI\":\"");
+    website += RSSI_dez;
+    website += F("\", \"AFC\":\"");
+    website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
+    website += F("\"}");
+
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/raw")) {
+        webSocket.sendTXT(num, website);
+      }
     }
   }
 }

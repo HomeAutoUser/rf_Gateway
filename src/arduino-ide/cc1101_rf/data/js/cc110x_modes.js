@@ -17,8 +17,8 @@ document.head.appendChild(js);
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /*  {"activated_mode_nr":"11", "activated_mode_name":"Lacrosse_mode1"} */
-  if(event.data.includes('activated_mode_nr') ) {
+  /*  {"MODE_id":"11", "MODE":"Lacrosse_mode1"} */
+  if (event.data.includes('MODE_id') ) {
     var obj = JSON.parse(event.data);
 
     /*  erste Spalte | automatischer Farbwechsel aktiver Modus
@@ -35,10 +35,10 @@ function onMessage(event) {
       if (i % 3 == 0) {
         btnr = i / 3;
         var bt = '#bt' + btnr;
-        var myEle = document.querySelector(bt);             /* to check element of error: Cannot set properties of null (setting 'innerHTML') */
+        var myEle = document.querySelector(bt);     /* to check element of error: Cannot set properties of null (setting 'innerHTML') */
 
         if (myEle!=null && bt != 'null' && bt != 'NULL') {
-          if (btnr == obj.activated_mode_nr) {              /* current button status */
+          if (btnr == obj.MODE_id) {                /* current button status */
             document.querySelector(bt).innerHTML = 'active reception &#10004;';
             document.querySelector(bt).className = 'btn2';
           } else {
@@ -48,11 +48,11 @@ function onMessage(event) {
         }
       }
 
-      if (cell[i].innerHTML == obj.activated_mode_name) {
+      if (cell[i].innerHTML == obj.MODE) {
         var btnr = i / 3;
-        cell[i].style.backgroundColor = color1;             /* activated_mode_name */
-        cell[i+1].style.backgroundColor = color1;           /* set to bank 0 1 2 3 */
-        cell[i+2].style.backgroundColor = color1;           /* button enable(d) reception */
+        cell[i].style.backgroundColor = color1;     /* MODE */
+        cell[i+1].style.backgroundColor = color1;   /* set to bank 0 1 2 3 */
+        cell[i+2].style.backgroundColor = color1;   /* button enable(d) reception */
         i = i + 2;
       } else {
         cell[i].style.backgroundColor = color2;

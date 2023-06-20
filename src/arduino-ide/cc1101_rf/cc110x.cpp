@@ -94,17 +94,18 @@ void CC1101_init() { /* CC1101 - Set default´s */
     /* normaler Start */
     if (EEPROMread(EEPROM_ADDR_FW1) == Prog_Ident1 && EEPROMread(EEPROM_ADDR_FW2) == Prog_Ident2 && chk == chk_comp) {  // EEPROM OK, chk OK
       /* cc110x - PATABLE */
+      uint8_t uiBuffer[8]; // Array anlegen
       for (byte i = 0; i < 8; i++) {
-        buffer[i] = EEPROM.read(EEPROM_ADDR_PATABLE + i);
-        if (buffer[i] == 255) {  // EEPROM gelöscht
+        uiBuffer[i] = EEPROM.read(EEPROM_ADDR_PATABLE + i);
+        if (uiBuffer[i] == 255) {  // EEPROM gelöscht
           if (i == 1) {
-            buffer[i] = 0x81;  // 5dB Default
+            uiBuffer[i] = 0x81;  // 5dB Default
           } else {
-            buffer[i] = 0x00;
+            uiBuffer[i] = 0x00;
           }
-          EEPROMwrite(EEPROM_ADDR_PATABLE + i, buffer[i]);
+          EEPROMwrite(EEPROM_ADDR_PATABLE + i, uiBuffer[i]);
         }
-        CC1101_writeBurstReg(buffer, CC1101_PATABLE, 8);
+        CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
       }
       EEPROM.get(EEPROM_ADDR_AFC, freqAfc);         /* cc110x - afc from EEPROM */
       EEPROM.get(EEPROM_ADDR_FOFFSET, Freq_offset); /* cc110x - freq offset from EEPROM */
@@ -290,7 +291,7 @@ void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_
                                           CC1101_readReg(14, READ_BURST),
                                           CC1101_readReg(15, READ_BURST)),
                             3));
-                            
+
 #ifdef debug_cc110x
       Serial.println(F("CC110x_Freq.Offset mod register 0x0D 0x0E 0x0F"));
       Serial.print(F("CC110x_Freq.Offset calculated "));
@@ -380,10 +381,10 @@ uint8_t CC1101_cmdStrobe(byte cmd) {
 }
 
 
-void CC1101_readBurstReg(byte *buffer, byte regAddr, byte len) {
+void CC1101_readBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   /* Read burst data from CC1101 via SPI
 
-    'buffer'  Buffer where to copy the result to
+    'uiBuffer'  Buffer where to copy the result to
     'regAddr'  Register address
     'len'  Data length  */
 
@@ -394,15 +395,15 @@ void CC1101_readBurstReg(byte *buffer, byte regAddr, byte len) {
   wait_Miso();         // Wait until MISO goes low
   SPI.transfer(addr);  // Send register address
   for (i = 0; i < len; i++)
-    buffer[i] = SPI.transfer(0x00);  // Read result byte by byte
+    uiBuffer[i] = SPI.transfer(0x00);  // Read result byte by byte
   cc1101_Deselect();                 // Deselect CC1101
 }
 
 
-void CC1101_writeBurstReg(byte *buffer, byte regAddr, byte len) {
+void CC1101_writeBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   /* Write burst data from CC1101 via SPI
 
-     'buffer'  Buffer where to copy the result to
+     'uiBuffer'  Buffer where to copy the result to
      'regAddr'  Register address
      'len'  Data length  */
 
@@ -413,7 +414,7 @@ void CC1101_writeBurstReg(byte *buffer, byte regAddr, byte len) {
   wait_Miso();                // Wait until MISO goes low
   SPI.transfer(addr);         // Send register address
   for (i = 0; i < len; i++)
-    SPI.transfer(buffer[i]);  // Write result byte by byte
+    SPI.transfer(uiBuffer[i]);  // Write result byte by byte
   cc1101_Deselect();          // Deselect CC1101
 }
 

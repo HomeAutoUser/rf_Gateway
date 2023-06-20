@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40516 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40536 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1812     initialized variables
-  ╠══ RODATA   5992     constants
-  ╚══ BSS      32712    zeroed variables
-  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61524 / 65536 bytes (93%)
+  ╠══ DATA     1808     initialized variables
+  ╠══ RODATA   5440     constants
+  ╚══ BSS      33288    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
-  ╚══ IRAM     28756    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 426032 / 1048576 bytes (40%)
+  ╚══ IRAM     28787    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 435036 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     426032   code in flash
+  ╚══ IROM     435036   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -106,16 +106,14 @@ int RSSI_dez;                           // for the output on web server
 #define MsgLenMax               254     // message maximum length
 #define PatMaxCnt               8       // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
 #define PatTol                  0.20    // pattern tolerance
-#define FIFO_LENGTH             160     // 90 from SIGNALduino FW
+#define FIFO_LENGTH             90      // 90 from SIGNALduino FW
 #include "SimpleFIFO.h"
-SimpleFIFO<int, FIFO_LENGTH> FiFo;      // store FIFO_LENGTH # ints
+SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;      // store FIFO_LENGTH # ints
 
 /* --- all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------------- */
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <WiFiUdp.h>
 ESP8266WebServer HttpServer(80);
 ADC_MODE(ADC_VCC);                  // vcc read
 #endif
@@ -134,6 +132,8 @@ WebServer HttpServer(80);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
+#define WEBSOCKETS_SAVE_RAM              // moves all Header strings to Flash (~300 Byte)
+//#define WEBSOCKETS_SERVER_CLIENT_MAX  2  // so ist der Empfang besser, RAM (free heap) 29800
 WebSocketsServer webSocket = WebSocketsServer(81);
 String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
 
@@ -215,16 +215,16 @@ boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
 unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
 
 /* Settings for OOK messages without Sync Pulse (MU) */
-int t_maxP = 32000;                           // Zeitdauer maximum für gültigen Puls in µs
-int t_minP = 75;                              // Zeitdauer minimum für gültigen Puls in µs
+#define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
+#define t_minP 75                             // Zeitdauer minimum für gültigen Puls in µs
 unsigned long lastTime = 0;                   // Zeit, letzte Aktion
-int ArPaT[PatMaxCnt];                         // Pattern Array für Zeiten
+int16_t ArPaT[PatMaxCnt];                     // Pattern Array für Zeiten
 signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
 byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
 byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
 byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
-int first;                                    // Pointer to first buffer entry
-int last;                                     // Pointer to last buffer entry
+int16_t first;                                // Pointer to first buffer entry
+int16_t last;                                 // Pointer to last buffer entry
 String msg;                                   // RAW (only serial/telnet, not HTML output)
 byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
 byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
@@ -243,7 +243,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 /* END - Settings for OOK messages without Sync Pulse (MU) - END */
 
 /* varible´s for other */
-uint8_t buffer[75];                           /* buffer cc110x */
 #define BUFFER_MAX 70                         /* !!! maximum number of characters to send !!! */
 int8_t freqErr = 0;                           /* for automatic Frequency Synthesizer Control */
 int8_t freqOffAcc = 0;                        /* for automatic Frequency Synthesizer Control */
@@ -251,6 +250,8 @@ float freqErrAvg = 0;                         /* for automatic Frequency Synthes
 boolean freqAfc = 0;                          /* AFC on or off */
 uint32_t msgCount = 0;                        /* message counter over all received messages */
 byte client_now;
+unsigned long secTick = 0; // time that the clock last "ticked"
+unsigned long toggleTick = 0;
 
 /* now all websites, all settings are available here */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -264,7 +265,7 @@ void InputCommand(char* buf_input);
 void Interupt_Variant(byte nr);
 void MSGBuild();
 void PatReset();
-void ToggleOnOff(unsigned long Intervall);
+void ToggleOnOff();
 void decode(const int pulse);
 void findpatt(int val);
 
@@ -299,6 +300,7 @@ void Interupt() {
     }                               // else => trash
   }
 }
+
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
   CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
@@ -307,14 +309,14 @@ void Interupt_Variant(byte nr) {
   delay(10);
 
   MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-
   if (MOD_FORMAT != 3) {
-    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
   } else {
     attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
   }
   CC1101_cmdStrobe(CC1101_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
 }
+
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
   msg.reserve(255);
@@ -339,11 +341,15 @@ void setup() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
   /* interner Flash-Speicher */
   if (!LittleFS.begin()) {
+#if defined debug
     Serial.println(F("LittleFS mount failed, formatting filesystem"));
+#endif
     LittleFS.format();
     return;  // ???
   } else {
+#if defined debug
     Serial.println(F("Starting LittleFS"));
+#endif
   }
   File logfile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
   if (logfile) {
@@ -428,6 +434,7 @@ void setup() {
   }
 
   /* Arduino OTA Update – Update über WLAN */
+#ifdef debug_wifi
   ArduinoOTA.onStart([]() {
     Serial.println(F("OTA - Start"));
   });
@@ -446,17 +453,24 @@ void setup() {
     else if (error == OTA_END_ERROR) Serial.println(F("OTA - End Failed"));
   });
   Serial.println(F("Starting OTA"));
+#endif
   ArduinoOTA.begin();
 
+#ifdef debug_wifi
   Serial.println(F("Starting TelnetServer"));
+#endif
   TelnetServer.begin();
   TelnetServer.setNoDelay(true);
 
+#ifdef debug_wifi
   Serial.println(F("Starting HttpServer"));
+#endif
   routing_websites(); /* load all routes to site´s */
   HttpServer.begin();
 
+#ifdef debug_wifi
   Serial.println(F("Starting WebSocket"));
+#endif
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
 #endif
@@ -471,23 +485,32 @@ void setup() {
 #endif    // END microcontrollers
 #endif    // END debug
 
-  // EEPROMclear();
-  // EEPROMread_table();
   CC1101_init();
+  toggleTick = ToggleTime;
+  if (ToggleTime == 0) { // switch to last activated receiving mode
+    activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
+    Interupt_Variant(activated_mode_nr);    // set receive variant & register
+  }
 }
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
 
 void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  webSocket.loop();
-  if (millis() % 1000 == 0) {   /* WebSocket Verarbeitung */
-    WebSocket_index();
-  }
+  webSocket.loop(); // dauert 53 µS
 #endif
 
-  if (ToggleTime > 0) { /* Toggle Option */
-    ToggleOnOff(ToggleTime);
+  if ((millis() - secTick) >= 1000UL) { // jede Sekunde
+    secTick += 1000UL;
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_index(); // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
+#endif
+    if (ToggleTime > 0) { /* Toggle Option */
+      if (millis() - toggleTick > ToggleTime) { /* Abfragen, ob Zeit zum Einschalten erreicht */
+        toggleTick = millis();                 /* Zeit merken, an der Eingeschaltet wurde. */
+        ToggleOnOff();
+      }
+    }
   }
 
   if (Serial.available() > 0) { /* Serial Input´s */
@@ -541,15 +564,16 @@ void loop() {
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
-    CC1101_readBurstReg(buffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO / read RSSI and build message */
+    uint8_t uiBuffer[activated_mode_packet_length]; // Array anlegen
+    CC1101_readBurstReg(uiBuffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO */
 #ifdef SIGNALduino_comp
     msg += char(2);  // STX
 #endif
     msg += TXT_RawPreamble;                                   // "MN;D=" | "data: "
     for (byte i = 0; i < activated_mode_packet_length; i++) { /* RawData */
-      msg += onlyDecToHex2Digit(buffer[i]);
+      msg += onlyDecToHex2Digit(uiBuffer[i]);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-      html_raw += onlyDecToHex2Digit(buffer[i]);
+      html_raw += onlyDecToHex2Digit(uiBuffer[i]);
 #endif
     }
     msg += TXT_RawRSSI; // ";R=" | "; RSSI="
@@ -565,15 +589,16 @@ void loop() {
 #endif
     msg += char(10);    // LF
     MSG_OUTPUTALL(msg); /* output msg to all */
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw();
-#endif
-    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) {
+    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
       CC1101_cmdStrobe(CC1101_SFRX);
     }
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+#endif
+    //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
     CC1101_cmdStrobe(CC1101_SRX);
     for (uint8_t i = 0; i < 255; i++) {
-      if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x0D) {
+      if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x0D) { // RX
         break;
       }
       delay(1);
@@ -597,61 +622,57 @@ void loop() {
    ################################
 */
 
-void ToggleOnOff(unsigned long Intervall) {
-  /*
-    Steuert alle [Intervall] ms einen Pin für die [Dauer] ms an.
-    example: ToggleOnOff(60000,30000); ->  alle 60sek für 30sek an.
-  */
-  static unsigned long tEin;
-
-  if (millis() - tEin > Intervall) { /* Abfragen, ob Zeit zum Einschalten erreicht */
-    detachInterrupt(digitalPinToInterrupt(GDO2));
-    tEin = millis();                 /* Zeit merken, an der Eingeschaltet wurde. */
+void ToggleOnOff() {
+  detachInterrupt(digitalPinToInterrupt(GDO2));
 
 #ifdef debug
-    MSG_OUTPUT(F("DB Toggle | ToggleCnt="));
-    MSG_OUTPUT(ToggleCnt + 1);
-    MSG_OUTPUT(F(" ToggleValues="));
-    MSG_OUTPUTLN(ToggleValues);
+  MSG_OUTPUT(F("DB Toggle | ToggleCnt="));
+  MSG_OUTPUT(ToggleCnt + 1);
+  MSG_OUTPUT(F(" ToggleValues="));
+  MSG_OUTPUTLN(ToggleValues);
 #endif
 
-    if (ToggleAll == true) {
-      activated_mode_nr = ToggleCnt + 1;
-      ToggleValues = RegistersCntMax - 1;
+  if (ToggleAll == true) {
+    activated_mode_nr = ToggleCnt + 1;
+    ToggleValues = RegistersCntMax - 1;
 #ifdef debug
-      MSG_OUTPUT(F("DB Toggle | ToggleAll activated_mode_nr ")); MSG_OUTPUT(activated_mode_nr);
-      MSG_OUTPUT(F(", ToggleValues ")); MSG_OUTPUTLN(ToggleValues);
+    MSG_OUTPUT(F("DB Toggle | ToggleAll activated_mode_nr ")); MSG_OUTPUT(activated_mode_nr);
+    MSG_OUTPUT(F(", ToggleValues ")); MSG_OUTPUTLN(ToggleValues);
 #endif
-    } else {
-      if (ToggleValues <= 1) {
-        ToggleTime = 0;
-        MSG_OUTPUTLN(F("Toggle STOPPED, no toggle values in togglebank!"));
-        return;
-      }
-      activated_mode_nr = ToggleOrder[ToggleCnt];
+  } else {
+    if (ToggleValues <= 1) {
+      ToggleTime = 0;
+#ifdef debug
+      MSG_OUTPUTLN(F("Toggle STOPPED, no toggle values in togglebank!"));
+#endif
+      return;
     }
+    activated_mode_nr = ToggleOrder[ToggleCnt];
+  }
 
-    //MSG_OUTPUT(  F("Toggle (output all)    | switched to "));
-    //MSG_OUTPUTLN(Registers[activated_mode_nr].name);
+#ifdef debug
+  MSG_OUTPUT(  F("Toggle (output all)    | switched to "));
+  MSG_OUTPUTLN(Registers[activated_mode_nr].name);
+#endif
 
-    activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    Interupt_Variant(activated_mode_nr);    // set receive variant & register
-    ToggleCnt++;
-    if (ToggleCnt >= ToggleValues) {
-      ToggleCnt = 0;
-    }
+  activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
+  Interupt_Variant(activated_mode_nr);    // set receive variant & register
+  ToggleCnt++;
+  if (ToggleCnt >= ToggleValues) {
+    ToggleCnt = 0;
+  }
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_cc110x();             /* WebSocket Verarbeitung */
-    WebSocket_cc110x_detail();
-    WebSocket_cc110x_modes();
+  WebSocket_cc110x();             /* WebSocket Verarbeitung */
+  WebSocket_cc110x_detail();
+  WebSocket_cc110x_modes();
 #endif
-  }
 }
 
 
 void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | marker, 255 = Serial | 0...254 = Telnet */
   String input = "";
+  uint8_t uiBuffer[47]; // Array anlegen
 
   for (byte i = 0; i < strlen(buf_input); i++) {
     input += buf_input[i];
@@ -884,7 +905,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 #endif
                 ToggleAll = true;
                 ToggleTime = 15000;  // set to default and start
-                ToggleOnOff(ToggleTime);
+                ToggleOnOff();
               }
             }
           } else {
@@ -898,17 +919,17 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2])) {
           for (byte i = 0; i < 8; i++) {
             if (i == 1) {
-              buffer[i] = hexToDec(input.substring(1));
-              EEPROMwrite(EEPROM_ADDR_PATABLE + i, buffer[i]);
+              uiBuffer[i] = hexToDec(input.substring(1));
+              EEPROMwrite(EEPROM_ADDR_PATABLE + i, uiBuffer[i]);
             } else {
-              buffer[i] = 0;
+              uiBuffer[i] = 0;
               EEPROMwrite(EEPROM_ADDR_PATABLE + i, 0);
             }
           }
           if (CC1101_found == false) {
             MSG_OUTPUTLN(F("Current registers unreadable, write patable stopped (no CC1101 found)"));
           } else {
-            CC1101_writeBurstReg(buffer, CC1101_PATABLE, 8);
+            CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
 
             MSG_OUTPUT(F("write "));
             MSG_OUTPUT(buf_input[1]);
@@ -970,7 +991,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
             commandCHECK = true;
           } else if (Cret == 153) { /* command C99 - ccreg */
-            CC1101_readBurstReg(buffer, 0x00, 47);
+            CC1101_readBurstReg(uiBuffer, 0x00, 47);
 
             for (uint8_t i = 0; i < 0x2f; i++) {
               if (i == 0 || i == 0x10 || i == 0x20) {
@@ -985,19 +1006,19 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 MSG_OUTPUT(i, HEX);
                 MSG_OUTPUT(F(": "));
               }
-              MSG_OUTPUT_DecToHEX_lz(buffer[i]);
+              MSG_OUTPUT_DecToHEX_lz(uiBuffer[i]);
               MSG_OUTPUT(' ');
             }
             MSG_OUTPUTLN("");
 
             commandCHECK = true;
           } else if (Cret == 62) { /* command C3E - patable  */
-            CC1101_readBurstReg(buffer, 0x3E, 8);
+            CC1101_readBurstReg(uiBuffer, 0x3E, 8);
 
             MSG_OUTPUT(F("C3E ="));
             for (byte i = 0; i < 8; i++) {
               MSG_OUTPUT(' ');
-              MSG_OUTPUT_DecToHEX_lz(buffer[i]);
+              MSG_OUTPUT_DecToHEX_lz(uiBuffer[i]);
             }
             MSG_OUTPUTLN("");
 
@@ -1319,19 +1340,27 @@ void Telnet() {
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch (type) {
     case WStype_PING: /* pong will be send automatically */
+#if defined debug_websocket
       Serial.printf("WebSocket [%u] connected - Ping!\n", num);
+#endif
       break;
     case WStype_PONG: /* // answer to a ping we send */
+#if defined debug_websocket
       Serial.printf("WebSocket [%u] connected - Pong!\n", num);
+#endif
       break;
     case WStype_DISCONNECTED:
+#if defined debug_websocket
       Serial.printf("WebSocket [%u] disconnected!\n", num);
+#endif
       webSocketSite[num] = "";
       break;
     case WStype_CONNECTED:
       {
+#if defined debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("WebSocket [%u] connected - from %d.%d.%d.%d%s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+#endif
         webSocketSite[num] = (char * )payload;
         webSocket.sendTXT(num, "Connected"); /* send message to client */
       }

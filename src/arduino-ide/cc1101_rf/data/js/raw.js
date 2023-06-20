@@ -20,13 +20,12 @@ document.head.appendChild(js);
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /*  {"RAW":"9006596A28", "RAW_rssi":"-52", "RAW_afc":"-14", "RAW_MODE":"Lacrosse_mode1"} */
-  if(event.data.includes('RAW_rssi') ) {
+  if (event.data.includes('RSSI') ) {
     // Push the data in array
     var time = new Date().toLocaleTimeString();
     var obj = JSON.parse(event.data);
     var keyCount = Object.keys(obj).length;   // count JSON objects
-    document.getElementById("RAW_MODE").innerHTML = obj.RAW_MODE;
+    document.getElementById("MODE").innerHTML = obj.MODE;
 
     if(keyCount == 4) {   // if data received, object contains 4 elements | security check
       // Update Data Table
@@ -43,18 +42,24 @@ function onMessage(event) {
       cell2.innerHTML = obj.RAW;
       cell2.style.fontFamily = "Courier New,Lucida Console";
       // RSSI & Style
-      cell3.innerHTML = obj.RAW_rssi;
-      if(obj.RAW_rssi <= -80) {
+      cell3.innerHTML = obj.RSSI;
+      if(obj.RSSI <= -80) {
         cell3.style.color = color2;
         cell3.style.textAlign = "right";
-      }else if(obj.RAW_rssi > -50) {
+      }else if(obj.RSSI > -50) {
         cell3.style.color = color1;
         cell3.style.textAlign = "right";
       }else{
         cell3.style.textAlign = "right";
       }
-      cell4.innerHTML = obj.RAW_afc;
+      cell4.innerHTML = obj.AFC;
       cell4.style.textAlign = "right";
+    }
+  } else if (event.data.includes('MODE')) {
+    var obj = JSON.parse(event.data);
+    var keyCount = Object.keys(obj).length;
+    if (keyCount == 1) {                       // if data received, object contains 1 elements | security check
+      document.getElementById("MODE").innerHTML = obj.MODE;
     }
   }
 }

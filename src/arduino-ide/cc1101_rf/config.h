@@ -50,6 +50,7 @@
 //#define debug_eeprom      1    // to debug all EEPROM
 //#define debug_html        1    // to all HTML handling
 //#define debug_websocket   1    // to all websocket handling
+//#define debug_wifi        1    // to debug all wifi
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp        1       // for compatibility in FHEM

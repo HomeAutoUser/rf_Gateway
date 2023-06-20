@@ -28,10 +28,12 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
   WiFi.hostname(OwnStationHostname); /* WIFI set hostname */
 
   if (WiFi.softAP(ssid_ap.c_str(), password_ap.c_str(), 1, false, 3) == true) {
+#ifdef debug_wifi
     Serial.println(F("WIFI AP Ready"));
     Serial.print(F("WIFI SSID        ")); Serial.println(ssid_ap);
     Serial.print(F("WIFI IP address  ")); Serial.println(WiFi.softAPIP());
     Serial.print(F("WIFI HOSTNAME    ")); Serial.println(OwnStationHostname);
+#endif
     WLAN_AP = true;
     WLAN_OK = true;
     File logfile = LittleFS.open("/files/log.txt", "a");         // Datei mit Schreibrechten öffnen
@@ -42,7 +44,9 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
       logfile.close(); /* Schließen der Datei */
     }
   } else {
+#ifdef debug_wifi
     Serial.println(F("WIFI AP Failed!"));
+#endif
     used_dhcp = 1;
     WLAN_AP = false;
     WLAN_OK = false;

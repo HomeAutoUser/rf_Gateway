@@ -8,15 +8,17 @@ var js = document.createElement("script");
 js.src = '/all.js';
 document.head.appendChild(js);
 
+var store = document.querySelector(':root');        /* Get the CSS root element */
+var value = getComputedStyle(store);                /* Get the styles (properties and values) for the root */
+var color1 = value.getPropertyValue('--val_std');
+var color2 = value.getPropertyValue('--val_diff');
+
 // Show the received message 
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /*  {"ToggleTime":"30000", "activated_mode_nr":"11", "activated_mode_name":"Lacrosse_mode1", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"89", "11":"5C", "12":"02", "13":"22", "14":"F8", "15":"56", "16":"07", "17":"00", "18":"18", "19":"15", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"45", "2D":"2D", "2E":"D4"}  */
-  if(event.data.includes('ToggleTime') ) {
+  if(event.data.includes('Time') ) {
     var obj = JSON.parse(event.data);
-    //location.reload(); // Werte schwinden dadurch wieder
-
     var name;         // to read value from HTML
     var obj_n;        // value from websocket for new value
     var reg_val;
@@ -33,19 +35,33 @@ function onMessage(event) {
       name = '0x' + reg_val.toUpperCase();    // notation HTML 
       obj_n = reg_val.toUpperCase();          // access to object from web socket
 
-      //alert(name);
-      //alert(obj[obj_n]);
-      /* compare old value < HTML value | document.getElementsByName(name)[0].value > with new value < websocket value | obj[obj_n] > */
+      /* compare old value < > HTML value */
+      if(document.getElementsByName(name)[0].value != obj[obj_n]) {
+        document.getElementsByName(name)[0].value = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, obj[obj_n]);
+        document.getElementsByName(name)[0].placeholder = obj[obj_n];
+        document.getElementsByName(name)[0].style.color = color2;
+      } else {
+        document.getElementsByName(name)[0].style.color = color1;
+      }
+
+      if (i == 18) { /* 0x12: MDMCFG2 - Modulation */
+        var val = (parseInt(obj[obj_n], 16) & "01110000") >> 4;
+        document.getElementById('mod').innerHTML = MOD_FORMAT[val];
+        document.querySelector('#modulation').value = val;
+      }
     }
   }
 }
 
 /* if website complete loaded, added texts */
 document.onreadystatechange = function () {
-  if (document.readyState == "complete") {
+  if (document.readyState == 'complete') {
     for ( i=0; i<regExplanation.length; i++ ) {
       document.getElementById('n' + i).innerHTML = regExplanation[i];
     }
+
+    /* SYNC_MODE | CC1101_readReg(0x12, READ_BURST) & 0x07 ; */
+    //document.getElementById('SYNC_MODE').innerHTML = SYNC_MODE[0];
   }
 }
 
@@ -98,6 +114,19 @@ const regExplanation = [
   'Various Test Settings 2',
   'Various Test Settings 1',
   'Various Test Settings 0'
-]
+];
+
+const MOD_FORMAT = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
+
+const SYNC_MODE = [
+  'No preamble/sync',
+  '15/16 sync word bits detected',
+  '16/16 sync word bits detected',
+  '30/32 sync word bits detected',
+  'No preamble/sync, carrier-sense above threshold',
+  '15/16 + carrier-sense above threshold',
+  '16/16 + carrier-sense above threshold',
+  '30/32 + carrier-sense above threshold'
+];
 
 /* - - END - - Detailed description register - - */

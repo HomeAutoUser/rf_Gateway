@@ -1080,26 +1080,26 @@ const uint8_t Config_KOPP_FC[] PROGMEM = {
 const uint8_t Config_OOK_MU_433[] PROGMEM = {
   /*
     Address Config = No address check
-    Base Frequency = 433.919830 
-    CRC Autoflush = false 
-    CRC Enable = false 
-    Carrier Frequency = 433.919830 
-    Channel Number = 0 
-    Channel Spacing = 349.914551 
-    Data Format = Asynchronous serial mode 
-    Data Rate = 5.60379 
-    Deviation = 1.586914 
-    Device Address = 0 
-    Manchester Enable = false 
-    Modulation Format = ASK/OOK 
-    PA Ramping = false 
-    Packet Length = 61 
-    Packet Length Mode = Infinite packet length mode 
-    Preamble Count = 4 
-    RX Filter BW = 325.000000 
-    Sync Word Qualifier Mode = No preamble/sync 
-    TX Power = unknown 
-    Whitening = false 
+    Base Frequency = 433.919830
+    CRC Autoflush = false
+    CRC Enable = false
+    Carrier Frequency = 433.919830
+    Channel Number = 0
+    Channel Spacing = 349.914551
+    Data Format = Asynchronous serial mode
+    Data Rate = 5.60379
+    Deviation = 1.586914
+    Device Address = 0
+    Manchester Enable = false
+    Modulation Format = ASK/OOK
+    PA Ramping = false
+    Packet Length = 61
+    Packet Length Mode = Infinite packet length mode
+    Preamble Count = 4
+    RX Filter BW = 325.000000
+    Sync Word Qualifier Mode = No preamble/sync
+    TX Power = unknown
+    Whitening = false
   */
   0x0D,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
