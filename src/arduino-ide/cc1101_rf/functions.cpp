@@ -73,22 +73,6 @@ String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E
 }
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-float web_Bandw_read() {    /* bandwidth calculation - 0x10 | 26000/(8 * (4+(($r{"10"}>>4)&3)) * (1 << (($r{"10"}>>6)&3))) */
-  float Bandw;
-  int Bandw1;
-  int Bandw2;
-  Bandw1 = CC1101_readReg(0x10, READ_BURST);
-  Bandw1 = Bandw1 >> 4;
-  Bandw1 = 4 + (Bandw1 & 3);
-  Bandw2 = CC1101_readReg(0x10, READ_BURST);
-  Bandw2 = Bandw2 >> 6;
-  Bandw2 = Bandw2 & 3;
-  Bandw2 = 1 << Bandw2;
-  Bandw = 26000.0 / (8.0 * Bandw1 * Bandw2);
-  return Bandw;
-}
-
-
 int web_Bandw_cal(int input, int input_split) {   /* bandwidth calculation from web */
   int bits = 0;
   int bw = 0;
@@ -106,13 +90,6 @@ END:
   Serial.print(F("DB web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(input_split + bits));
 #endif
   return (input_split + bits);
-}
-
-
-float web_Datarate_read() {   /* DataRate calculation - (((256+$r{"11"})*(2**($r{"10"} & 15 )))*26000000/(2**28) / 1000) | Register 0x10,0x11 */
-  int reg10 = CC1101_readReg(0x10, READ_BURST);
-  int reg11 = CC1101_readReg(0x11, READ_BURST);
-  return (((256 + reg11 ) * (pow(2, (reg10 & 15)))) * 26000000.0 / (pow(2, 28)) / 1000.0);
 }
 
 
@@ -156,12 +133,6 @@ String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0
 #endif
 
   return reg10 + reg11;
-}
-
-
-float web_Devi_read() {   /* Deviation calculation - round((8+($r{"15"}&7))*(2**(($r{"15"}>>4)&7)) *26000/(2**17),2) | Register 0x15 */
-  int reg15 = CC1101_readReg(0x15, READ_BURST);
-  return (8 + (reg15 & 7)) * (pow(2, ((reg15 >> 4) & 7))) * 26000.0 / pow(2, 17);
 }
 
 
@@ -280,31 +251,6 @@ String web_Marcstate_read() {
 }
 
 
-String web_Mod_read() {
-  byte reg12 = CC1101_readReg(0x12, READ_BURST) >> 4;
-  switch (reg12) {
-    case 0:
-      return F("2-FSK");
-      break;
-    case 1:
-      return F("GFSK");
-      break;
-    case 3:
-      return F("ASK/OOK");
-      break;
-    case 4:
-      return F("4-FSK");
-      break;
-    case 7:
-      return F("MSK");
-      break;
-    default:
-      return F("unknown");
-      break;
-  }
-}
-
-
 byte web_Mod_set(String input) {
 #ifdef debug
   Serial.print(F("DB web_Mod_set, set new value to ")); Serial.println(input);
@@ -316,62 +262,6 @@ byte web_Mod_set(String input) {
   byte output = input.toInt() << 4;
   output = output | reg12_6_4;
   return output;
-}
-
-
-String web_PackConf_read() {
-  byte reg8_1_0 = CC1101_readReg(0x08, READ_BURST) & 0x03 ;
-  switch (reg8_1_0) {
-    case 0:
-      return F("fixed (configured in PKTLEN register)");
-      break;
-    case 1:
-      return F("variable (configured by the first byte after sync word)");
-      break;
-    case 2:
-      return F("infinite");
-      break;
-    case 3:
-      return F("reserved");
-      break;
-    default:
-      return F("unknown");
-      break;
-  }
-}
-
-
-String web_SyncQualiMode_read() {
-  byte reg12_2_0 = CC1101_readReg(0x12, READ_BURST) & 0x07 ;
-  switch (reg12_2_0) {
-    case 0:
-      return F("No preamble/sync");
-      break;
-    case 1:
-      return F("15/16 sync word bits detected");
-      break;
-    case 2:
-      return F("16/16 sync word bits detected");
-      break;
-    case 3:
-      return F("30/32 sync word bits detected");
-      break;
-    case 4:
-      return F("No preamble/sync, carrier-sense above threshold");
-      break;
-    case 5:
-      return F("15/16 + carrier-sense above threshold");
-      break;
-    case 6:
-      return F("16/16 + carrier-sense above threshold");
-      break;
-    case 7:
-      return F("30/32 + carrier-sense above threshold");
-      break;
-    default:
-      return F("unknown");
-      break;
-  }
 }
 #endif
 

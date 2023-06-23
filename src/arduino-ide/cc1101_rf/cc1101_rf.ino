@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40536 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40584 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5440     constants
-  ╚══ BSS      33288    zeroed variables
+  ╠══ RODATA   5448     constants
+  ╚══ BSS      33328    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 435036 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 433028 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     435036   code in flash
+  ╚══ IROM     433028   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -1368,6 +1368,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
     case WStype_TEXT: /*  */
       // webSocket.sendTXT(num, "message here"); /* send message to client */
       // webSocket.broadcastTXT("message here"); /* send data to all connected clients */
+      {
+#if defined debug_websocket
+        IPAddress ip = webSocket.remoteIP(num);
+        Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+#endif
+        String payloadString = (const char *)payload;
+        if (payloadString == "cc110x_detail") {
+          WebSocket_cc110x_detail();
+        }
+      }
       break;
     case WStype_BIN: /* binary files receive */
       // webSocket.sendBIN(num, payload, length); /* send message to client */

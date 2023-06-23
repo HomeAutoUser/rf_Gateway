@@ -14,10 +14,15 @@ extern boolean freqAfc;
 
 /* predefinitions of the functions */
 void WebSocket_cc110x();
+/* {"MODE":"Lacrosse_mode2","MS":"08 = STARTCAL","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","Time":"30000"} */
 void WebSocket_cc110x_detail();
+/* {"MODE":"Lacrosse_mode1", "MODE_id":"11", "Time":"30000", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"89", "11":"5C", "12":"02", "13":"22", "14":"F8", "15":"56", "16":"07", "17":"00", "18":"18", "19":"15", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"45", "2D":"2D", "2E":"D4"} */
 void WebSocket_cc110x_modes();
+/* {"MODE":"Lacrosse_mode2", "MODE_id":"12"} */
 void WebSocket_index();
+/* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
 void WebSocket_raw();
+/* {"MODE":"Lacrosse_mode2", "RAW":"9706636AE6", "RSSI":"-52", "AFC":"-15"} */
 void routing_websites();
 void web_cc110x();
 void web_cc110x_detail();
@@ -433,14 +438,12 @@ void web_cc110x_detail() {
   String freq = HttpServer.arg("freq");
   String freqOff = HttpServer.arg("freq_off");
   String mod = HttpServer.arg("modulation");
-  String mod_array[8] = { F("2-FSK"), F("GFSK"), "", F("ASK/OOK"), F("4-FSK"), "", "", F("MSK") };
   String return_val;
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
-  String web_status = F("<tr><td class=\"in\" colspan=\"6\">current values ​​readed &#10004;</td></tr>");
+  String web_status = F("<tr><td class=\"in\" colspan=\"6\"><span id=\"state\"></span></td></tr>");
   String website;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
-
 
   if (countargs != 0) {
 #ifdef debug_html
@@ -563,10 +566,10 @@ void web_cc110x_detail() {
     }
     activated_mode_name = F("CC110x user configuration");
   } else {
-    freq = String(web_Freq_read(CC1101_readReg(13, READ_BURST),
-                                CC1101_readReg(14, READ_BURST),
-                                CC1101_readReg(15, READ_BURST)
-                               ), 3);
+    //    freq = String(web_Freq_read(CC1101_readReg(13, READ_BURST),
+    //                                CC1101_readReg(14, READ_BURST),
+    //                                CC1101_readReg(15, READ_BURST)
+    //                               ), 3);
   }
   temp = "";
 
@@ -581,71 +584,45 @@ void web_cc110x_detail() {
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
-               "<tr><td colspan=\"2\">Frequency (should | is )</td><td class=\"di\" colspan=\"2\">");
-  website += String(web_Freq_read(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 13),
-                                  pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 14),
-                                  pgm_read_byte_near(Registers[activated_mode_nr].reg_val + 15)
-                                 ), 3);
-  website += F(" | ");
-  website += String(web_Freq_read(CC1101_readReg(13, READ_BURST),
-                                  CC1101_readReg(14, READ_BURST),
-                                  CC1101_readReg(15, READ_BURST)
-                                 ), 3);
-  website += F(" MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" name=\"freq\" value=\"");
-  website += freq;
-  website += F("\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>");  // end Frequency
-
-  website += F("<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
+               // Frequency (should | is)
+               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQ\"></span> | <span id=\"FREQis\"></span>"
+               " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" name=\"freq\" value=\""
+               //  website += freq;
+               "\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
+               // Frequency Offset
+               "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? " checked" : "");
 
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
-  website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>");  // end Frequency Offset
-
-  website += F("<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\">");
-  website += web_Bandw_read();
-  website += F(" kHz</td><td class=\"ce\"><input aria-label=\"Bw\" size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
-  website += String(web_Bandw_read(), 0);
-  website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"  // end Bandwidth
-               "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\">");
-  website += String(web_Datarate_read(), 2);
-  website += F(" kBaud</td><td class=\"ce\"><input aria-label=\"datra\" size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
-  website += String(web_Datarate_read(), 2);
-  website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"  // end DataRate
-               "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\">");
-  website += String(web_Devi_read(), 2);
-  website += F(" kHz</td><td class=\"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
-  website += String(web_Devi_read(), 2);
-  website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"  // end Deviation
-               "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"mod\">");
-  website += web_Mod_read();
-  website += F("</span><td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\">");
-
-  for (byte i = 0; i <= 7; i++) {
-    if (i == 2 || i == 5 || i == 6) {
-      continue;
-    }
-    website += F("<option value=");
-    website += i;
-    if (mod_array[i] == web_Mod_read()) {
-      website += F(" selected");
-    }
-    website += '>';
-    website += mod_array[i];
-    website += F("</option>");
-  }
-
-  website += F("</select></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"  // end Modulation
-               "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\">");
-  website += web_PackConf_read();
-  website += F("</td></tr><tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span>");
-  website += web_SyncQualiMode_read();
-  website += F("</td></tr>"
+  website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>"
+               // Bandwidth
+               "<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
+               "<td class=\"ce\"><input aria-label=\"Bw\" size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
+  website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
+               // DataRate
+               "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
+               "<td class=\"ce\"><input aria-label=\"datra\" size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
+  website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
+               // Deviation
+               "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
+               "<td class = \"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
+  website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
+               // Modulation
+               "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>");
+  website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"><option value=\"2-FSK\">2-FSK</option></select></td>");
+  website += F("<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"
+               // Packet length config
+               "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
+               // Sync-word qualifier mode
+               "<tr><td colspan = \"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
+               // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_import'\">import registers</button></td></tr>");
+  // status line
   website += web_status + F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
 
   for (byte i = 0; i <= 46; i++) {
@@ -658,16 +635,15 @@ void web_cc110x_detail() {
     website += F("</td><td class=\"ce\">");
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     temp.toUpperCase();
-    website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"0x");
-    website += onlyDecToHex2Digit(i);             /* registername for GET / POST */
+    website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"r");
+    website += i;                                 /* registername for GET / POST */
     website += F("\" value=\"");
     website += temp;                              /* value for GET / POST */
     website += F("\" type=\"text\" maxlength=\"2\" pattern=\"^[\\da-fA-F]{1,2}$\" placeholder=\"");
     website += temp;                              /* placeholder */
     website += F("\"></td><td colspan=\"4\"><span id=\"n");
     website += i;
-    website += F("\"></span>");
-    website += F("</td></tr>");
+    website += F("\"></span></td></tr>");
   }
 
   website += F("</tbody></table></form></body></html>");
@@ -1036,12 +1012,11 @@ void WebSocket_cc110x() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x running"));
 #endif
-  /* {"MS":"08 = STARTCAL","MODE":"Lacrosse_mode1","ToggleBank":"{&emsp;11&emsp;12&emsp;-&emsp;-&emsp;}","Time":"45000"} */
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"MS\":\"");
-    website += web_Marcstate_read();
-    website += F("\",\"MODE\":\"");
+    String website = F("{\"MODE\":\"");
     website += activated_mode_name;
+    website += F("\",\"MS\":\"");
+    website += web_Marcstate_read();
     website += F("\",\"ToggleBank\":\"{&emsp;");
 
     for (byte i = 0; i < 4; i++) {
@@ -1072,31 +1047,36 @@ void WebSocket_cc110x_detail() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x_detail running"));
 #endif
-  /* {"Time":"45000", "MODE_id":"12", "MODE":"Lacrosse_mode2", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"C8", "11":"83", "12":"02", "13":"22", "14":"F8", "15":"42", "16":"07", "17":"00", "18":"18", "19":"16", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"41", "2D":"2D", "2E":"D4"} */
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"Time\":\"");
-    website += ToggleTime;
+    unsigned long testt = micros();
+
+    String website = F("{\"MODE\":\"");
+    website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
-    website += F("\", \"MODE\":\"");
-    website += activated_mode_name;
+    website += F("\", \"Time\":\"");
+    website += ToggleTime;
     website += F("\", ");
 
-    for (byte i = 0; i <= 46; i++) { /* all registers */
-      website += F("\"");
-      website += onlyDecToHex2Digit(i);
-      website += F("\":\"");
-      website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
+    website += F("\"Config\":\"");
+    for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
+      if (ToggleTime != 0) {
+        website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
+      } else {
+        website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+      }
       if (i == 46) {
         website += F("\"}");
       } else {
-        website += F("\", ");
+        website += ',';
       }
     }
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == F("/cc110x_detail")) {
         webSocket.sendTXT(num, website);
+        Serial.print("micros: ");
+        Serial.println(micros() - testt);
       }
     }
   }
@@ -1107,7 +1087,6 @@ void WebSocket_cc110x_modes() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x_modes running"));
 #endif
-  /* {"MODE":"Lacrosse_mode2", "MODE_id":"12"} */
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
     website += activated_mode_name;
@@ -1134,7 +1113,6 @@ void WebSocket_index() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_index running"));
 #endif
-  /* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
   if (webSocket.connectedClients() > 0) {
     unsigned long Uptime = getUptime();
     String website = F("{\"CC1101\":\"");
@@ -1171,8 +1149,6 @@ void WebSocket_raw() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_raw running"));
 #endif
-
-  /* {"RAW":"9706226A9B", "RAW_rssi":"-72", "RAW_afc":"-15", "RAW_MODE":"Lacrosse_mode2"} */
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
     website += activated_mode_name;
