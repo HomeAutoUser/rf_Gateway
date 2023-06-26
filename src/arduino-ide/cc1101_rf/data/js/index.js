@@ -11,19 +11,23 @@ var js = document.createElement("script");
 js.src = '/all.js';
 document.head.appendChild(js);
 
+var UptTxt = '';
+
 // Show the received message 
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /* {"CC1101":"yes","RAM":"31024","Uptime":"7485","dd":"0","hh":"2","mm":"4","ss":"45","MSGcnt":"1330","WLANdB":"-61"} */
+  /* {"CC1101":"yes","RAM":"31024","Uptime":"7485","MSGcnt":"1330","WLANdB":"-61"} */
   if(event.data.includes('CC1101') ) {
     var obj = JSON.parse(event.data);
     document.getElementById("RAM").innerHTML = obj.RAM;
     document.getElementById("Uptime").innerHTML = obj.Uptime;
-    document.getElementById("dd").innerHTML = obj.dd;
-    document.getElementById("hh").innerHTML = obj.hh;
-    document.getElementById("mm").innerHTML = obj.mm;
-    document.getElementById("ss").innerHTML = obj.ss;
+    var dd = ~~(obj.Uptime/60/60/24);
+    var hh = ~~( (obj.Uptime/60/60) % 24 );
+    var mm = ~~( (obj.Uptime/60) % 60 );
+    var ss = (obj.Uptime % 60);
+    UptTxt = dd + ' day(s)&emsp;' + hh + ' hour(s)&emsp;' + mm + ' minute(s)&emsp;' + ss + ' second(s)';
+    document.getElementById("UptimeTxT").innerHTML = UptTxt;
     document.getElementById("WLANdB").innerHTML = obj.WLANdB;
 
     if ( (obj.Uptime / 60) >= 60) {

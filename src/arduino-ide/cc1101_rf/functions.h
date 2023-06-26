@@ -26,7 +26,6 @@ uint16_t hexToDec(String hexString);
 uint32_t EEPROMread_long(int address);
 uint8_t * EEPROMread_ipaddress(int address);
 uint8_t EEPROMread(int adr);
-unsigned long getUptime();
 void EEPROMclear();
 void EEPROMread_table();
 void EEPROMwrite(int adr, byte val);

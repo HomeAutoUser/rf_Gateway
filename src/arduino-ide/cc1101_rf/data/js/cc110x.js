@@ -19,7 +19,7 @@ function onMessage(event) {
     var obj = JSON.parse(event.data);
     document.getElementById("MS").innerHTML = obj.MS;
     document.getElementById("MODE").innerHTML = obj.MODE;
-    document.getElementById("ToggleBank").innerHTML = obj.ToggleBank;
+    document.getElementById("ToggleBank").innerHTML = obj.ToggleBank.replace(/\s/g, '&emsp;');
     document.getElementById("Time").innerHTML = obj.Time;
   }
 }

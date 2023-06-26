@@ -291,18 +291,6 @@ boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 =
 }
 
 
-unsigned long getUptime() {   /* gibt die Uptime vom uC wieder */
-  unsigned long now = millis();
-  static uint16_t times_rolled = 0;
-  static unsigned long last = 0;
-  if (now < last) {
-    times_rolled++;
-  }
-  last = now;
-  return (0xFFFFFFFF / 1000) * times_rolled + (now / 1000);
-}
-
-
 int freeRam () {    /* gibt den freien Speicher wieder | Arduino Nano (andere uC´s ggf andere Variante) */
 #if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
   extern int __heap_start, *__brkval;

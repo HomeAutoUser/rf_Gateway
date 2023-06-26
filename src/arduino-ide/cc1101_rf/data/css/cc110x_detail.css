@@ -8,6 +8,12 @@ input {
  color: #0000b3;
 }
 
+div.txt {
+ display: inline-block;
+ text-align: left;
+ width: 50px;
+}
+
 a:link.CC110x, a:visited.CC110x {
  color: #cc00cc;
 }

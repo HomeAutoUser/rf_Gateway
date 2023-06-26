@@ -14,6 +14,7 @@ var color1 = value.getPropertyValue('--val_std');
 var color2 = value.getPropertyValue('--val_diff');
 var status_html = false;
 var status_websocket = false;
+var mod_list = false;
 
 
 // Show the received message 
@@ -63,8 +64,11 @@ function onMessage(event) {
             Freq = (Freq + parseInt(reg[i], 16) );
             Freq = (26 * Freq) / 65536;
             document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-            document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
+            document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
             document.getElementsByName('freq')[0].value = Freq.toFixed(3);
+            Freq = Freq + (obj['FreOff'] * 1);
+            document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
+            document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
           }
         }
 
@@ -80,6 +84,7 @@ function onMessage(event) {
             CHANBW = 26000.0 / (8.0 * CHANBW1 * CHANBW2);
             document.getElementById('CHANBW').innerHTML = CHANBW.toFixed(1) + ' kHz';
             document.getElementsByName('bandw')[0].value = CHANBW.toFixed(1);
+            document.getElementById('p3').pattern = "^[\\d]{2,3}(\\.[\\d]{1,2})?$";
 
             /* DataRate */
             DRATE1 = parseInt(reg[i], 16);
@@ -91,18 +96,21 @@ function onMessage(event) {
             DRATE =  ( ( (256 + DRATE2) * (2 ** (DRATE1 & 15)) ) * 26000000.0 / (2 ** 28) / 1000.0 );
             document.getElementById('DRATE').innerHTML = DRATE.toFixed(2) + ' kBaud';
             document.getElementsByName('datarate')[0].value = DRATE.toFixed(2);
+            document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,2})?$";
           }
         }
 
         if (i == 18) { /* 0x12: MDMCFG2 - Modulation */
           /* html select element | added options (first value 2-FSK is in html programmed) */
-          var selectElement = document.getElementById('modulation');
-          for (var j = 0; j<=7; j++) {
-            if (MOD_FORMAT[j] != '' && MOD_FORMAT[j] != '2-FSK') {
-              selectElement.add(new Option(MOD_FORMAT[j]));
+          if (!mod_list) {
+            mod_list = true;
+            var selectElement = document.getElementById('modulation');
+            for (var j = 0; j<=7; j++) {
+              if (MOD_FORMAT[j] != '' && MOD_FORMAT[j] != '2-FSK') {
+                selectElement.add(new Option(MOD_FORMAT[j]));
+              }
             }
           }
-
           /* MOD_FORMAT */
           var val = (parseInt(reg[i], 16) & "01110000") >> 4;
           document.getElementById('MOD_FORMAT').innerHTML = MOD_FORMAT[val];
@@ -119,6 +127,7 @@ function onMessage(event) {
           DEVIATN = (8 + (DEVIATN & 7)) * ( 2 ** ((DEVIATN >> 4) & 7)  ) * 26000.0 / ( 2 ** 17);
           document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(2) + ' kHz';
           document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(2);
+          document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,2})?$";
         }
       }
 

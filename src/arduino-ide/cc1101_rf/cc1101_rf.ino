@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40584 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40468 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5448     constants
-  ╚══ BSS      33328    zeroed variables
+  ╠══ RODATA   5340     constants
+  ╚══ BSS      33320    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 433028 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 431288 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     433028   code in flash
+  ╚══ IROM     431288   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -252,6 +252,7 @@ uint32_t msgCount = 0;                        /* message counter over all receiv
 byte client_now;
 unsigned long secTick = 0; // time that the clock last "ticked"
 unsigned long toggleTick = 0;
+unsigned long uptime = 0;
 
 /* now all websites, all settings are available here */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -353,7 +354,7 @@ void setup() {
   }
   File logfile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
   if (logfile) {
-    String logText = String(getUptime());
+    String logText = String(uptime);
     logText += F(" - Systemstart (");
 #if defined(ARDUINO_ARCH_ESP8266)
     logText += ESP.getResetReason();
@@ -502,6 +503,7 @@ void loop() {
 
   if ((millis() - secTick) >= 1000UL) { // jede Sekunde
     secTick += 1000UL;
+    uptime++;
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_index(); // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
 #endif
@@ -592,9 +594,6 @@ void loop() {
     if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
       CC1101_cmdStrobe(CC1101_SFRX);
     }
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
-#endif
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
     CC1101_cmdStrobe(CC1101_SRX);
     for (uint8_t i = 0; i < 255; i++) {
@@ -608,6 +607,9 @@ void loop() {
     }
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#endif
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
     digitalWriteFast(LED, LOW); /* LED off */
   }
@@ -724,7 +726,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           }
           MSG_OUTPUT(F("CC110x_Freq.Offset saved value "));
           MSG_OUTPUTLN(Freq_offset, 3);
-
           EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
           EEPROM.commit();
@@ -813,7 +814,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 't':
       if (!buf_input[1]) { /* command t */
-        MSG_OUTPUTLN(getUptime());
+        MSG_OUTPUTLN(uptime);
       } else {
         commandCHECK = false;
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
@@ -1279,7 +1280,7 @@ void Telnet() {
         Serial.println(F(" connected new session"));
         File logfile = LittleFS.open("/files/log.txt", "a");  // open logfile for append to end of file
         if (logfile) {
-          logfile.print(getUptime());
+          logfile.print(uptime);
           logfile.print(F(" - Telnet client "));
           logfile.print(TelnetClient[i].remoteIP());
           logfile.println(F(" connected"));

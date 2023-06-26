@@ -68,7 +68,6 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
 
 
 void web_index() {
-  unsigned long Uptime = getUptime();
   String website;
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
@@ -101,16 +100,8 @@ void web_index() {
   website += F("</span> dB");
 #endif
   website += F("</td></tr><tr><td>Uptime (Seconds)</td><td><span id=\"Uptime\">");
-  website += Uptime;
-  website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"dd\">");
-  website += elapsedDays(Uptime);
-  website += F("</span> day(s)&emsp;<span id=\"hh\">");
-  website += numberOfHours(Uptime);
-  website += F("</span> hour(s)&emsp;<span id=\"mm\">");
-  website += numberOfMinutes(Uptime);
-  website += F("</span> minute(s)&emsp;<span id=\"ss\">");
-  website += numberOfSeconds(Uptime);
-  website += F("</span> second(s)</td></tr><tr><td>Version</td><td>");
+  website += uptime;
+  website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
   website += TXT_VERSION;
   website += F("</td></tr></tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
@@ -586,30 +577,29 @@ void web_cc110x_detail() {
                "</thead><tbody>"
                // Frequency (should | is)
                "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQ\"></span> | <span id=\"FREQis\"></span>"
-               " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" name=\"freq\" value=\""
-               //  website += freq;
-               "\" pattern=\"^[\\d]{3}(\\.[\\d]{1,3})?$\"></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
+               " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" id=\"p1\" name=\"freq\" value=\""
+               "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? " checked" : "");
 
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
-  website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" name=\"freq_off\" value=\"");
+  website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
-  website += F("\" pattern=\"^-?[\\d]{1,3}(\\.[\\d]{1,3})?$\"></td></tr>"
+  website += F("\"><div class=\"txt\">&ensp;MHz</div></td></tr>"
                // Bandwidth
                "<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
-               "<td class=\"ce\"><input aria-label=\"Bw\" size=\"7\" maxlength=\"5\" name=\"bandw\" value=\"");
-  website += F("\" pattern=\"^[\\d]{2,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
+               "<td class=\"ce\"><input aria-label=\"Bw\" size=\"7\" maxlength=\"5\" id=\"p3\" name=\"bandw\" value=\"");
+  website += F("\"><div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
                // DataRate
                "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
-               "<td class=\"ce\"><input aria-label=\"datra\" size=\"7\" maxlength=\"6\" name=\"datarate\" value=\"");
-  website += F("\" pattern = \"^[\\d]{1,4}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
+               "<td class=\"ce\"><input aria-label=\"datra\" size=\"7\" maxlength=\"6\" id=\"p4\" name=\"datarate\" value=\"");
+  website += F("\"><div class=\"txt\">&ensp;kBaud</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
                // Deviation
                "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
-               "<td class = \"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" name=\"deviation\" value=\"");
-  website += F("\" pattern = \"^[\\d]{1,3}(\\.[\\d]{1,2})?$\"></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
+               "<td class=\"ce\"><input aria-label=\"devi\" size=\"7\" maxlength=\"5\" id=\"p5\" name=\"deviation\" value=\"");
+  website += F("\"><div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
                // Modulation
                "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>");
   website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"><option value=\"2-FSK\">2-FSK</option></select></td>");
@@ -617,7 +607,7 @@ void web_cc110x_detail() {
                // Packet length config
                "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
                // Sync-word qualifier mode
-               "<tr><td colspan = \"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
                // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
@@ -1017,7 +1007,7 @@ void WebSocket_cc110x() {
     website += activated_mode_name;
     website += F("\",\"MS\":\"");
     website += web_Marcstate_read();
-    website += F("\",\"ToggleBank\":\"{&emsp;");
+    website += F("\",\"ToggleBank\":\"{ ");
 
     for (byte i = 0; i < 4; i++) {
       if (ToggleArray[i] == 255) {
@@ -1026,11 +1016,11 @@ void WebSocket_cc110x() {
         website += ToggleArray[i];
       }
       if (i != 3) {
-        website += F("&emsp;");
+        website += F(" ");
       }
     }
 
-    website += F("&emsp;}\",\"Time\":\"");
+    website += F(" }\",\"Time\":\"");
     website += ToggleTime;
     website += F("\"}");
 
@@ -1048,14 +1038,14 @@ void WebSocket_cc110x_detail() {
   Serial.println(F("DB WebSocket_cc110x_detail running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    unsigned long testt = micros();
-
     String website = F("{\"MODE\":\"");
     website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
     website += F("\", \"Time\":\"");
     website += ToggleTime;
+    website += F("\", \"FreOff\":\"");
+    website += String(Freq_offset,3);
     website += F("\", ");
 
     website += F("\"Config\":\"");
@@ -1075,8 +1065,6 @@ void WebSocket_cc110x_detail() {
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == F("/cc110x_detail")) {
         webSocket.sendTXT(num, website);
-        Serial.print("micros: ");
-        Serial.println(micros() - testt);
       }
     }
   }
@@ -1114,22 +1102,12 @@ void WebSocket_index() {
   Serial.println(F("DB WebSocket_index running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    unsigned long Uptime = getUptime();
     String website = F("{\"CC1101\":\"");
     CC1101_found ? website += F("yes") : website += F("no");
     website += F("\",\"RAM\":\"");
     website += freeRam();
     website += F("\",\"Uptime\":\"");
-    website += Uptime;
-    // "dd":"0","hh":"0","mm":"3","ss":"59" könnte in javascript berechnet werden, spart ca. 200 µS
-    website += F("\",\"dd\":\"");
-    website += elapsedDays(Uptime);
-    website += F("\",\"hh\":\"");
-    website += numberOfHours(Uptime);
-    website += F("\",\"mm\":\"");
-    website += numberOfMinutes(Uptime);
-    website += F("\",\"ss\":\"");
-    website += numberOfSeconds(Uptime);
+    website += uptime;
     website += F("\",\"MSGcnt\":\"");
     website += msgCount;
     website += F("\",\"WLANdB\":\"");

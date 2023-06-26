@@ -38,7 +38,7 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
     WLAN_OK = true;
     File logfile = LittleFS.open("/files/log.txt", "a");         // Datei mit Schreibrechten öffnen
     if (logfile) {
-      String logText = String(getUptime());
+      String logText = String(uptime);
       logText += F(" - WIFI Access point active");
       logfile.println(logText);
       logfile.close(); /* Schließen der Datei */
@@ -67,6 +67,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
   WiFi.mode(WIFI_STA);               /* WIFI set mode */
   WiFi.hostname(OwnStationHostname); /* WIFI set hostname */
 
+#ifdef debug_wifi
   if (EEPROMread(EEPROM_ADDR_DHCP) == 0) { /* WIFI config static IP */
     if (!WiFi.config(eip, esnm, esgw, edns)) {
       Serial.println("WIFI Stationsmode WIFI_STA Failed to configure");
@@ -76,36 +77,45 @@ void start_WLAN_STATION(String qssid, String qpass) {
   } else {
     Serial.println(F("WIFI Stationsmode WIFI_STA configured DHCP"));
   }
-
+#endif
   WiFi.begin(qssid.c_str(), qpass.c_str()); /* WIFI connect to ssid with password */
 
+#ifdef debug_wifi
   Serial.print(F("WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
+#endif
   delay(50);
 
   unsigned long startTime = millis(); /* ... Give ESP 60 seconds to connect to station. */
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 60000) {
     digitalWriteFast(LED, !digitalRead(LED));  // LED toggle
     delay(500);
+#ifdef debug_wifi
     Serial.print('.');
+#endif
   }
+#ifdef debug_wifi
   Serial.println("");
+#endif
 
   if (WiFi.status() == WL_CONNECTED) {
     digitalWriteFast(LED, LOW);  // LED off
+#ifdef debug_wifi
     Serial.print(F("WIFI IP address ")); Serial.println(WiFi.localIP());
-
+#endif
     if (qssid != EEPROMread_string(EEPROM_ADDR_SSID) || qpass != EEPROMread_string(EEPROM_ADDR_PASS)) {
       EEPROMwrite_string(EEPROM_ADDR_SSID, qssid);
       EEPROMwrite_string(EEPROM_ADDR_PASS, qpass);
       EEPROMwrite(EEPROM_ADDR_AP, 0);
+#ifdef debug_wifi
       Serial.println(F("WIFI Settings to EEPROM"));
     } else {
       Serial.println(F("WIFI Settings from EEPROM"));
+#endif
     }
 
     File logfile = LittleFS.open("/files/log.txt", "a");  // Datei mit Schreibrechten öffnen
     if (logfile) {
-      String logText = String(getUptime());
+      String logText = String(uptime);
       logText += F(" - WIFI connected to ");
       logText += qssid;
       logfile.println(logText);

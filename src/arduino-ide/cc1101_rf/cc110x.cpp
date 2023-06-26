@@ -58,11 +58,11 @@ void CC1101_init() { /* CC1101 - Set default´s */
   uint8_t chipVersion = CC1101_readReg(CC1101_VERSION, READ_BURST);
   if (chipVersion == 0x14 || chipVersion == 0x04 || chipVersion == 0x03 || chipVersion == 0x05 || chipVersion == 0x07 || chipVersion == 0x17) {  // found CC110x
     CC1101_cmdStrobe(CC1101_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-    Serial.println(F("CC110x found"));
     CC1101_found = true;
+#ifdef debug_cc110x
+    Serial.println(F("CC110x found"));
     Serial.print(F("CC110x_PARTNUM         ")); Serial.println(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);        // PARTNUM – Chip ID
     Serial.print(F("CC110x_VERSION         ")); Serial.println(chipVersion, HEX);                                       // VERSION – Chip ID
-#ifdef debug_cc110x
     Serial.print(F("CC110x_FREQEST         ")); Serial.println(CC1101_readReg(CC1101_FREQEST, READ_BURST), HEX);        // FREQEST – Frequency Offset Estimate from Demodulator
     Serial.print(F("CC110x_LQI             ")); Serial.println(CC1101_readReg(CC1101_LQI, READ_BURST), HEX);            // LQI – Demodulator Estimate for Link Quality
     Serial.print(F("CC110x_RSSI            ")); Serial.println(CC1101_readReg(CC1101_RSSI, READ_BURST), HEX);           // RSSI – Received Signal Strength Indication
@@ -116,9 +116,9 @@ void CC1101_init() { /* CC1101 - Set default´s */
         EEPROM.commit();
 #endif
       }
-      Serial.print(F("CC110x_Freq.Offset     ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
       activated_mode_nr = EEPROMread(EEPROM_ADDR_Prot);
 #ifdef debug_cc110x
+      Serial.print(F("CC110x_Freq.Offset     ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
       Serial.print(F("DB CC1101_init, EEPROM read last activated mode ")); Serial.println(activated_mode_nr);
 #endif
       ToggleTime = EEPROMread_long(EEPROM_ADDR_Toggle);
@@ -174,9 +174,11 @@ void CC1101_init() { /* CC1101 - Set default´s */
           break;
         }
         delay(1);
+#ifdef debug_cc110x
         if (i == 254) {
           Serial.println("CC1101_init, ERROR read CC1101_MARCSTATE, READ_BURST !");
         }
+#endif
       }
       // Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
     } else { /* Ende normaler Start */
@@ -225,13 +227,15 @@ void CC1101_init() { /* CC1101 - Set default´s */
       Serial.println(F("DB CC1101_init, set cc110x to factory settings"));
       Serial.print(F("DB CC1101_init, activated_mode_nr = "));
       Serial.print(activated_mode_nr); Serial.print(F(", ")); Serial.println(activated_mode_name);
-#endif
       Serial.println(F("CC1101 remains idle, please set receive mode!"));
+#endif
       // Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
   } else { /* NO CC1101 found */
     CC1101_found = false;
+#ifdef debug_cc110x
     Serial.println(F("DB CC1101_init, CC110x NOT recognized"));
+#endif
   }
 }
 
