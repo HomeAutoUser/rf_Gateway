@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40468 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40504 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5340     constants
+  ╠══ RODATA   5376     constants
   ╚══ BSS      33320    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 431288 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 431664 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     431288   code in flash
+  ╚══ IROM     431664   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -1377,6 +1377,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         String payloadString = (const char *)payload;
         if (payloadString == "cc110x_detail") {
           WebSocket_cc110x_detail();
+        } else if (payloadString == "help") {
+          WebSocket_help();
         }
       }
       break;

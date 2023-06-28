@@ -14,13 +14,15 @@ extern boolean freqAfc;
 
 /* predefinitions of the functions */
 void WebSocket_cc110x();
-/* {"MODE":"Lacrosse_mode2","MS":"08 = STARTCAL","ToggleBank":"{&emsp;11&emsp;12&emsp;13&emsp;-&emsp;}","Time":"30000"} */
+/* {"MODE":"OOK_MU_433","MS":"08 = STARTCAL","ToggleBank":"{ 11 12 13 - }","Time":"30000"} */
 void WebSocket_cc110x_detail();
-/* {"MODE":"Lacrosse_mode1", "MODE_id":"11", "Time":"30000", "00":"01", "01":"2E", "02":"2E", "03":"41", "04":"2D", "05":"D4", "06":"05", "07":"80", "08":"00", "09":"00", "0A":"00", "0B":"06", "0C":"00", "0D":"21", "0E":"65", "0F":"6A", "10":"89", "11":"5C", "12":"02", "13":"22", "14":"F8", "15":"56", "16":"07", "17":"00", "18":"18", "19":"15", "1A":"6C", "1B":"43", "1C":"68", "1D":"91", "1E":"87", "1F":"6B", "20":"F8", "21":"B6", "22":"11", "23":"EA", "24":"2A", "25":"00", "26":"1F", "27":"41", "28":"00", "29":"01", "2A":"2E", "2B":"2E", "2C":"45", "2D":"2D", "2E":"D4"} */
+/* {"MODE":"Lacrosse_mode2", "MODE_id":"12", "Time":"30000", "FreOff":"0.000", "Config":"01,2E,2E,41,2D,D4,05,80,00,00,00,06,00,21,65,6A,C8,83,02,22,F8,42,07,00,18,16,6C,43,68,91,87,6B,F8,B6,11,EA,2A,00,1F,41,00,01,2E,2E,41,2D,D4"} */
 void WebSocket_cc110x_modes();
 /* {"MODE":"Lacrosse_mode2", "MODE_id":"12"} */
+void WebSocket_help();
+/* {"CC1101":"no"} */
 void WebSocket_index();
-/* {"CC1101":"yes","RAM":"31296","Uptime":"239","dd":"0","hh":"0","mm":"3","ss":"59","MSGcnt":"50","WLANdB":"-53"} */
+/* {"CC1101":"yes","RAM":"29496","Uptime":"305","MSGcnt":"37","WLANdB":"-60"} */
 void WebSocket_raw();
 /* {"MODE":"Lacrosse_mode2", "RAW":"9706636AE6", "RSSI":"-52", "AFC":"-15"} */
 void routing_websites();
@@ -33,6 +35,7 @@ void web_index();
 void web_log();
 void web_raw();
 void web_wlan();
+String HTML_mod(String txt);
 
 /* Display of all websites from the web server
   https://wiki.selfhtml.org/wiki/HTML/Tutorials/Grundger%C3%BCst
@@ -74,6 +77,7 @@ void web_index() {
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
   website += String(html_head_table);
+  website = HTML_mod(website);
   website += F("<body><table><thead><tr><th colspan=2>Device - Information</th></tr></thead>"
                "<tbody><tr><td class=\"tdf\">Firmware compiled</td><td>");
   website += compile_date;
@@ -116,6 +120,7 @@ void web_cc110x() {
                "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
                "</head>");
   website += String(html_head_table);
+  website = HTML_mod(website);
   website += F("<body>"
                "<table><thead>"
                "<tr>");
@@ -557,10 +562,7 @@ void web_cc110x_detail() {
     }
     activated_mode_name = F("CC110x user configuration");
   } else {
-    //    freq = String(web_Freq_read(CC1101_readReg(13, READ_BURST),
-    //                                CC1101_readReg(14, READ_BURST),
-    //                                CC1101_readReg(15, READ_BURST)
-    //                               ), 3);
+
   }
   temp = "";
 
@@ -582,7 +584,6 @@ void web_cc110x_detail() {
                // Frequency Offset
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? " checked" : "");
-
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
@@ -646,6 +647,7 @@ void web_log() {
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
   website += String(html_head_table);
+  website = HTML_mod(website);
 
   File logfile = LittleFS.open("/files/log.txt", "r");
   if (!logfile) {
@@ -767,6 +769,7 @@ void web_wlan() {
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"wlan.css\">"
                "</head>");
   website += String(html_head_table);
+  website = HTML_mod(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                     /* START Tabelle gesamt */
                "<thead>"
@@ -1045,7 +1048,7 @@ void WebSocket_cc110x_detail() {
     website += F("\", \"Time\":\"");
     website += ToggleTime;
     website += F("\", \"FreOff\":\"");
-    website += String(Freq_offset,3);
+    website += String(Freq_offset, 3);
     website += F("\", ");
 
     website += F("\"Config\":\"");
@@ -1090,6 +1093,21 @@ void WebSocket_cc110x_modes() {
         website = F("{\"MODE\":\"");
         website += activated_mode_name;
         website += F("\"}");
+        webSocket.sendTXT(num, website);
+      }
+    }
+  }
+}
+
+
+void WebSocket_help() {
+#ifdef debug_websocket
+  Serial.println(F("DB WebSocket_help running"));
+#endif
+  if (webSocket.connectedClients() > 0) {
+    String website = F("{\"CC1101\":\"no\"}");
+    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+      if (webSocketSite[num] == F("/help")) {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1186,4 +1204,12 @@ void routing_websites() {
     HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   });
+}
+
+
+String HTML_mod(String txt) {
+  if (CC1101_found != true) {
+    txt.replace("<a href=\"raw\" class=\"RAW\">RAW data</a>", "");
+  }
+  return txt;
 }

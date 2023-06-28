@@ -17,7 +17,6 @@ document.head.appendChild(js);
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /*  {"MODE_id":"11", "MODE":"Lacrosse_mode1"} */
   if (event.data.includes('MODE_id') ) {
     var obj = JSON.parse(event.data);
 
@@ -39,7 +38,7 @@ function onMessage(event) {
 
         if (myEle!=null && bt != 'null' && bt != 'NULL') {
           if (btnr == obj.MODE_id) {                /* current button status */
-            document.querySelector(bt).innerHTML = 'active reception &#10004;';
+            document.querySelector(bt).innerHTML = 'active reception';
             document.querySelector(bt).className = 'btn2';
           } else {
             document.querySelector(bt).innerHTML = 'enable reception';

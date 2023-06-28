@@ -131,7 +131,9 @@ function onMessage(event) {
         }
       }
 
-      document.getElementById('state').innerHTML = obj['MODE'] + ' values readed &#10004;';
+      if (document.getElementById('state')) {
+        document.getElementById('state').innerHTML = obj['MODE'] + ' values readed &#10004;';        
+      }
     }
   }
 }

@@ -2,9 +2,6 @@
   JavaScript for website cc110x / CC110x - cc110x_rf_Gateway
   Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
   URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
-
-  --- Data update via Websocket ---
-
 */
 
 var js = document.createElement("script");

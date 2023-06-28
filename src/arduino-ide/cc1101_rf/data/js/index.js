@@ -2,9 +2,6 @@
   JavaScript for website HOME / - cc110x_rf_Gateway
   Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
   URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
-
-  --- Data update via Websocket ---
-
 */
 
 var js = document.createElement("script");
@@ -17,7 +14,6 @@ var UptTxt = '';
 function onMessage(event) {
   console.log('received message: ' + event.data);
 
-  /* {"CC1101":"yes","RAM":"31024","Uptime":"7485","MSGcnt":"1330","WLANdB":"-61"} */
   if(event.data.includes('CC1101') ) {
     var obj = JSON.parse(event.data);
     document.getElementById("RAM").innerHTML = obj.RAM;

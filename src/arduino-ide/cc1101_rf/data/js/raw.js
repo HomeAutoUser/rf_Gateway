@@ -2,9 +2,6 @@
   JavaScript for website RAW data /raw - cc110x_rf_Gateway
   Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
   URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
-
-  --- Data update via Websocket ---
-
 */
 
 var store = document.querySelector(':root');        /* Get the CSS root element */
