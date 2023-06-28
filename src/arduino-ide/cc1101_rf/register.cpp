@@ -4,58 +4,6 @@
 String web_regData[47] = {
 };
 
-#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-const char* regExplanation_short[47] PROGMEM = {
-  "IOCFG2",
-  "IOCFG1",
-  "IOCFG0",
-  "FIFOTHR",
-  "SYNC1",
-  "SYNC0",
-  "PKTLEN",
-  "PKTCTRL1",
-  "PKTCTRL0",
-  "ADDR",
-  "CHANNR",
-  "FSCTRL1",
-  "FSCTRL0",
-  "FREQ2",
-  "FREQ1",
-  "FREQ0",
-  "MDMCFG4",
-  "MDMCFG3",
-  "MDMCFG2",
-  "MDMCFG1",
-  "MDMCFG0",
-  "DEVIATN",
-  "MCSM2",
-  "MCSM1",
-  "MCSM0",
-  "FOCCFG",
-  "BSCFG",
-  "AGCCTRL2",
-  "AGCCTRL1",
-  "AGCCTRL0",
-  "WOREVT1",
-  "WOREVT0",
-  "WORCTRL",
-  "FREND1",
-  "FREND0",
-  "FSCAL3",
-  "FSCAL2",
-  "FSCAL1",
-  "FSCAL0",
-  "RCCTRL1",
-  "RCCTRL0",
-  "FSTEST",
-  "PTEST",
-  "AGCTEST",
-  "TEST2",
-  "TEST1",
-  "TEST0",
-};
-#endif
-
 /* all available CC1101 registers to set */
 const uint8_t Config_Default[] PROGMEM = {
   /*

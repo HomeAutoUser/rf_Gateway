@@ -171,7 +171,7 @@ void web_cc110x_modes() {
   String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
   String tgtime = HttpServer.arg("tgt");    // toggle time
-  String web_status = F("<tr id=\"trLast\"><td></td>");
+  String web_status = F("<tr id=\"trLast\"><td class=\"ac\"><span id=\"stat\"></span></td>");
   String website;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
   uint8_t tb_nr;                            // togglebank nr
@@ -231,12 +231,23 @@ void web_cc110x_modes() {
 
       web_status = F("<tr><td class=\"in grn\">");
       if (tb_nr <= 3) {
+#ifdef debug_html
+        Serial.print(F("DB web_cc1101_modes, togglebank value "));
+        Serial.println(tb_val == ToggleArray[tb_nr] ? F("same") : F("differing"));
+#endif
         InputCmd = F("tob");  // preparation for processing
         InputCmd += tb_nr;    // preparation for processing
-        InputCmd += tb_val;   // preparation for processing
+
         web_status += F("togglebank ");
         web_status += tb_nr;
-        web_status += F(" &#10004;</td>");
+
+        if (tb_val == ToggleArray[tb_nr]) {
+          InputCmd += 99;       // preparation for processing
+          web_status += F(" reset</td>");
+        } else {
+          InputCmd += tb_val;   // preparation for processing
+          web_status += F(" &#10004;</td>");
+        }
       } else {
         InputCmd = F("tob99");
         web_status += F("toggle reseted & stopped &#10004;</td>");
@@ -617,13 +628,9 @@ void web_cc110x_detail() {
   website += web_status + F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
 
   for (byte i = 0; i <= 46; i++) {
-    website += F("<tr><td class=\"f4\">0x");
-    temp = onlyDecToHex2Digit(i);                 /* register */
-    temp.toUpperCase();
-    website += temp;
-    website += F("&emsp;");
-    website += regExplanation_short[i];
-    website += F("</td><td class=\"ce\">");
+    website += F("<tr><td class=\"f4\"><span id=\"s");
+    website += i;
+    website += F("\"></span></td><td class=\"ce\">");
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     temp.toUpperCase();
     website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"r");

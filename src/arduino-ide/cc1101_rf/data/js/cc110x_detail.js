@@ -32,12 +32,23 @@ function onMessage(event) {
     if (obj['Config']) {
       let reg = obj['Config'].split(',');
       var name;         // to read value from input element in HTML
+      var name_s;
+      var hex;
       var Freq;
       var DRATE1;
       var DRATE2;
 
       for ( i=0; i<= 46; i++ ) {    /* register values 00 - 2E (0 - 46) */
         name = 'r' + i;
+        name_s = 's' + i;
+
+        if (i <= 15) {
+          hex = '0' + i.toString(16)
+        } else {
+          hex = i.toString(16)
+        }
+        document.getElementById(name_s).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + regExplanation_short[i];
+
         /* compare old value < > HTML value */
         if (document.getElementsByName(name)[0].value != reg[i]) {
           document.getElementsByName(name)[0].value = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, reg[i]);
@@ -132,7 +143,7 @@ function onMessage(event) {
       }
 
       if (document.getElementById('state')) {
-        document.getElementById('state').innerHTML = obj['MODE'] + ' values readed &#10004;';        
+        document.getElementById('state').innerHTML = obj['MODE'] + ' values readed &#10004;';
       }
     }
   }
@@ -207,6 +218,56 @@ const regExplanation = [
   'Various Test Settings 2',
   'Various Test Settings 1',
   'Various Test Settings 0'
+];
+
+const regExplanation_short = [
+  'IOCFG2',
+  'IOCFG1',
+  'IOCFG0',
+  'FIFOTHR',
+  'SYNC1',
+  'SYNC0',
+  'PKTLEN',
+  'PKTCTRL1',
+  'PKTCTRL0',
+  'ADDR',
+  'CHANNR',
+  'FSCTRL1',
+  'FSCTRL0',
+  'FREQ2',
+  'FREQ1',
+  'FREQ0',
+  'MDMCFG4',
+  'MDMCFG3',
+  'MDMCFG2',
+  'MDMCFG1',
+  'MDMCFG0',
+  'DEVIATN',
+  'MCSM2',
+  'MCSM1',
+  'MCSM0',
+  'FOCCFG',
+  'BSCFG',
+  'AGCCTRL2',
+  'AGCCTRL1',
+  'AGCCTRL0',
+  'WOREVT1',
+  'WOREVT0',
+  'WORCTRL',
+  'FREND1',
+  'FREND0',
+  'FSCAL3',
+  'FSCAL2',
+  'FSCAL1',
+  'FSCAL0',
+  'RCCTRL1',
+  'RCCTRL0',
+  'FSTEST',
+  'PTEST',
+  'AGCTEST',
+  'TEST2',
+  'TEST1',
+  'TEST0',
 ];
 
 const LENGTH_CONFIG = [

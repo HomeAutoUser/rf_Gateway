@@ -57,5 +57,8 @@ function onMessage(event) {
         cell[i].style.backgroundColor = color2;
       }
     }
+
+    var today = new Date();
+    document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');
   }
 }

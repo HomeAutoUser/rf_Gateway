@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40504 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40168 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5376     constants
+  ╠══ RODATA   5040     constants
   ╚══ BSS      33320    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 431664 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 431268 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     431664   code in flash
+  ╚══ IROM     431268   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -952,16 +952,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           MSG_OUTPUTLN(F("Current register (address - CC110x value - EEPROM value)"));
 
           for (byte i = 0; i <= 46; i++) {
-            MSG_OUTPUT(F("0x"));
             MSG_OUTPUT_DecToHEX_lz(i);
-            MSG_OUTPUT(' ');
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-            MSG_OUTPUT(regExplanation_short[i]);
-            for (byte i2 = strlen(regExplanation_short[i]); i2 < 9; i2++) {
-              MSG_OUTPUT(' ');
-            }
-#endif
-            MSG_OUTPUT(F("= "));
+            MSG_OUTPUT('=');
             MSG_OUTPUT_DecToHEX_lz(CC1101_readReg(i, READ_BURST));
             if (i < 41) {
               MSG_OUTPUT(F(" ("));
