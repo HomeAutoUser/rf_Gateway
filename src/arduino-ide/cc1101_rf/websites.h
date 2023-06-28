@@ -1112,7 +1112,8 @@ void WebSocket_help() {
   Serial.println(F("DB WebSocket_help running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"CC1101\":\"no\"}");
+    String website = F("{\"CC1101\":\"");
+    website += CC1101_found == true ? F("yes\"}") : F("no\"}");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == F("/help")) {
         webSocket.sendTXT(num, website);
