@@ -34,6 +34,7 @@ byte hex2int(byte hex) {                      /* convert a hexdigit to int (smal
 
 String onlyDecToHex2Digit(byte Dec) {
   String ret = String(Dec, HEX);
+  ret.reserve(2);
   if (Dec < 16) {
     ret = "0" + ret;
   }
@@ -53,6 +54,8 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
 
 
 String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
+  String output = "";
+  output.reserve(6);
   float f;
   int f2;
   int f1;
@@ -69,7 +72,10 @@ String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E
   Serial.print(' '); Serial.println(onlyDecToHex2Digit(f0));
 #endif
 
-  return String(onlyDecToHex2Digit(f2)) + String(onlyDecToHex2Digit(f1)) + String(onlyDecToHex2Digit(f0));
+  output += String(onlyDecToHex2Digit(f2));
+  output += String(onlyDecToHex2Digit(f1));
+  output += String(onlyDecToHex2Digit(f0));
+  return output;
 }
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
@@ -125,7 +131,9 @@ String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0
   }
 
   String reg10 = String( int(ret + DRATE_E), HEX );
+  reg10.reserve(2);
   String reg11 = String( int(DRATE_M), HEX );
+  reg11.reserve(2);
 
 #ifdef debug
   Serial.print(F("DB web_Datarate_set, MDMCFG4..MDMCFG3 to ")); Serial.print(reg10);
@@ -173,6 +181,7 @@ String web_Devi_set(float input) {    /* Deviation set & calculation */
 
 
 byte web_Mod_set(String input) {
+  input.reserve(7);
 #ifdef debug
   Serial.print(F("DB web_Mod_set, set new value to ")); Serial.println(input);
   Serial.print(F("DB web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC1101_readReg(0x12, READ_BURST)));
@@ -185,6 +194,7 @@ byte web_Mod_set(String input) {
   return output;
 }
 #endif
+
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */
   unsigned int stringLength = str.length();
@@ -262,6 +272,7 @@ void EEPROMwrite(int adr, byte val) {
 
 String EEPROMread_string(int address) {   /* read String from EEPROM (Address) */
   String str = "";
+  str.reserve(2);
   for (int i = address; i < EEPROM_ADDR_MAX; ++i) {
     byte value = 0;
 #ifdef ARDUINO_AVR_NANO

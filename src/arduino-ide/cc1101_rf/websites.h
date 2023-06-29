@@ -212,9 +212,9 @@ void web_cc110x_modes() {
       Serial.print(F("DB web_cc1101_modes, set toggletime to ")); Serial.println(tgtime);
 #endif
       if (tgtime.toInt() >= ToggleTimeMin && tgtime.toInt() <= ToggleTimeMax) {
-        web_status = F("<tr><td class=\"in grn\">toggle started &#10004;</td>");
+        web_status = F("<tr><td class=\"in grn\"><span id=\"stat\">toggle started &#10004;</span></td>");
       } else {
-        web_status = F("<tr><td class=\"in red\">toggle value ");
+        web_status = F("<tr><td class=\"in red\"><span id=\"stat\">toggle value ");
         if (tgtime.toInt() < ToggleTimeMin) {
           web_status += "< ";
           web_status += ToggleTimeMin;
@@ -222,7 +222,7 @@ void web_cc110x_modes() {
           web_status += "> ";
           web_status += ToggleTimeMax;
         }
-        web_status += F(" &#10006;</td>");
+        web_status += F(" &#10006;</span></td>");
       }
     }
 
@@ -448,13 +448,20 @@ void web_cc110x_detail() {
 
   String afc = HttpServer.arg("afc");
   String bandw = HttpServer.arg("bandw");
+  bandw.reserve(7);
   String datar = HttpServer.arg("datarate");
+  datar.reserve(7);
   String dev = HttpServer.arg("deviation");
+  dev.reserve(7);
   String freq = HttpServer.arg("freq");
+  freq.reserve(7);
   String freqOff = HttpServer.arg("freq_off");
+  freqOff.reserve(7);
   String mod = HttpServer.arg("modulation");
+  mod.reserve(7);
   String return_val;
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
+  submit.reserve(9);
   String temp;
   String web_status = F("<tr><td class=\"in\" colspan=\"6\"><span id=\"state\"></span></td></tr>");
   String website;
@@ -467,6 +474,7 @@ void web_cc110x_detail() {
     Serial.print(F("DB web_cc1101_detail, countargs  ")); Serial.println(countargs);
     Serial.print(F("DB web_cc1101_detail, freq       ")); Serial.println(freq);
     Serial.print(F("DB web_cc1101_detail, freqOff    ")); Serial.println(freqOff);
+    Serial.print(F("DB web_cc1101_detail, bandw      ")); Serial.println(bandw);
     Serial.print(F("DB web_cc1101_detail, datarate   ")); Serial.println(datar);
     Serial.print(F("DB web_cc1101_detail, deviation  ")); Serial.println(dev);
     Serial.print(F("DB web_cc1101_detail, modulation "));
@@ -539,11 +547,26 @@ void web_cc110x_detail() {
       EEPROMwrite(21, hexToDec(return_val));      // write in flash
     } else if (submit == "bmod") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set modulation pushed with ")); Serial.println(mod);
+      Serial.print(F("DB web_cc1101_detail, set modulation to ")); Serial.println(mod);
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
-      CC1101_writeReg(18, web_Mod_set(mod));      // write in cc1101
-      EEPROMwrite(18, web_Mod_set(mod));          // write in flash
+
+      String value;
+      value.reserve(2);
+      if (mod == "2-FSK") {
+        value = 0;
+      } else if (mod == "GFSK") {
+        value = 1;
+      } else if (mod == "ASK/OOK") {
+        value = 3;
+      } else if (mod == "4-FSK") {
+        value = 4;
+      } else if (mod == "MSK") {
+        value = 7;
+      }
+
+      CC1101_writeReg(18, web_Mod_set(value));      // write in cc1101
+      EEPROMwrite(18, web_Mod_set(value));          // write in flash
     } else if (submit == "breg") {
 #ifdef debug_html
       Serial.println(F("DB web_cc1101_detail, button set registers pushed"));
@@ -622,7 +645,7 @@ void web_cc110x_detail() {
   website += F("\"><div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
                // Modulation
                "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>");
-  website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"><option value=\"2-FSK\">2-FSK</option></select></td>");
+  website += F("<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"></select></td>");
   website += F("<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"
                // Packet length config
                "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
@@ -1128,6 +1151,7 @@ void WebSocket_help() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
+    website.reserve(16);
     website += CC1101_found == true ? F("yes\"}") : F("no\"}");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == F("/help")) {

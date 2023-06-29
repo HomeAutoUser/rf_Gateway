@@ -517,6 +517,7 @@ void loop() {
 
   if (Serial.available() > 0) { /* Serial Input´s */
     String input = Serial.readString();
+    input.reserve(BUFFER_MAX);
     input.trim();                                           /* String, strip off any leading/trailing space and \r \n */
     char BUFFER_Serial[input.length() + 1];
     input.toCharArray(BUFFER_Serial, input.length() + 1);   /* String to char in buf */
@@ -1224,6 +1225,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 #ifdef debug
           String val = String(buf_input[2]);
           val += String(buf_input[3]);
+          val.reserve(4);
           MSG_OUTPUT(F("DB Input | cmd WS with value=")); MSG_OUTPUTLN(val);
 #endif
           if (buf_input[3] == '4') {
@@ -1368,6 +1370,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         String payloadString = (const char *)payload;
+        payloadString.reserve(13);
         if (payloadString == "cc110x_detail") {
           WebSocket_cc110x_detail();
         } else if (payloadString == "cc110x") {

@@ -117,7 +117,7 @@ function onMessage(event) {
             mod_list = true;
             var selectElement = document.getElementById('modulation');
             for (var j = 0; j<=7; j++) {
-              if (MOD_FORMAT[j] != '' && MOD_FORMAT[j] != '2-FSK') {
+              if (MOD_FORMAT[j] != '') {
                 selectElement.add(new Option(MOD_FORMAT[j]));
               }
             }
@@ -125,7 +125,7 @@ function onMessage(event) {
           /* MOD_FORMAT */
           var val = (parseInt(reg[i], 16) & "01110000") >> 4;
           document.getElementById('MOD_FORMAT').innerHTML = MOD_FORMAT[val];
-          document.querySelector('#modulation').value = MOD_FORMAT[val];
+          document.getElementById('modulation').value = MOD_FORMAT[val];
 
           /* SYNC_MODE */
           var val = (parseInt(reg[i], 16) & "00000111") >> 4;
@@ -289,5 +289,3 @@ const SYNC_MODE = [
   '16/16 + carrier-sense above threshold',
   '30/32 + carrier-sense above threshold'
 ];
-
-/* - - END - - Detailed description register - - */

@@ -295,7 +295,7 @@ void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_
                                           CC1101_readReg(14, READ_BURST),
                                           CC1101_readReg(15, READ_BURST)),
                             3));
-
+      ret.reserve(6);
 #ifdef debug_cc110x
       Serial.println(F("CC110x_Freq.Offset mod register 0x0D 0x0E 0x0F"));
       Serial.print(F("CC110x_Freq.Offset calculated "));
