@@ -180,8 +180,7 @@ String web_Devi_set(float input) {    /* Deviation set & calculation */
 }
 
 
-byte web_Mod_set(String input) {
-  input.reserve(7);
+byte web_Mod_set(byte input) {
 #ifdef debug
   Serial.print(F("DB web_Mod_set, set new value to ")); Serial.println(input);
   Serial.print(F("DB web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC1101_readReg(0x12, READ_BURST)));
@@ -189,7 +188,7 @@ byte web_Mod_set(String input) {
 
   /* read all split values | example F1 -> 11110001 */
   byte reg12_6_4 = CC1101_readReg(0x12, READ_BURST) & 0x8f ;
-  byte output = input.toInt() << 4;
+  byte output = input << 4;
   output = output | reg12_6_4;
   return output;
 }

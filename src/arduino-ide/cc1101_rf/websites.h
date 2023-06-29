@@ -551,8 +551,7 @@ void web_cc110x_detail() {
 #endif
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
 
-      String value;
-      value.reserve(2);
+      byte value = 0;
       if (mod == "2-FSK") {
         value = 0;
       } else if (mod == "GFSK") {

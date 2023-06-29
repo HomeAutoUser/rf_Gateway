@@ -17,7 +17,7 @@ String web_Freq_set(String input);
 boolean isNumeric(String str);
 boolean str2ip(char *string, byte * IP);
 byte hex2int(byte hex);
-byte web_Mod_set(String input);
+byte web_Mod_set(byte input);
 float web_Freq_read(byte adr1, byte adr2, byte adr3);
 int freeRam();
 int web_Bandw_cal(int input, int input_split);
