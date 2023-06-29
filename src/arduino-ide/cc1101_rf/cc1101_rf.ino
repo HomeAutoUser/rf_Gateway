@@ -28,9 +28,9 @@
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 430484 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 430612 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     430484   code in flash
+  ╚══ IROM     430612   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
