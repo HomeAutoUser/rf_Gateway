@@ -14,7 +14,7 @@ extern boolean freqAfc;
 
 /* predefinitions of the functions */
 void WebSocket_cc110x();
-/* {"MODE":"OOK_MU_433","MS":"08 = STARTCAL","ToggleBank":"{ 11 12 13 - }","Time":"30000"} */
+/* {"MODE":"Lacrosse_mode2","MS":"8","ToggleBank":"{ 11 12 - - }","Time":"30000"} */
 void WebSocket_cc110x_detail();
 /* {"MODE":"Lacrosse_mode2", "MODE_id":"12", "Time":"30000", "FreOff":"0.000", "Config":"01,2E,2E,41,2D,D4,05,80,00,00,00,06,00,21,65,6A,C8,83,02,22,F8,42,07,00,18,16,6C,43,68,91,87,6B,F8,B6,11,EA,2A,00,1F,41,00,01,2E,2E,41,2D,D4"} */
 void WebSocket_cc110x_modes();
@@ -138,10 +138,14 @@ void web_cc110x() {
   website += F("</td></tr>");
 
   if (CC1101_found) {
-    website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
-    website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">") + String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX);
-    website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"MS\">") + web_Marcstate_read();
-    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">") + activated_mode_name;
+    website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
+    website += String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
+    website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">");
+    website += String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX);
+    website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"MS\">");
+    website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
+    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
+    website += activated_mode_name;
     website += F("</span></td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\"><span id=\"ToggleBank\">{");
     website += F("&emsp;");
 
@@ -194,14 +198,16 @@ void web_cc110x_modes() {
       Serial.print(F("DB web_cc1101_modes, set reception ")); Serial.println(submit);
 #endif
       web_status = F("<td class=\"in grn\">");
-      web_status += String(Registers[submit.toInt()].name) + F(" &#10004;</td>");
+      web_status += String(Registers[submit.toInt()].name);
+      web_status += F(" &#10004;</td>");
     }
 
     if (submit != "" && submit == "time") {  // button "START"
       if (tgtime == "") {
         tgtime = String(ToggleTime);
       }
-      InputCmd = "tos" + tgtime;
+      InputCmd = "tos";
+      InputCmd += tgtime;
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_modes, set toggletime to ")); Serial.println(tgtime);
 #endif
@@ -310,7 +316,8 @@ void web_cc110x_modes() {
     website += F("\">enable reception</button></td></tr>");
   }
 
-  website += web_status + F("<td class=\"ac\">toggletime&nbsp;");
+  website += web_status;
+  website += F("<td class=\"ac\">toggletime&nbsp;");
   website += F("<input name=\"tgt\" type=\"text\" size=\"7\" maxlength=\"7\" pattern=\"^[\\d]{1,7}$\" placeholder=\"");
 
   if (ToggleTime != 0) {
@@ -342,7 +349,8 @@ void web_cc110x_detail_export() {
     }
     if (i < 41) {
       website += onlyDecToHex2Digit(i);
-      website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)) + ' ';
+      website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+      website += ' ';
       website_p2 += '\'';
       website_p2 += onlyDecToHex2Digit(i);
       website_p2 += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
@@ -625,7 +633,8 @@ void web_cc110x_detail() {
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_import'\">import registers</button></td></tr>");
   // status line
-  website += web_status + F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
+  website += web_status;
+  website += F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
 
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
@@ -794,7 +803,8 @@ void web_wlan() {
   }
 
   website += F("</td><td class=\"alig_c\" colspan=\"2\">");
-  website += WiFi.macAddress() + F("</td></tr>");
+  website += WiFi.macAddress();
+  website += F("</td></tr>");
   website += F("<tr><td class=\"b1\" colspan=\"6\"></td></tr>");
   website += F("<thead><tr><th colspan=\"6\">WLAN - available networks</th></tr>"
                "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr></thead>");
@@ -827,7 +837,12 @@ void web_wlan() {
 #endif
 
     website += F("</td><td class=\"ssid\">");
-    website += WiFi.SSID(i) + F("</td><td class=\"fb\">") + WifiMAC + F("</td><td class=\"wch\">") + WiFi.channel(i) + F("</td><td class=\"wrs");
+    website += WiFi.SSID(i);
+    website += F("</td><td class=\"fb\">");
+    website += WifiMAC;
+    website += F("</td><td class=\"wch\">");
+    website += WiFi.channel(i);
+    website += F("</td><td class=\"wrs");
     if (WiFi.RSSI(i) > -40) {         // WLAN RSSI good
       website += F(" wrsgrn\">");
     } else if (WiFi.RSSI(i) < -65) {  // WLAN RSSI very bad
@@ -837,7 +852,8 @@ void web_wlan() {
     }
     website += WiFi.RSSI(i);
     website += F(" db</td><td class=\"alig_c\">");
-    website += WifiEncryptionType + F("</td></tr>");
+    website += WifiEncryptionType;
+    website += F("</td></tr>");
   }
 
   /* Tabelle WLAN - available networks, letzte Zeile für SSID-Eingabe */
@@ -1016,7 +1032,7 @@ void WebSocket_cc110x() {
     String website = F("{\"MODE\":\"");
     website += activated_mode_name;
     website += F("\",\"MS\":\"");
-    website += web_Marcstate_read();
+    website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
     website += F("\",\"ToggleBank\":\"{ ");
 
     for (byte i = 0; i < 4; i++) {
@@ -1057,7 +1073,6 @@ void WebSocket_cc110x_detail() {
     website += F("\", \"FreOff\":\"");
     website += String(Freq_offset, 3);
     website += F("\", ");
-
     website += F("\"Config\":\"");
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
       if (ToggleTime != 0) {

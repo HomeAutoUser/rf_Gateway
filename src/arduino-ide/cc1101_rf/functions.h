@@ -14,7 +14,6 @@ String onlyDecToHex2Digit(byte Dec);
 String web_Datarate_set(float input);
 String web_Devi_set(float input);
 String web_Freq_set(String input);
-String web_Marcstate_read();
 boolean isNumeric(String str);
 boolean str2ip(char *string, byte * IP);
 byte hex2int(byte hex);

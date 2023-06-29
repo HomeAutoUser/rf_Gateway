@@ -28,9 +28,9 @@
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 431284 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 430328 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     431284   code in flash
+  ╚══ IROM     430328   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -108,7 +108,7 @@ int RSSI_dez;                           // for the output on web server
 #define PatTol                  0.20    // pattern tolerance
 #define FIFO_LENGTH             90      // 90 from SIGNALduino FW
 #include "SimpleFIFO.h"
-SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;      // store FIFO_LENGTH # ints
+SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;  // store FIFO_LENGTH # ints
 
 /* --- all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------------- */
 #ifdef ARDUINO_ARCH_ESP8266
@@ -1222,7 +1222,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
 #ifdef debug
-          String val = String(buf_input[2]) + String(buf_input[3]);
+          String val = String(buf_input[2]);
+          val += String(buf_input[3]);
           MSG_OUTPUT(F("DB Input | cmd WS with value=")); MSG_OUTPUTLN(val);
 #endif
           if (buf_input[3] == '4') {
@@ -1369,6 +1370,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         String payloadString = (const char *)payload;
         if (payloadString == "cc110x_detail") {
           WebSocket_cc110x_detail();
+        } else if (payloadString == "cc110x") {
+          WebSocket_cc110x();
         } else if (payloadString == "help") {
           WebSocket_help();
         }
