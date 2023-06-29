@@ -72,6 +72,7 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
 
 void web_index() {
   String website;
+  website.reserve(2000);
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
@@ -114,7 +115,7 @@ void web_index() {
 
 void web_cc110x() {
   String website;
-
+  website.reserve(2000);
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x.css\">"
                "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
@@ -177,6 +178,7 @@ void web_cc110x_modes() {
   String tgtime = HttpServer.arg("tgt");    // toggle time
   String web_status = F("<tr id=\"trLast\"><td class=\"ac\"><span id=\"stat\"></span></td>");
   String website;
+  website.reserve(10000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
   uint8_t tb_nr;                            // togglebank nr
   uint8_t tb_val;                           // togglebank value
@@ -335,6 +337,7 @@ void web_cc110x_modes() {
 
 void web_cc110x_detail_export() {
   String website;
+  website.reserve(1500);
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_exp.css\"></head>");
 
@@ -373,6 +376,7 @@ void web_cc110x_detail_import() {
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   String website;
+  website.reserve(1000);
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String Part = "";
   String PartAdr = "";
@@ -465,6 +469,7 @@ void web_cc110x_detail() {
   String temp;
   String web_status = F("<tr><td class=\"in\" colspan=\"6\"><span id=\"state\"></span></td></tr>");
   String website;
+  website.reserve(16000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
   if (countargs != 0) {
@@ -682,6 +687,7 @@ void web_cc110x_detail() {
 
 void web_log() {
   String website;
+  website.reserve(10000);
   website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
   website += String(html_head_table);
@@ -717,6 +723,7 @@ void web_raw() {
   String sd = HttpServer.arg("sd");         // welche Daten genutzt werden sollen
   String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
   String website;
+  website.reserve(2000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
   website += String(html_meta);
@@ -786,6 +793,7 @@ void web_wlan() {
   String qssid = HttpServer.arg("setssid");     // Auswahl SSID
   String submit = HttpServer.arg("submit");     // welcher Button wurde betätigt
   String website;
+  website.reserve(10000);
   uint8_t countargs = HttpServer.args();        // Anzahl Argumente
   used_ssid_mac = WiFi.BSSIDstr();
 
@@ -1052,6 +1060,7 @@ void WebSocket_cc110x() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
+    website.reserve(100);
     website += activated_mode_name;
     website += F("\",\"MS\":\"");
     website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
@@ -1087,6 +1096,7 @@ void WebSocket_cc110x_detail() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
+    website.reserve(250);
     website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
@@ -1124,6 +1134,7 @@ void WebSocket_cc110x_modes() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
+    website.reserve(75);
     website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
@@ -1167,6 +1178,7 @@ void WebSocket_index() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
+    website.reserve(100);
     CC1101_found ? website += F("yes") : website += F("no");
     website += F("\",\"RAM\":\"");
     website += freeRam();
@@ -1193,6 +1205,7 @@ void WebSocket_raw() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"MODE\":\"");
+    website.reserve(500);
     website += activated_mode_name;
     website += F("\", \"RAW\":\"");
     html_raw.toUpperCase();
