@@ -452,20 +452,13 @@ void web_cc110x_detail() {
 
   String afc = HttpServer.arg("afc");
   String bandw = HttpServer.arg("bandw");
-  bandw.reserve(7);
   String datar = HttpServer.arg("datarate");
-  datar.reserve(7);
   String dev = HttpServer.arg("deviation");
-  dev.reserve(7);
   String freq = HttpServer.arg("freq");
-  freq.reserve(7);
   String freqOff = HttpServer.arg("freq_off");
-  freqOff.reserve(7);
   String mod = HttpServer.arg("modulation");
-  mod.reserve(7);
   String return_val;
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
-  submit.reserve(9);
   String temp;
   String web_status = F("<tr><td class=\"in\" colspan=\"6\"><span id=\"state\"></span></td></tr>");
   String website;
@@ -1209,7 +1202,7 @@ void WebSocket_raw() {
     website += activated_mode_name;
     website += F("\", \"RAW\":\"");
     html_raw.toUpperCase();
-    website += html_raw;
+    website += html_raw; // TODO
     website += F("\", \"RSSI\":\"");
     website += RSSI_dez;
     website += F("\", \"AFC\":\"");

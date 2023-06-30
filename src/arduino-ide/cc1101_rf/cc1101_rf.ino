@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40200 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40196 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5064     constants
-  ╚══ BSS      33328    zeroed variables
+  ╠══ RODATA   5068     constants
+  ╚══ BSS      33320    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 430612 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 430516 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     430612   code in flash
+  ╚══ IROM     430516   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -225,7 +225,7 @@ byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
 byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
 int16_t first;                                // Pointer to first buffer entry
 int16_t last;                                 // Pointer to last buffer entry
-String msg;                                   // RAW (only serial/telnet, not HTML output)
+String msg;                                   // RAW (only serial/telnet, not HTML output) & Serial Input
 byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
 byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
 byte MOD_FORMAT;                              // Marker - Modulation
@@ -321,6 +321,8 @@ void Interupt_Variant(byte nr) {
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
   msg.reserve(255);
+  html_raw.reserve(360);
+
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
   Serial.println();
@@ -516,13 +518,12 @@ void loop() {
   }
 
   if (Serial.available() > 0) { /* Serial Input´s */
-    String input = Serial.readString();
-    input.reserve(BUFFER_MAX);
-    input.trim();                                           /* String, strip off any leading/trailing space and \r \n */
-    char BUFFER_Serial[input.length() + 1];
-    input.toCharArray(BUFFER_Serial, input.length() + 1);   /* String to char in buf */
+    msg = Serial.readString();
+    msg.trim();                                           /* String, strip off any leading/trailing space and \r \n */
+    char BUFFER_Serial[msg.length() + 1];
+    msg.toCharArray(BUFFER_Serial, msg.length() + 1);   /* String to char in buf */
 
-    if (input.length() > 0 && input.length() <= BUFFER_MAX) {
+    if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
       MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(input);
 #endif
@@ -1225,7 +1226,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 #ifdef debug
           String val = String(buf_input[2]);
           val += String(buf_input[3]);
-          val.reserve(4);
           MSG_OUTPUT(F("DB Input | cmd WS with value=")); MSG_OUTPUTLN(val);
 #endif
           if (buf_input[3] == '4') {
@@ -1317,12 +1317,12 @@ void Telnet() {
         Serial.println(i);
 #endif
         client_now = i; /* current telnet client is set where data is received */
-        String input = TelnetClient[i].readString();
-        input.trim();   /* String, strip off any leading/trailing space and \r \n */
-        char BUFFER_Telnet[input.length() + 1];
-        input.toCharArray(BUFFER_Telnet, input.length() + 1); /* String to char in buf */
+        msg = TelnetClient[i].readString();
+        msg.trim();   /* String, strip off any leading/trailing space and \r \n */
+        char BUFFER_Telnet[msg.length() + 1];
+        msg.toCharArray(BUFFER_Telnet, msg.length() + 1); /* String to char in buf */
 
-        if (input.length() > 0 && input.length() <= BUFFER_MAX) {
+        if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
           InputCommand(BUFFER_Telnet);
         }
       }
@@ -1370,7 +1370,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         String payloadString = (const char *)payload;
-        payloadString.reserve(13);
         if (payloadString == "cc110x_detail") {
           WebSocket_cc110x_detail();
         } else if (payloadString == "cc110x") {
@@ -1430,13 +1429,13 @@ void MSGBuild() {     /* Nachrichtenausgabe */
     digitalWriteFast(LED, HIGH);  // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
-    String msgMU = "";
+    html_raw = char(2);
     uint8_t rssi = CC1101_readReg(0x34, 0xC0); // not converted
 
-    msgMU += char(2); msgMU += F("MU");
+    html_raw += F("MU");
     for (uint8_t i = 0; i <= PatNmb; i++) {
       int16_t PulseAvg = ArPaSu[i] / ArPaCnt[i];
-      msgMU += F(";P"); msgMU += i; msgMU += F("="); msgMU += PulseAvg;
+      html_raw += F(";P"); html_raw += i; html_raw += F("="); html_raw += PulseAvg;
       // search Clockpulse (CP=) - das funktioniert noch nicht richtig! --> kein richtiger Einfall ;-) TODO
       if (ArPaSu[i] > 0) { // HIGH-Pulse
         if (PulseAvg < PulseAvgMin) { // kürzeste Zeit
@@ -1448,24 +1447,24 @@ void MSGBuild() {     /* Nachrichtenausgabe */
         }
       }
     }
-    msgMU += F(";D="); msgMU += msg; msgMU += F(";CP="); msgMU += CP_PaNum;
-    msgMU += F(";R="); msgMU += rssi; msgMU += ';';
+    html_raw += F(";D="); html_raw += msg; html_raw += F(";CP="); html_raw += CP_PaNum;
+    html_raw += F(";R="); html_raw += rssi; html_raw += ';';
     if (MsgLen == MsgLenMax) {  /* max. Nachrichtenlänge erreicht */
-      msgMU += F("O;");
+      html_raw += F("O;");
     } else if (TiOv != 0) {     /* Timeoverflow größer 32000 -> Zwangstrennung */
-      msgMU += F("p;");
+      html_raw += F("p;");
     } else if (PatMAX == 1) {   /* max. Pattern erreicht und neuer unbekannter würde folgen */
-      msgMU += F("e;");
+      html_raw += F("e;");
     }
-    msgMU += F("w="); msgMU += valid; msgMU += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
+    html_raw += F("w="); html_raw += valid; html_raw += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    html_raw = msgMU;
-    html_raw = html_raw.substring(1);
     CC1101_readRSSI();
+    html_raw.remove(0, 1);
     WebSocket_raw();
 #endif
-    msgMU += char(3); msgMU += char(10);
-    MSG_OUTPUTALL(msgMU);
+    html_raw.replace("M", "M");
+    html_raw += char(3); html_raw += char(10);
+    MSG_OUTPUTALL(html_raw);
     digitalWriteFast(LED, LOW);  // LED off
   }
   PatReset();

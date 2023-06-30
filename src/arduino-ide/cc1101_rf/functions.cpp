@@ -34,7 +34,6 @@ byte hex2int(byte hex) {                      /* convert a hexdigit to int (smal
 
 String onlyDecToHex2Digit(byte Dec) {
   String ret = String(Dec, HEX);
-  ret.reserve(2);
   if (Dec < 16) {
     ret = "0" + ret;
   }
@@ -131,9 +130,7 @@ String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0
   }
 
   String reg10 = String( int(ret + DRATE_E), HEX );
-  reg10.reserve(2);
   String reg11 = String( int(DRATE_M), HEX );
-  reg11.reserve(2);
 
 #ifdef debug
   Serial.print(F("DB web_Datarate_set, MDMCFG4..MDMCFG3 to ")); Serial.print(reg10);
@@ -271,7 +268,6 @@ void EEPROMwrite(int adr, byte val) {
 
 String EEPROMread_string(int address) {   /* read String from EEPROM (Address) */
   String str = "";
-  str.reserve(2);
   for (int i = address; i < EEPROM_ADDR_MAX; ++i) {
     byte value = 0;
 #ifdef ARDUINO_AVR_NANO
