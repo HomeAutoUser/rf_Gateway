@@ -33,10 +33,8 @@ byte hex2int(byte hex) {                      /* convert a hexdigit to int (smal
 
 
 String onlyDecToHex2Digit(byte Dec) {
-  String ret = String(Dec, HEX);
-  if (Dec < 16) {
-    ret = "0" + ret;
-  }
+  String ret = (Dec < 16 ? "0" : "");
+  ret += String(Dec, HEX);
   ret.toUpperCase();
   return ret;
 }
@@ -54,7 +52,7 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
 
 String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
   String output = "";
-  output.reserve(6);
+  output.reserve(7);
   float f;
   int f2;
   int f1;
