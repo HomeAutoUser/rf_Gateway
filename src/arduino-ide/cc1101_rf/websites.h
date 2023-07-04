@@ -140,9 +140,9 @@ void web_cc110x() {
 
   if (CC1101_found) {
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
-    website += String(CC1101_readReg(CC1101_PARTNUM, READ_BURST), HEX);
+    website += onlyDecToHex2Digit(CC1101_readReg(CC1101_PARTNUM, READ_BURST));
     website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">");
-    website += String(CC1101_readReg(CC1101_VERSION, READ_BURST), HEX);
+    website += onlyDecToHex2Digit(CC1101_readReg(CC1101_VERSION, READ_BURST));
     website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"MS\">");
     website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
     website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
@@ -200,13 +200,13 @@ void web_cc110x_modes() {
       Serial.print(F("DB web_cc1101_modes, set reception ")); Serial.println(submit);
 #endif
       web_status = F("<td class=\"in grn\">");
-      web_status += String(Registers[submit.toInt()].name);
+      web_status += Registers[submit.toInt()].name;
       web_status += F(" &#10004;</td>");
     }
 
     if (submit != "" && submit == "time") {  // button "START"
       if (tgtime == "") {
-        tgtime = String(ToggleTime);
+        tgtime = ToggleTime;
       }
       InputCmd = "tos";
       InputCmd += tgtime;
@@ -481,7 +481,9 @@ void web_cc110x_detail() {
 
     if (countargs > 0) { /* register values from browser | set registers button -> into array */
       for (byte i = 0; i <= 46; i++) {
-        web_regData[i] = HttpServer.arg(String("0x") + String(onlyDecToHex2Digit(i)));
+        temp = 'r';
+        temp += i;
+        web_regData[i] = HttpServer.arg(temp);
       }
     }
 
@@ -577,7 +579,6 @@ void web_cc110x_detail() {
 #endif
         /* compare value with value to be written */
         temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
-        temp.toUpperCase();
         if (web_regData[i] != temp) {
 #ifdef debug_html
           if (i > 34 && i <= 40) {
@@ -661,7 +662,6 @@ void web_cc110x_detail() {
     website += i;
     website += F("\"></span></td><td class=\"ce\">");
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
-    temp.toUpperCase();
     website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"r");
     website += i;                                 /* registername for GET / POST */
     website += F("\" value=\"");
@@ -1201,7 +1201,6 @@ void WebSocket_raw() {
     website.reserve(500);
     website += activated_mode_name;
     website += F("\", \"RAW\":\"");
-    html_raw.toUpperCase();
     website += html_raw; // TODO
     website += F("\", \"RSSI\":\"");
     website += RSSI_dez;
