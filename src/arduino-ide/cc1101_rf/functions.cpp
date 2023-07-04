@@ -33,9 +33,12 @@ byte hex2int(byte hex) {                      /* convert a hexdigit to int (smal
 
 
 String onlyDecToHex2Digit(byte Dec) {
-  String ret = (Dec < 16 ? "0" : "");
-  ret += String(Dec, HEX);
-  ret.toUpperCase();
+  char ret[3];
+  ret[0] = (Dec >> 4);
+  ret[1] = (Dec & 0x0F);
+  ret[0] = (ret[0] > 9 ? ret[0] + 55 : ret[0] + '0');
+  ret[1] = (ret[1] > 9 ? ret[1] + 55 : ret[1] + '0');
+  ret[2] = '\0';
   return ret;
 }
 
