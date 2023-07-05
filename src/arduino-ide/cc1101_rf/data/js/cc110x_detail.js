@@ -74,12 +74,12 @@ function onMessage(event) {
           if(i == 15){ /* 0x0F: FREQ0 – Frequency Control Word, Low Byte */
             Freq = (Freq + parseInt(reg[i], 16) );
             Freq = (26 * Freq) / 65536;
+            document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
+            document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+            Freq = Freq - (obj['FreOff'] * 1);
             document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
             document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
             document.getElementsByName('freq')[0].value = Freq.toFixed(3);
-            Freq = Freq + (obj['FreOff'] * 1);
-            document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-            document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
           }
         }
 

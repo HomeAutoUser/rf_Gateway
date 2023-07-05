@@ -72,9 +72,9 @@ String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E
   Serial.print(' '); Serial.println(onlyDecToHex2Digit(f0));
 #endif
 
-  output += String(onlyDecToHex2Digit(f2));
-  output += String(onlyDecToHex2Digit(f1));
-  output += String(onlyDecToHex2Digit(f0));
+  output += onlyDecToHex2Digit(f2);
+  output += onlyDecToHex2Digit(f1);
+  output += onlyDecToHex2Digit(f0);
   return output;
 }
 
@@ -130,15 +130,15 @@ String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0
     DRATE_E = DRATE_E1;
   }
 
-  String reg10 = String( int(ret + DRATE_E), HEX );
-  String reg11 = String( int(DRATE_M), HEX );
+  String reg = String( int(ret + DRATE_E), HEX );
+  reg += String( int(DRATE_M), HEX );
 
 #ifdef debug
-  Serial.print(F("DB web_Datarate_set, MDMCFG4..MDMCFG3 to ")); Serial.print(reg10);
-  Serial.print(' '); Serial.print(reg11); Serial.print(F(" = ")); Serial.print(input); Serial.println(F(" kHz"));
+  Serial.print(F("DB web_Datarate_set, MDMCFG4..MDMCFG3 to ")); Serial.print(reg);
+  Serial.print(' '); Serial.print(F(" = ")); Serial.print(input); Serial.println(F(" kHz"));
 #endif
 
-  return reg10 + reg11;
+  return reg;
 }
 
 

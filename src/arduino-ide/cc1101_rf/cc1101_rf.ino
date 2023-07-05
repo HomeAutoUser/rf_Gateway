@@ -18,19 +18,19 @@
   Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
-  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 34600, 32176, 31208 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40164 / 80192 bytes (50%)
+  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
+  . Variables and constants in RAM (global, static), used 40196 / 80192 bytes (50%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5068     constants
+  ╠══ RODATA   5100     constants
   ╚══ BSS      33288    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 430356 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 429972 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     430356   code in flash
+  ╚══ IROM     429972   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -585,7 +585,15 @@ void loop() {
     if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
       CC1101_cmdStrobe(CC1101_SFRX);
     }
+
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#endif
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+#endif
+
     CC1101_cmdStrobe(CC1101_SRX);
     for (uint8_t i = 0; i < 255; i++) {
       if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x0D) { // RX
@@ -593,15 +601,10 @@ void loop() {
       }
       delay(1);
       if (i == 254) {
-        MSG_OUTPUTALLLN("loop, ERROR read CC1101_MARCSTATE, READ_BURST !");
+        MSG_OUTPUTALLLN(F("loop, ERROR read CC1101_MARCSTATE, READ_BURST !"));
       }
     }
-#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
-    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
-#endif
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
-#endif
+
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
     /* OOK */
@@ -1054,7 +1057,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           MSG_OUTPUT(F("CC110x_Freq.Offset  ")); MSG_OUTPUT(Freq_offset, 3); MSG_OUTPUTLN(F(" MHz"));
         }
         MSG_OUTPUT(F("ReceiveMode         ")); MSG_OUTPUTLN(activated_mode_name);
-        MSG_OUTPUT(F("ToggleAll (Scan)    ")); MSG_OUTPUTLN(ToggleAll == 1 ? F("on") : F("off"));
+        MSG_OUTPUT(F("ToggleAll (Scan)    ")); MSG_OUTPUTLN(ToggleAll == 1 ? "on" : "off");
         MSG_OUTPUT(F("ToggleBank 0-3      { "));
 
         for (byte i = 0; i < 4; i++) {

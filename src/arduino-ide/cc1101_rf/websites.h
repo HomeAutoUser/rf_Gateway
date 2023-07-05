@@ -135,7 +135,7 @@ void web_cc110x() {
   }
 
   website += F("</tr></thead><tbody><tr><td>chip detected</td><td td colspan=\"2\">");
-  CC1101_found ? website += F("yes") : website += F("no");
+  CC1101_found ? website += "yes" : website += "no";
   website += F("</td></tr>");
 
   if (CC1101_found) {
@@ -172,16 +172,16 @@ void web_cc110x_modes() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String InputCmd;                          // preparation for processing | control html InputCommand
-  String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
+  String InputCmd;                                        // preparation for processing | control html InputCommand
+  String submit = HttpServer.arg("submit");               // welcher Button wurde betätigt
   String tb = HttpServer.arg("tgb");
-  String tgtime = HttpServer.arg("tgt");    // toggle time
+  unsigned long tgtime = HttpServer.arg("tgt").toInt();   // toggle time
   String web_status = F("<tr id=\"trLast\"><td class=\"ac\"><span id=\"stat\"></span></td>");
   String website;
   website.reserve(10000);
-  uint8_t countargs = HttpServer.args();    // Anzahl Argumente
-  uint8_t tb_nr;                            // togglebank nr
-  uint8_t tb_val;                           // togglebank value
+  uint8_t countargs = HttpServer.args();                  // Anzahl Argumente
+  uint8_t tb_nr;                                          // togglebank nr
+  uint8_t tb_val;                                         // togglebank value
   char InCmdBuf[11];
 
 #ifdef debug_html
@@ -205,22 +205,22 @@ void web_cc110x_modes() {
     }
 
     if (submit != "" && submit == "time") {  // button "START"
-      if (tgtime == "") {
+      if (tgtime == 0) {
         tgtime = ToggleTime;
       }
-      InputCmd = "tos";
+      InputCmd = F("tos");
       InputCmd += tgtime;
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_modes, set toggletime to ")); Serial.println(tgtime);
 #endif
-      if (tgtime.toInt() >= ToggleTimeMin && tgtime.toInt() <= ToggleTimeMax) {
+      if (tgtime >= ToggleTimeMin && tgtime <= ToggleTimeMax) {
         web_status = F("<tr><td class=\"in grn\"><span id=\"stat\">toggle started &#10004;</span></td>");
       } else {
         web_status = F("<tr><td class=\"in red\"><span id=\"stat\">toggle value ");
-        if (tgtime.toInt() < ToggleTimeMin) {
+        if (tgtime < ToggleTimeMin) {
           web_status += "< ";
           web_status += ToggleTimeMin;
-        } else if (tgtime.toInt() > ToggleTimeMax) {
+        } else if (tgtime > ToggleTimeMax) {
           web_status += "> ";
           web_status += ToggleTimeMax;
         }
@@ -243,7 +243,7 @@ void web_cc110x_modes() {
         Serial.print(F("DB web_cc1101_modes, togglebank value "));
         Serial.println(tb_val == ToggleArray[tb_nr] ? F("same") : F("differing"));
 #endif
-        InputCmd = F("tob");  // preparation for processing
+        InputCmd = "tob";     // preparation for processing
         InputCmd += tb_nr;    // preparation for processing
 
         web_status += F("togglebank ");
@@ -325,7 +325,7 @@ void web_cc110x_modes() {
   if (ToggleTime != 0) {
     website += ToggleTime;
   } else {
-    website += F("(ms)");
+    website += "(ms)";
   }
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
                "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
@@ -363,7 +363,7 @@ void web_cc110x_detail_export() {
       }
     }
   }
-  website += F("<br>");
+  website += "<br>";
   website += website_p2;
   website += F("]<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>");
   website += F("</body></html>");
@@ -696,14 +696,14 @@ void web_log() {
     uint8_t lineCnt = 0;
     while (logfile.available()) {
       website += logfile.readStringUntil('\n');
-      website += F("<br>");
+      website += "<br>";
       lineCnt++;
     }
     logfile.close();
     if (lineCnt == 0) {
       website += F("Log file is empty");
     }
-    website += F("</html>");
+    website += "</html>";
   }
   HttpServer.send(200, "text/html", website);
 }
@@ -1066,16 +1066,16 @@ void WebSocket_cc110x() {
         website += ToggleArray[i];
       }
       if (i != 3) {
-        website += F(" ");
+        website += " ";
       }
     }
 
     website += F(" }\",\"Time\":\"");
     website += ToggleTime;
-    website += F("\"}");
+    website += "\"}";
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/cc110x")) {
+      if (webSocketSite[num] == "/cc110x") {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1097,7 +1097,7 @@ void WebSocket_cc110x_detail() {
     website += ToggleTime;
     website += F("\", \"FreOff\":\"");
     website += String(Freq_offset, 3);
-    website += F("\", ");
+    website += "\", ";
     website += F("\"Config\":\"");
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
       if (ToggleTime != 0) {
@@ -1106,14 +1106,14 @@ void WebSocket_cc110x_detail() {
         website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
       }
       if (i == 46) {
-        website += F("\"}");
+        website += "\"}";
       } else {
         website += ',';
       }
     }
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/cc110x_detail")) {
+      if (webSocketSite[num] == "/cc110x_detail") {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1131,16 +1131,16 @@ void WebSocket_cc110x_modes() {
     website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
-    website += F("\"}");
+    website += "\"}";
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/cc110x_modes")) {
+      if (webSocketSite[num] == "/cc110x_modes") {
         webSocket.sendTXT(num, website);
       }
-      if (webSocketSite[num] == F("/raw")) {
+      if (webSocketSite[num] == "/raw") {
         website = F("{\"MODE\":\"");
         website += activated_mode_name;
-        website += F("\"}");
+        website += "\"}";
         webSocket.sendTXT(num, website);
       }
     }
@@ -1155,9 +1155,9 @@ void WebSocket_help() {
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
     website.reserve(16);
-    website += CC1101_found == true ? F("yes\"}") : F("no\"}");
+    website += CC1101_found == true ? "yes\"}" : "no\"}";
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/help")) {
+      if (webSocketSite[num] == "/help") {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1172,7 +1172,7 @@ void WebSocket_index() {
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
     website.reserve(100);
-    CC1101_found ? website += F("yes") : website += F("no");
+    CC1101_found ? website += "yes" : website += "no";
     website += F("\",\"RAM\":\"");
     website += freeRam();
     website += F("\",\"Uptime\":\"");
@@ -1181,10 +1181,10 @@ void WebSocket_index() {
     website += msgCount;
     website += F("\",\"WLANdB\":\"");
     website += WiFi.RSSI();
-    website += F("\"}");
+    website += "\"}";
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/")) {
+      if (webSocketSite[num] == "/") {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1206,10 +1206,10 @@ void WebSocket_raw() {
     website += RSSI_dez;
     website += F("\", \"AFC\":\"");
     website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
-    website += F("\"}");
+    website += "\"}";
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == F("/raw")) {
+      if (webSocketSite[num] == "/raw") {
         webSocket.sendTXT(num, website);
       }
     }
