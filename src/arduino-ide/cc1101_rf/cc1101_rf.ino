@@ -28,9 +28,9 @@
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 430004 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 429412 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     430004   code in flash
+  ╚══ IROM     429412   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -824,14 +824,20 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
               unsigned long IntTime = input.substring(3).toInt();
 
               if (isNumeric(input.substring(3)) == 1 && (IntTime > ToggleTimeMax)) { /* command tos<n> > ToggleTimeMax -> max limit */
-                MSG_OUTPUT(F("Toggle STOPPED, time too long [min ")); MSG_OUTPUT(ToggleTimeMin);
-                MSG_OUTPUT(F(", max ")); MSG_OUTPUT(ToggleTimeMax); MSG_OUTPUTLN(']');
+                String temp = F("Toggle STOPPED, time too long [min ");
+                temp += ToggleTimeMin;
+                temp += F(", max ");
+                temp += ToggleTimeMax;
+                temp += ']';
+                MSG_OUTPUTLN(temp);
 
                 ToggleTime = 0;
                 commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime >= ToggleTimeMin)) { /* command tos<n> >= ToggleTime OK */
-                MSG_OUTPUT(F("Toggle starts changing every ")); MSG_OUTPUT(input.substring(3));
-                MSG_OUTPUTLN(F(" milliseconds"));
+                String temp = F("Toggle starts changing every ");
+                temp += IntTime;
+                temp += F(" milliseconds");
+                MSG_OUTPUTLN(temp);
 
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, IntTime); /* write to EEPROM */
                 ToggleCnt = 0;                                 // sonst evtl. CC110x switched to mode 66, ⸮=
@@ -847,8 +853,10 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
                 commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime < ToggleTimeMin)) { /* command tos<n> < ToggleTimeMin -> min limit */
-                MSG_OUTPUT(F("Toggle STOPPED, time to short [min ")); MSG_OUTPUT(ToggleTimeMin);
-                MSG_OUTPUTLN(']');
+                String temp = F("Toggle STOPPED, time to short [min ");
+                temp += ToggleTimeMin;
+                temp += ']';
+                MSG_OUTPUTLN(temp);
 
                 ToggleTime = 0;
                 commandCHECK = true;
@@ -870,8 +878,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, input.substring(4).toInt());
 
-                    MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4)); MSG_OUTPUT(F(" set to "));
-                    MSG_OUTPUT(Registers[input.substring(4).toInt()].name); MSG_OUTPUTLN(F(" mode"));
+                    String temp = F("ToggleBank ");
+                    temp += input.substring(3, 4);
+                    temp += F(" set to ");
+                    temp += Registers[input.substring(4).toInt()].name;
+                    temp += F(" mode");
+                    MSG_OUTPUTLN(temp);
                     commandCHECK = true;
                   }
                 }
@@ -929,6 +941,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             MSG_OUTPUTLN(F("Current registers unreadable, write patable stopped (no CC1101 found)"));
           } else {
             CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
+
             String temp = F("write ");
             temp += buf_input[1];
             temp += buf_input[2];
@@ -1078,14 +1091,19 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'M': /* command M */
       if (!buf_input[1]) {
-        MSG_OUTPUTLN(F("available register modes:"));
+        String temp = F("available register modes:");
+        temp += '\n';
 
         for (byte i = 0; i < RegistersCntMax; i++) {
           if (i < 10) {
-            MSG_OUTPUT(' ');
+            temp += ' ';
           }
-          MSG_OUTPUT(i); MSG_OUTPUT(F(" - ")); MSG_OUTPUTLN(Registers[i].name);
+          temp += i; temp += F(" - "); temp += Registers[i].name;
+          if (i < (RegistersCntMax - 1)) {
+            temp += '\n';
+          }
         }
+        MSG_OUTPUTLN(temp);
       } else {
         commandCHECK = false;
       }
