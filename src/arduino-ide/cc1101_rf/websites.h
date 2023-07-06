@@ -461,7 +461,7 @@ void web_cc110x_detail() {
   String return_val;
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
-  String web_status = F("<tr><td class=\"in\" colspan=\"6\"><span id=\"state\"></span></td></tr>");
+  String web_stat = F("<span id=\"state\"></span>");
   String website;
   website.reserve(16000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
@@ -510,7 +510,7 @@ void web_cc110x_detail() {
 #endif
 
       return_val = web_Freq_set(freq);
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">Frequency & Frequency Offset set &#10004;</td></tr>");
+      web_stat = F("Frequency & Frequency Offset set &#10004;");
 
       for (byte i = 0; i < 3; i++) {    /* write value to register 0D,0E,0F */
         byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
@@ -522,7 +522,7 @@ void web_cc110x_detail() {
       Serial.print(F("DB web_cc1101_detail, button set bandwidth pushed with ")); Serial.println(bandw);
       Serial.print(F("DB web_cc1101_detail, register 0x10 value is ")); Serial.println(web_regData[16]);
 #endif
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">Bandwidth set &#10004;</td></tr>");
+      web_stat = F("Bandwidth set &#10004;");
       int value = web_Bandw_cal(bandw.toInt(), (hexToDec(web_regData[16]) & 0x0f)); /* input complete | input split */
       CC1101_writeReg(16, value);                                                   // write in cc1101
       EEPROMwrite(16, value);                                                       // write in flash
@@ -530,7 +530,7 @@ void web_cc110x_detail() {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, button set datarate pushed with ")); Serial.println(datar);
 #endif
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">DataRate set &#10004;</td></tr>");
+      web_stat = F("DataRate set &#10004;");
       return_val = web_Datarate_set(datar.toFloat());
 
       for (byte i = 0; i < 2; i++) {    /* write value to register 0D,0E,0F */
@@ -542,7 +542,7 @@ void web_cc110x_detail() {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, button set deviation pushed with ")); Serial.println(dev);
 #endif
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">Deviation set &#10004;</td></tr>");
+      web_stat = F("Deviation set &#10004;");
       return_val = web_Devi_set(dev.toFloat());
       CC1101_writeReg(21, hexToDec(return_val));  // write in cc1101
       EEPROMwrite(21, hexToDec(return_val));      // write in flash
@@ -550,7 +550,7 @@ void web_cc110x_detail() {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, set modulation to ")); Serial.println(mod);
 #endif
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
+      web_stat = F("Modulation set &#10004;");
 
       byte value = 0;
       if (mod == F("2-FSK")) {
@@ -571,7 +571,7 @@ void web_cc110x_detail() {
 #ifdef debug_html
       Serial.println(F("DB web_cc1101_detail, button set registers pushed"));
 #endif
-      web_status = F("<tr><td class=\"in\" colspan=\"6\">all registers set &#10004;</td></tr>");
+      web_stat = F("all registers set &#10004;");
 
       for (byte i = 0; i <= 46; i++) { /* all registers */
 #ifdef debug_html
@@ -655,19 +655,20 @@ void web_cc110x_detail() {
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_import'\">import registers</button></td></tr>");
   // status line
-  website += web_status;
-  website += F("<tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
+  website += F("<tr><td class=\"in\" colspan=\"6\">");
+  website += web_stat;
+  website += F("</td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
 
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
     website += F("\"></span></td><td class=\"ce\">");
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
-    website += F("<input class= \"vw\" size=\"2\" maxlength=\"2\" name=\"r");
+    website += F("<input class= \"vw\" size=\"2\" name=\"r");
     website += i;                                 /* registername for GET / POST */
     website += F("\" value=\"");
     website += temp;                              /* value for GET / POST */
-    website += F("\" type=\"text\" maxlength=\"2\" pattern=\"^[\\da-fA-F]{1,2}$\" placeholder=\"");
+    website += F("\" type=\"text\" placeholder=\"");
     website += temp;                              /* placeholder */
     website += F("\"></td><td colspan=\"4\"><span id=\"n");
     website += i;

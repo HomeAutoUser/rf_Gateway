@@ -48,6 +48,8 @@ function onMessage(event) {
           hex = i.toString(16)
         }
         document.getElementById(name_s).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + regExplanation_short[i];
+        document.getElementsByName(name)[0].pattern = "^[\\da-fA-F]{1,2}$";
+        document.getElementsByName(name)[0].maxLength = "2";
 
         /* compare old value < > HTML value */
         if (document.getElementsByName(name)[0].value != reg[i]) {
