@@ -135,7 +135,7 @@ void web_cc110x() {
   }
 
   website += F("</tr></thead><tbody><tr><td>chip detected</td><td td colspan=\"2\">");
-  CC1101_found ? website += "yes" : website += "no";
+  CC1101_found ? website += F("yes") : website += F("no");
   website += F("</td></tr>");
 
   if (CC1101_found) {
@@ -194,7 +194,8 @@ void web_cc110x_modes() {
 
   if (countargs != 0) {
     if (submit != "" && submit != "time") {  // button "enable reception"
-      InputCmd = "m" + submit;
+      InputCmd = "m";
+      InputCmd += submit;
 
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_modes, set reception ")); Serial.println(submit);
@@ -218,10 +219,10 @@ void web_cc110x_modes() {
       } else {
         web_status = F("<tr><td class=\"in red\"><span id=\"stat\">toggle value ");
         if (tgtime < ToggleTimeMin) {
-          web_status += "< ";
+          web_status += F("< ");
           web_status += ToggleTimeMin;
         } else if (tgtime > ToggleTimeMax) {
-          web_status += "> ";
+          web_status += F("> ");
           web_status += ToggleTimeMax;
         }
         web_status += F(" &#10006;</span></td>");
@@ -243,7 +244,7 @@ void web_cc110x_modes() {
         Serial.print(F("DB web_cc1101_modes, togglebank value "));
         Serial.println(tb_val == ToggleArray[tb_nr] ? F("same") : F("differing"));
 #endif
-        InputCmd = "tob";     // preparation for processing
+        InputCmd = F("tob");  // preparation for processing
         InputCmd += tb_nr;    // preparation for processing
 
         web_status += F("togglebank ");
@@ -325,7 +326,7 @@ void web_cc110x_modes() {
   if (ToggleTime != 0) {
     website += ToggleTime;
   } else {
-    website += "(ms)";
+    website += F("(ms)");
   }
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
                "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
@@ -363,7 +364,7 @@ void web_cc110x_detail_export() {
       }
     }
   }
-  website += "<br>";
+  website += F("<br>");
   website += website_p2;
   website += F("]<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>");
   website += F("</body></html>");
@@ -552,15 +553,15 @@ void web_cc110x_detail() {
       web_status = F("<tr><td class=\"in\" colspan=\"6\">Modulation set &#10004;</td></tr>");
 
       byte value = 0;
-      if (mod == "2-FSK") {
+      if (mod == F("2-FSK")) {
         value = 0;
-      } else if (mod == "GFSK") {
+      } else if (mod == F("GFSK")) {
         value = 1;
-      } else if (mod == "ASK/OOK") {
+      } else if (mod == F("ASK/OOK")) {
         value = 3;
-      } else if (mod == "4-FSK") {
+      } else if (mod == F("4-FSK")) {
         value = 4;
-      } else if (mod == "MSK") {
+      } else if (mod == F("MSK")) {
         value = 7;
       }
 
@@ -623,7 +624,7 @@ void web_cc110x_detail() {
                "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
-  website += (freqAfc == 1 ? " checked" : "");
+  website += (freqAfc == 1 ? F(" checked") : F(""));
   website += F("></td><td class=\"di\">");
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"7\" maxlength=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
@@ -674,7 +675,9 @@ void web_cc110x_detail() {
   }
 
   website += F("</tbody></table></form></body></html>");
+  Serial.println(freeRam());
   HttpServer.send(200, "text/html", website);
+  Serial.println(freeRam());
 }
 
 
@@ -696,14 +699,14 @@ void web_log() {
     uint8_t lineCnt = 0;
     while (logfile.available()) {
       website += logfile.readStringUntil('\n');
-      website += "<br>";
+      website += F("<br>");
       lineCnt++;
     }
     logfile.close();
     if (lineCnt == 0) {
       website += F("Log file is empty");
     }
-    website += "</html>";
+    website += F("</html>");
   }
   HttpServer.send(200, "text/html", website);
 }
@@ -901,7 +904,7 @@ void web_wlan() {
 
   /* Tabelle Setting IP - network | IP DHCP */
   website += F("<tr><td class=\"ra1\"><input aria-label=\"n3\" type=\"radio\" name=\"dhcp\" value=\"1\"");
-  website += (used_dhcp == 1 ? " checked" : "");
+  website += (used_dhcp == 1 ? F(" checked") : F(""));
   website += F("></td><td colspan=\"2\">IP - adress automatically (DHCP)</td><td class=\"inp\" colspan=\"3\">");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
@@ -909,7 +912,7 @@ void web_wlan() {
 
   /* Tabelle Setting IP - network | IP statisch */
   website += F("<tr><td class=\"ra1\"><input aria-label=\"n4\" type=\"radio\" name=\"dhcp\" value=\"0\"");
-  website += (used_dhcp == 0 ? " checked" : "");
+  website += (used_dhcp == 0 ? F(" checked") : F(""));
   website += F("></td><td colspan=\"2\">IP - adress static</td>"
                "<td class=\"inp\" colspan=\"3\"><input aria-label=\"n4\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"ip\" type=\"text\" id=\"ip\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
@@ -922,7 +925,7 @@ void web_wlan() {
   website += ipbuffer;
   website += F("\"></td></tr>");
 
-  ipadr = WiFi.gatewayIP(); /* Tabelle Setting IP - network | Standard-Gateway */
+                            /* Tabelle Setting IP - network | Standard-Gateway */
   website += F("<tr><td class=\"alig_r\" colspan=\"3\">default gateway</td><td class=\"inp\" colspan=\"3\"><input aria-label=\"n6\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"gw\" type=\"text\" id=\"gw\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
@@ -1066,13 +1069,13 @@ void WebSocket_cc110x() {
         website += ToggleArray[i];
       }
       if (i != 3) {
-        website += " ";
+        website += ' ';
       }
     }
 
     website += F(" }\",\"Time\":\"");
     website += ToggleTime;
-    website += "\"}";
+    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/cc110x") {
@@ -1097,7 +1100,7 @@ void WebSocket_cc110x_detail() {
     website += ToggleTime;
     website += F("\", \"FreOff\":\"");
     website += String(Freq_offset, 3);
-    website += "\", ";
+    website += F("\", ");
     website += F("\"Config\":\"");
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
       if (ToggleTime != 0) {
@@ -1106,7 +1109,7 @@ void WebSocket_cc110x_detail() {
         website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
       }
       if (i == 46) {
-        website += "\"}";
+        website += F("\"}");
       } else {
         website += ',';
       }
@@ -1131,16 +1134,16 @@ void WebSocket_cc110x_modes() {
     website += activated_mode_name;
     website += F("\", \"MODE_id\":\"");
     website += activated_mode_nr;
-    website += "\"}";
+    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/cc110x_modes") {
         webSocket.sendTXT(num, website);
       }
-      if (webSocketSite[num] == "/raw") {
+      if (webSocketSite[num] == F("/raw")) {
         website = F("{\"MODE\":\"");
         website += activated_mode_name;
-        website += "\"}";
+        website += F("\"}");
         webSocket.sendTXT(num, website);
       }
     }
@@ -1155,7 +1158,7 @@ void WebSocket_help() {
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
     website.reserve(16);
-    website += CC1101_found == true ? "yes\"}" : "no\"}";
+    website += CC1101_found == true ? F("yes\"}") : F("no\"}");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/help") {
         webSocket.sendTXT(num, website);
@@ -1172,7 +1175,7 @@ void WebSocket_index() {
   if (webSocket.connectedClients() > 0) {
     String website = F("{\"CC1101\":\"");
     website.reserve(100);
-    CC1101_found ? website += "yes" : website += "no";
+    CC1101_found ? website += F("yes") : website += F("no");
     website += F("\",\"RAM\":\"");
     website += freeRam();
     website += F("\",\"Uptime\":\"");
@@ -1181,7 +1184,7 @@ void WebSocket_index() {
     website += msgCount;
     website += F("\",\"WLANdB\":\"");
     website += WiFi.RSSI();
-    website += "\"}";
+    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/") {
@@ -1206,7 +1209,7 @@ void WebSocket_raw() {
     website += RSSI_dez;
     website += F("\", \"AFC\":\"");
     website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
-    website += "\"}";
+    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/raw") {
@@ -1260,7 +1263,7 @@ void routing_websites() {
 
 String HTML_mod(String txt) {
   if (CC1101_found != true) {
-    txt.replace("<a href=\"raw\" class=\"RAW\">RAW data</a>", "");
+    txt.replace(F("<a href=\"raw\" class=\"RAW\">RAW data</a>"), F(""));
   }
   return txt;
 }

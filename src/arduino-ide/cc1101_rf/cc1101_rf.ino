@@ -19,18 +19,18 @@
   Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40196 / 80192 bytes (50%)
+  . Variables and constants in RAM (global, static), used 40040 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   5100     constants
-  ╚══ BSS      33288    zeroed variables
+  ╠══ RODATA   4936     constants
+  ╚══ BSS      33296    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 429972 / 1048576 bytes (41%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 430272 / 1048576 bytes (41%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     429972   code in flash
+  ╚══ IROM     430272   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -301,7 +301,14 @@ void Interupt_Variant(byte nr) {
   CC1101_cmdStrobe(CC1101_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
   CC1101_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
   CC1101_cmdStrobe(CC1101_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  WebSocket_cc110x();             /* WebSocket Verarbeitung */
+  WebSocket_cc110x_detail();
+  WebSocket_cc110x_modes();
+#else
   delay(10);
+#endif
 
   MOD_FORMAT = ( CC1101_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
   if (MOD_FORMAT != 3) {
@@ -395,7 +402,7 @@ void setup() {
         break;
     }
 #endif
-    logText += F(")");
+    logText += ')';
     logfile.println(logText);
     logfile.close(); /* Schließen der Datei */
   }
@@ -663,12 +670,6 @@ void ToggleOnOff() {
   if (ToggleCnt >= ToggleValues) {
     ToggleCnt = 0;
   }
-
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  WebSocket_cc110x();             /* WebSocket Verarbeitung */
-  WebSocket_cc110x_detail();
-  WebSocket_cc110x_modes();
-#endif
 }
 
 
@@ -858,14 +859,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 #ifdef debug
                 MSG_OUTPUT(F("DB Input | cmd tob ")); MSG_OUTPUT(input.substring(3)); MSG_OUTPUTLN(F(" accepted"));
 #endif
-
                 if (isNumeric(input.substring(4)) == 1) {
                   if (input.substring(4).toInt() == 99) {                                 /* command tob<0-3>99 -> reset togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = 255;                     /* 255 is max value and reset value */
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, 255); /* 255 is max value and reset value */
 
                     MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4).toInt()); MSG_OUTPUTLN(F(" reset"));
-
                     commandCHECK = true;
                   } else if (input.substring(4).toInt() < RegistersCntMax) { /* command tob<0-3><n> -> set togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
@@ -873,7 +872,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
                     MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4)); MSG_OUTPUT(F(" set to "));
                     MSG_OUTPUT(Registers[input.substring(4).toInt()].name); MSG_OUTPUTLN(F(" mode"));
-
                     commandCHECK = true;
                   }
                 }
@@ -931,11 +929,11 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             MSG_OUTPUTLN(F("Current registers unreadable, write patable stopped (no CC1101 found)"));
           } else {
             CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
-
-            MSG_OUTPUT(F("write "));
-            MSG_OUTPUT(buf_input[1]);
-            MSG_OUTPUT(buf_input[2]);
-            MSG_OUTPUTLN(F(" to PATABLE done"));
+            String temp = F("write ");
+            temp += buf_input[1];
+            temp += buf_input[2];
+            temp += F(" to PATABLE done");
+            MSG_OUTPUTLN(temp);
           }
         } else {
           commandCHECK = false;
@@ -1311,7 +1309,7 @@ void Telnet() {
 
       while (TelnetClient[i].available()) { /* get data from the telnet client */
 #ifdef debug
-        Serial.print("DB Telnet, Data from session ");
+        Serial.print(F("DB Telnet, Data from session "));
         Serial.println(i);
 #endif
         client_now = i; /* current telnet client is set where data is received */

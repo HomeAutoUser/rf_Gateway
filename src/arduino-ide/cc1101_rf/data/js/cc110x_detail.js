@@ -64,7 +64,18 @@ function onMessage(event) {
           document.getElementById('PKTCTRL0').innerHTML = LENGTH_CONFIG[val];
         }
 
-        if(i == 13 || i == 14 || i == 15) {
+        if (i == 12) { /* 0x0C: FSCTRL0 – Frequency Synthesizer Control */
+          if(document.getElementsByName('afc')[0].checked) {
+            var off = ( parseInt(reg[i], 16) );
+            if (off > 127) {
+              off -= 255;
+            }
+            off = (26000000 / 16384 * off / 1000);
+            document.getElementById('n' + i).innerHTML = regExplanation[i] + ' (Freq. offset ' + off.toFixed(0) + ' kHz)';
+          }
+        }
+
+        if (i == 13 || i == 14 || i == 15) {
           if(i == 13){ /* 0x0D: FREQ2 – Frequency Control Word, High Byte */
             Freq = parseInt(reg[i], 16) * 256;
           }
