@@ -1,18 +1,9 @@
-﻿/*
-  JavaScript for alls website´s
-  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
-  URL: https://github.com/HomeAutoUser/cc1101_rf_Gateway
-*/
-
-var wsurl = 'ws://' + window.location.host + ':81' + window.location.pathname;
+﻿var wsurl = 'ws://' + window.location.host + ':81' + window.location.pathname;
 var websocket;
-
 window.addEventListener('load', onload);
-
 function onload(event) {
   initWebSocket();
 }
-
 function initWebSocket() {
   console.log('Trying to open a WebSocket connection…');
   websocket = new WebSocket(wsurl);
@@ -20,11 +11,9 @@ function initWebSocket() {
   websocket.onclose = onClose;
   websocket.onmessage = onMessage;
 }
-
 function onOpen(event) {
   console.log('Connected ' + window.location.host);
 }
-
 function onClose(event) {
   console.log('Disconnected ' + window.location.host);
 }

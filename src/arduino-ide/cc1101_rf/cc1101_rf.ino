@@ -6,9 +6,9 @@
   Der Sketch verwendet 29330 Bytes (95%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino Nano OHNE debug´s | FreeRam -> 637
-  Der Sketch verwendet 26000 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - Arduino Nano OHNE debug´s | FreeRam -> 320
+  Der Sketch verwendet 26324 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1136 Bytes (55%) des dynamischen Speichers, 912 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
   Der Sketch verwendet 26086 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -164,7 +164,6 @@ byte WLAN_reco_cnt = 0;             // counter for connection, if cnt 3, WLAN ju
 const char* ssid_ap = WLAN_ssid_ap;
 const char* password_ap = WLAN_password_ap;
 String OwnStationHostname = WLAN_hostname;
-String html_raw;          // for the output on web server
 String used_ssid;         // for the output on web server
 String used_ssid_mac;     // for the output on web server
 String used_ssid_pass;    // for the output on web server
@@ -239,7 +238,6 @@ void MSGBuild();
 void PatReset();
 void decode(const int pulse);
 void findpatt(int val);
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 /* END - Settings for OOK messages without Sync Pulse (MU) - END */
 
 /* varible´s for other */
@@ -257,6 +255,7 @@ unsigned long uptime = 0;
 /* now all websites, all settings are available here */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #include "websites.h"
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 #endif
 
 
@@ -322,7 +321,6 @@ void Interupt_Variant(byte nr) {
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
   msg.reserve(255);
-  html_raw.reserve(360);
 
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
@@ -501,6 +499,9 @@ void setup() {
 
 void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  ArduinoOTA.handle(); /* OTA Updates */
+  Telnet();            /* Telnet Input´s  */
+  HttpServer.handleClient();
   webSocket.loop(); // dauert 53 µS
 #endif
 
@@ -533,12 +534,6 @@ void loop() {
     }
   }
 
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  ArduinoOTA.handle(); /* OTA Updates */
-  Telnet();            /* Telnet Input´s  */
-  HttpServer.handleClient();
-#endif
-
   /* only for test !!! HangOver ??? */
   //#ifdef debug_cc110x_ms
   //MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
@@ -558,7 +553,8 @@ void loop() {
     }
     msg = "";
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    html_raw = ""; /* reset for Webserver data */
+    String html_raw = "";        // for the output on web server
+    html_raw.reserve(128);
 #endif
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
@@ -589,18 +585,16 @@ void loop() {
 #endif
     msg += char(10);    // LF
     MSG_OUTPUTALL(msg); /* output msg to all */
-    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
-      CC1101_cmdStrobe(CC1101_SFRX);
-    }
-
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw(); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+    WebSocket_raw(html_raw); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
-
+    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
+      CC1101_cmdStrobe(CC1101_SFRX);
+    }
     CC1101_cmdStrobe(CC1101_SRX);
     for (uint8_t i = 0; i < 255; i++) {
       if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x0D) { // RX
@@ -611,7 +605,6 @@ void loop() {
         MSG_OUTPUTALLLN(F("loop, ERROR read CC1101_MARCSTATE, READ_BURST !"));
       }
     }
-
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
     /* OOK */
@@ -751,7 +744,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 
       if (buf_input[1] == 't' && !buf_input[2]) { /* command ft */
         MSG_OUTPUTLN(F("CC110x_Frequency, send testsignal"));
-
         input = F("SN;D=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;R=50;");
         char In[input.length() + 1];
         input.toCharArray(In, input.length() + 1); /* String to char in buf */
@@ -877,7 +869,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                   } else if (input.substring(4).toInt() < RegistersCntMax) { /* command tob<0-3><n> -> set togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, input.substring(4).toInt());
-
                     String temp = F("ToggleBank ");
                     temp += input.substring(3, 4);
                     temp += F(" set to ");
@@ -885,6 +876,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                     temp += F(" mode");
                     MSG_OUTPUTLN(temp);
                     commandCHECK = true;
+                  } else {
+                    MSG_OUTPUTLN(F("Mode number greater RegistersCntMax"));
                   }
                 }
                 if (ToggleTime > 0) {
@@ -1093,7 +1086,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       if (!buf_input[1]) {
         String temp = F("available register modes:");
         temp += '\n';
-
         for (byte i = 0; i < RegistersCntMax; i++) {
           if (i < 10) {
             temp += ' ';
@@ -1216,8 +1208,9 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       if (CC1101_found == true) {
         if (buf_input[1] && buf_input[1] != 'S' && buf_input[1] > 47 && buf_input[1] < 52 && buf_input[2] && buf_input[3] && buf_input[4] && !buf_input[5]) {
           /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... */
-          byte adr_dec = hexToDec(String(buf_input[1]) + String(buf_input[2]));
-          byte val_dec = hexToDec(String(buf_input[3]) + String(buf_input[4]));
+          byte adr_dec = hexToDec(input.substring(1, 3));
+          byte val_dec = hexToDec(input.substring(3));
+          //TODO, check function with offset !!! 
 
           if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2]) && isHexadecimalDigit(buf_input[3]) && isHexadecimalDigit(buf_input[4])) {
 #ifdef debug
@@ -1440,16 +1433,16 @@ inline void doDetect() {      /* Pulsprüfung und Weitergabe an Patternprüfung 
 
 void MSGBuild() {     /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
+    uint8_t rssi = CC1101_readReg(0x34, 0xC0); // not converted
     digitalWriteFast(LED, HIGH);  // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
-    html_raw = char(2);
-    uint8_t rssi = CC1101_readReg(0x34, 0xC0); // not converted
-
-    html_raw += F("MU");
+    String raw = String(char(2));          // for the output on telnet and serial
+    raw.reserve(360);
+    raw += F("MU");
     for (uint8_t i = 0; i <= PatNmb; i++) {
       int16_t PulseAvg = ArPaSu[i] / ArPaCnt[i];
-      html_raw += F(";P"); html_raw += i; html_raw += F("="); html_raw += PulseAvg;
+      raw += F(";P"); raw += i; raw += F("="); raw += PulseAvg;
       // search Clockpulse (CP=) - das funktioniert noch nicht richtig! --> kein richtiger Einfall ;-) TODO
       if (ArPaSu[i] > 0) { // HIGH-Pulse
         if (PulseAvg < PulseAvgMin) { // kürzeste Zeit
@@ -1461,24 +1454,24 @@ void MSGBuild() {     /* Nachrichtenausgabe */
         }
       }
     }
-    html_raw += F(";D="); html_raw += msg; html_raw += F(";CP="); html_raw += CP_PaNum;
-    html_raw += F(";R="); html_raw += rssi; html_raw += ';';
+    raw += F(";D="); raw += msg; raw += F(";CP="); raw += CP_PaNum;
+    raw += F(";R="); raw += rssi; raw += ';';
     if (MsgLen == MsgLenMax) {  /* max. Nachrichtenlänge erreicht */
-      html_raw += F("O;");
+      raw += F("O;");
     } else if (TiOv != 0) {     /* Timeoverflow größer 32000 -> Zwangstrennung */
-      html_raw += F("p;");
+      raw += F("p;");
     } else if (PatMAX == 1) {   /* max. Pattern erreicht und neuer unbekannter würde folgen */
-      html_raw += F("e;");
+      raw += F("e;");
     }
-    html_raw += F("w="); html_raw += valid; html_raw += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
+    raw += F("w="); raw += valid; raw += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     CC1101_readRSSI();
-    html_raw.remove(0, 1);
-    WebSocket_raw();
+    raw.remove(0, 1);
+    WebSocket_raw(raw);
 #endif
-    html_raw.replace("M", "M");
-    html_raw += char(3); html_raw += char(10);
-    MSG_OUTPUTALL(html_raw);
+    raw.replace("M", "M");
+    raw += char(3); raw += char(10);
+    MSG_OUTPUTALL(raw);
     digitalWriteFast(LED, LOW);  // LED off
   }
   PatReset();

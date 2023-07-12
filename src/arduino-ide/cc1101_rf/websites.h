@@ -23,7 +23,7 @@ void WebSocket_help();
 /* {"CC1101":"no"} */
 void WebSocket_index();
 /* {"CC1101":"yes","RAM":"29496","Uptime":"305","MSGcnt":"37","WLANdB":"-60"} */
-void WebSocket_raw();
+void WebSocket_raw(const String & html_raw);
 /* {"MODE":"Lacrosse_mode2", "RAW":"9706636AE6", "RSSI":"-52", "AFC":"-15"} */
 void routing_websites();
 void web_cc110x();
@@ -71,9 +71,8 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
 
 
 void web_index() {
-  String website;
+  String website = String(html_meta);
   website.reserve(2000);
-  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
@@ -926,7 +925,7 @@ void web_wlan() {
   website += ipbuffer;
   website += F("\"></td></tr>");
 
-                            /* Tabelle Setting IP - network | Standard-Gateway */
+  /* Tabelle Setting IP - network | Standard-Gateway */
   website += F("<tr><td class=\"alig_r\" colspan=\"3\">default gateway</td><td class=\"inp\" colspan=\"3\"><input aria-label=\"n6\" pattern=\"^[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}$\" size=\"15\" maxlength=\"15\" name=\"gw\" type=\"text\" id=\"gw\" value=\"");
   sprintf(ipbuffer, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
   website += ipbuffer;
@@ -1174,18 +1173,15 @@ void WebSocket_index() {
   Serial.println(F("DB WebSocket_index running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"CC1101\":\"");
-    website.reserve(100);
-    CC1101_found ? website += F("yes") : website += F("no");
-    website += F("\",\"RAM\":\"");
+    String website = F("CC1101,");
+    website.reserve(48);
     website += freeRam();
-    website += F("\",\"Uptime\":\"");
+    website += ',';
     website += uptime;
-    website += F("\",\"MSGcnt\":\"");
+    website += ',';
     website += msgCount;
-    website += F("\",\"WLANdB\":\"");
+    website += ',';
     website += WiFi.RSSI();
-    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/") {
@@ -1196,7 +1192,7 @@ void WebSocket_index() {
 }
 
 
-void WebSocket_raw() {
+void WebSocket_raw(const String & html_raw) {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_raw running"));
 #endif
