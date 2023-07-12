@@ -7,30 +7,30 @@
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 320
-  Der Sketch verwendet 26324 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1136 Bytes (55%) des dynamischen Speichers, 912 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26260 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1116 Bytes (54%) des dynamischen Speichers, 932 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
-  Der Sketch verwendet 26086 Bytes (84%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1441 Bytes (70%) des dynamischen Speichers, 607 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26346 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1116 Bytes (54%) des dynamischen Speichers, 932 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 28358 Bytes (98%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 1410 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 28620 Bytes (99%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 1087 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40040 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 40024 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
   ╠══ RODATA   4936     constants
-  ╚══ BSS      33296    zeroed variables
+  ╚══ BSS      33280    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 429412 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 429300 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     429412   code in flash
+  ╚══ IROM     429300   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
   Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
@@ -193,13 +193,13 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) ";
 static const char TXT_RawPreamble[] = "MN;D=";
 static const char TXT_RawRSSI[] = ";R=";
 static const char TXT_RawFP2[] = ";A=";
 byte CC1101_writeReg_offset = 2;
 #else
-static const char TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway ";
+static const char TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
 static const char TXT_RawPreamble[] = "data: ";
 static const char TXT_RawRSSI[] = "; RSSI=";
 static const char TXT_RawFP2[] = "; FREQAFC=";
@@ -1210,7 +1210,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... */
           byte adr_dec = hexToDec(input.substring(1, 3));
           byte val_dec = hexToDec(input.substring(3));
-          //TODO, check function with offset !!! 
+          //TODO, check function with offset !!!
 
           if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2]) && isHexadecimalDigit(buf_input[3]) && isHexadecimalDigit(buf_input[4])) {
 #ifdef debug
