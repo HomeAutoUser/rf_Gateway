@@ -617,8 +617,8 @@ void web_cc110x_detail() {
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
-               // Frequency (should | is)
-               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQ\"></span> | <span id=\"FREQis\"></span>"
+               // Frequency (is | should)
+               "<tr><td colspan=\"2\">Frequency (is | should)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQ\"></span> | <span id=\"FREQis\"></span>"
                " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" id=\"p1\" name=\"freq\" value=\""
                "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
@@ -1055,12 +1055,11 @@ void WebSocket_cc110x() {
   Serial.println(F("DB WebSocket_cc110x running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"MODE\":\"");
-    website.reserve(100);
-    website += activated_mode_name;
-    website += F("\",\"MS\":\"");
+    String website = activated_mode_name;
+    website.reserve(55);
+    website += ',';
     website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
-    website += F("\",\"ToggleBank\":\"{ ");
+    website += F(",{ ");
 
     for (byte i = 0; i < 4; i++) {
       if (ToggleArray[i] == 255) {
@@ -1073,9 +1072,8 @@ void WebSocket_cc110x() {
       }
     }
 
-    website += F(" }\",\"Time\":\"");
+    website += F(" },");
     website += ToggleTime;
-    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/cc110x") {
@@ -1091,17 +1089,9 @@ void WebSocket_cc110x_detail() {
   Serial.println(F("DB WebSocket_cc110x_detail running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"MODE\":\"");
-    website.reserve(250);
-    website += activated_mode_name;
-    website += F("\", \"MODE_id\":\"");
-    website += activated_mode_nr;
-    website += F("\", \"Time\":\"");
-    website += ToggleTime;
-    website += F("\", \"FreOff\":\"");
-    website += String(Freq_offset, 3);
-    website += F("\", ");
-    website += F("\"Config\":\"");
+
+    String website = "";
+    website.reserve(200);
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
       if (ToggleTime != 0) {
         website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
@@ -1109,11 +1099,15 @@ void WebSocket_cc110x_detail() {
         website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
       }
       if (i == 46) {
-        website += F("\"}");
+        website += F(",detail,");
       } else {
         website += ',';
       }
     }
+
+    website += activated_mode_name;
+    website += ',';
+    website += String(Freq_offset, 3);
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/cc110x_detail") {
@@ -1129,21 +1123,14 @@ void WebSocket_cc110x_modes() {
   Serial.println(F("DB WebSocket_cc110x_modes running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"MODE\":\"");
-    website.reserve(75);
+    String website = F("MODE,");
+    website.reserve(35);
     website += activated_mode_name;
-    website += F("\", \"MODE_id\":\"");
+    website += ',';
     website += activated_mode_nr;
-    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == "/cc110x_modes") {
-        webSocket.sendTXT(num, website);
-      }
-      if (webSocketSite[num] == F("/raw")) {
-        website = F("{\"MODE\":\"");
-        website += activated_mode_name;
-        website += F("\"}");
+      if (webSocketSite[num] == "/cc110x_modes" || webSocketSite[num] == F("/raw")) {
         webSocket.sendTXT(num, website);
       }
     }
@@ -1156,9 +1143,8 @@ void WebSocket_help() {
   Serial.println(F("DB WebSocket_help running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"CC1101\":\"");
-    website.reserve(16);
-    website += CC1101_found == true ? F("yes\"}") : F("no\"}");
+    String website = F("CC1101,");
+    website += CC1101_found == true ? F("yes") : F("no");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/help") {
         webSocket.sendTXT(num, website);
@@ -1197,16 +1183,15 @@ void WebSocket_raw(const String & html_raw) {
   Serial.println(F("DB WebSocket_raw running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("{\"MODE\":\"");
-    website.reserve(500);
+    String website = F("RAW,");
     website += activated_mode_name;
-    website += F("\", \"RAW\":\"");
-    website += html_raw; // TODO
-    website += F("\", \"RSSI\":\"");
+    website.reserve(460);
+    website += ',';
+    website += html_raw;
+    website += ',';
     website += RSSI_dez;
-    website += F("\", \"AFC\":\"");
+    website += ',';
     website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
-    website += F("\"}");
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/raw") {

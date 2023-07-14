@@ -83,7 +83,7 @@
 //#define WMBus_T                 1
 
 /* Configuration for WLAN devices */
-#define TELNET_CLIENTS_MAX      2                           // maximum number of Telnet clients
+#define TELNET_CLIENTS_MAX      3                           // maximum number of Telnet clients
 #define TELNET_PORT             23                          // Telnet Port
 #define WLAN_ssid_ap            "cc110x_rf_Gateway"         // AP - SSID
 #define WLAN_password_ap        "config-gateway"            // AP - Passwort

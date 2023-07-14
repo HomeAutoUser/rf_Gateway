@@ -19,22 +19,22 @@
   Globale Variablen verwenden 1087 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40024 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 40068 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   4936     constants
-  ╚══ BSS      33280    zeroed variables
+  ╠══ RODATA   4948     constants
+  ╚══ BSS      33312    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 429300 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 428956 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     429300   code in flash
+  ╚══ IROM     428956   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 939286 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 46180 Bytes (14%) des dynamischen Speichers, 281500 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 947702 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 46492 Bytes (14%) des dynamischen Speichers, 281188 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
 
@@ -499,10 +499,14 @@ void setup() {
 
 void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  ArduinoOTA.handle(); /* OTA Updates */
-  Telnet();            /* Telnet Input´s  */
+  /* https://arduino-esp8266.readthedocs.io/en/3.0.0/reference.html#timing-and-delays
+    delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
+  delay(10);  // receiving better | delay(1); // receiving ok
+
+  ArduinoOTA.handle();  /* OTA Updates */
+  Telnet();             /* Telnet Input´s */
   HttpServer.handleClient();
-  webSocket.loop(); // dauert 53 µS
+  webSocket.loop();     /* 53 µS */
 #endif
 
   if ((millis() - secTick) >= 1000UL) { // jede Sekunde
@@ -1472,6 +1476,7 @@ void MSGBuild() {     /* Nachrichtenausgabe */
     raw.replace("M", "M");
     raw += char(3); raw += char(10);
     MSG_OUTPUTALL(raw);
+    msgCount++;
     digitalWriteFast(LED, LOW);  // LED off
   }
   PatReset();
