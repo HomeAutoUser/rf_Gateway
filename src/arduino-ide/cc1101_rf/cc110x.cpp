@@ -289,26 +289,22 @@ void CC1101_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_
 #endif
 
     if (i == 15 && Freq_offset != 0.00) { /* 0D 0E 0F - attention to the frequency offset !!! */
-
-      String ret = web_Freq_set(
-                     String(web_Freq_read(CC1101_readReg(13, READ_BURST),
-                                          CC1101_readReg(14, READ_BURST),
-                                          CC1101_readReg(15, READ_BURST)),
-                            3));
+      byte value[3];
+      web_Freq_Set(web_Freq_read(CC1101_readReg(13, READ_BURST),
+                                 CC1101_readReg(14, READ_BURST),
+                                 CC1101_readReg(15, READ_BURST)
+                                ), value);
 #ifdef debug_cc110x
       Serial.println(F("CC110x_Freq.Offset mod register 0x0D 0x0E 0x0F"));
       Serial.print(F("CC110x_Freq.Offset calculated "));
-      Serial.print(String(web_Freq_read(CC1101_readReg(13, READ_BURST),
-                                        CC1101_readReg(14, READ_BURST),
-                                        CC1101_readReg(15, READ_BURST))
-                          + Freq_offset,
-                          3));
+      Serial.print(web_Freq_read(CC1101_readReg(13, READ_BURST),
+                                 CC1101_readReg(14, READ_BURST),
+                                 CC1101_readReg(15, READ_BURST)) + (Freq_offset * 1000));
       Serial.println(F(" MHz an write new value"));
 #endif
       for (byte i2 = 0; i2 < 3; i2++) { /* write value to register 0D,0E,0F */
-        byte val = hexToDec(ret.substring(i2 * 2, i2 * 2 + 2));
-        if (pgm_read_byte_near(reg_name + i2 + 13) != val) {
-          CC1101_writeReg(i2 + 13, val);  // write in cc1101
+        if (pgm_read_byte_near(reg_name + i2 + 13) != value[i2]) {
+          CC1101_writeReg(i2 + 13, value[i2]);  // write in cc1101
         }
       }
     }

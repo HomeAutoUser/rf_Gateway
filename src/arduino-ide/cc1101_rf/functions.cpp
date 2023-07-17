@@ -48,38 +48,29 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
   Freq = adr1 * 256;
   Freq = (Freq + adr2) * 256;
   Freq = Freq + adr3 ;
-  Freq = (26 * Freq) / 65536;
+  Freq = ( (26 * Freq) / 65536 ) * 1000;
   return Freq;
 }
 
 
-String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
-  String output = "";
-  output.reserve(7);
+void web_Freq_Set(long frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
   int32_t f;
-  int f2;
-  int f1;
-  int f0;
-  f = (input.toFloat() * 1000 + Freq_offset * 1000) / 26000 * 65536;
-  f2 = f / 65536;
-  f1 = (f % 65536) / 256;
-  f0 = f % 256;
+  f = (frequency + Freq_offset * 1000) / 26000 * 65536;
+  arr[0] = f / 65536;
+  arr[1] = (f % 65536) / 256;
+  arr[2] = f % 256;
 
 #ifdef debug
-  Serial.print(F("DB web_Freq_set, input ")); Serial.print(input); Serial.println(F(" MHz"));
-  Serial.print(F("DB web_Freq_set, FREQ2..0 (0D,0E,0F) to ")); Serial.print(onlyDecToHex2Digit(f2));
-  Serial.print(' '); Serial.print(onlyDecToHex2Digit(f1));
-  Serial.print(' '); Serial.println(onlyDecToHex2Digit(f0));
+  Serial.print(F("DB web_Freq_Set, input ")); Serial.print(frequency); Serial.println(F(" MHz"));
+  Serial.print(F("DB web_Freq_Set, FREQ2..0 (0D,0E,0F) to ")); Serial.print(onlyDecToHex2Digit(arr[0]));
+  Serial.print(' '); Serial.print(onlyDecToHex2Digit(arr[1]));
+  Serial.print(' '); Serial.println(onlyDecToHex2Digit(arr[2]));
 #endif
-
-  output += onlyDecToHex2Digit(f2);
-  output += onlyDecToHex2Digit(f1);
-  output += onlyDecToHex2Digit(f0);
-  return output;
 }
 
+
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-int web_Bandw_cal(int input, int input_split) {   /* bandwidth calculation from web */
+byte web_Bandw_cal(float input, byte reg_split) {   /* bandwidth calculation from web */
   int bits = 0;
   int bw = 0;
   for (int e = 0; e < 4; e++) {
@@ -93,27 +84,27 @@ int web_Bandw_cal(int input, int input_split) {   /* bandwidth calculation from 
   }
 END:
 #ifdef debug
-  Serial.print(F("DB web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(input_split + bits));
+  Serial.print(F("DB web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(reg_split + bits));
 #endif
-  return (input_split + bits);
+  return (reg_split + bits);
 }
 
 
-String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0x11 */
-  if (input < 0.0247955) {
-    input = 0.0247955;
-  } else if (input > 1621.83) {
-    input = 1621.83;
+void web_Datarate_Set(long datarate, byte * arr) {    /* datarate set & calculation - 0x10 0x11 */
+  if (datarate < 24.7955) {
+    datarate = 24.7955;
+  } else if (datarate > 1621830) {
+    datarate = 1621830;
   }
 
   int ret = CC1101_readReg(0x10, READ_BURST);
   ret = ret & 0xf0;
 
-  float DRATE_E = (input * 1000.0) * ( pow(2, 20) ) / 26000000.0;
+  float DRATE_E = datarate * ( pow(2, 20) ) / 26000000.0;
   DRATE_E = log(DRATE_E) / log(2);
   DRATE_E = int(DRATE_E);
 
-  float DRATE_M = ((input * 1000.0) * (pow(2, 28)) / (26000000.0 * (pow(2, DRATE_E)))) - 256;
+  float DRATE_M = (datarate * (pow(2, 28)) / (26000000.0 * (pow(2, DRATE_E)))) - 256;
   DRATE_M = int(DRATE_M);
   int DRATE_Mr = round(DRATE_M);
 
@@ -130,24 +121,21 @@ String web_Datarate_set(float input) {    /* datarate set & calculation - 0x10 0
     DRATE_E = DRATE_E1;
   }
 
-  String reg = String( int(ret + DRATE_E), HEX );
-  reg += String( int(DRATE_M), HEX );
-
+  arr[0] = ret + DRATE_E;
+  arr[1] = DRATE_M;
 #ifdef debug
-  Serial.print(F("DB web_Datarate_set, MDMCFG4..MDMCFG3 to ")); Serial.print(reg);
-  Serial.print(' '); Serial.print(F(" = ")); Serial.print(input); Serial.println(F(" kHz"));
+  Serial.print(F("DB web_Datarate_Set, MDMCFG4..MDMCFG3 to ")); Serial.print(onlyDecToHex2Digit(arr[0])); Serial.print(onlyDecToHex2Digit(arr[1]));
+  Serial.print(' '); Serial.print(F(" = ")); Serial.print(datarate); Serial.println(F(" Hz"));
 #endif
-
-  return reg;
 }
 
 
-String web_Devi_set(float input) {    /* Deviation set & calculation */
-  if (input > 380.859375) {
-    input = 380.859375;
+byte web_Devi_Set(float deviation) {    /* Deviation set & calculation */
+  if (deviation > 380.859375) {
+    deviation = 380.859375;
   }
-  if (input < 1.586914) {
-    input = 1.586914;
+  if (deviation < 1.586914) {
+    deviation = 1.586914;
   }
 
   float deviatn_val;
@@ -159,11 +147,11 @@ String web_Devi_set(float input) {    /* Deviation set & calculation */
     for (int DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
       deviatn_val = (8 + DEVIATION_M) * (pow(2, DEVIATION_E)) * 26000.0 / (pow(2, 17));
       bits = DEVIATION_M + (DEVIATION_E << 4);
-      if (input > deviatn_val) {
+      if (deviation > deviatn_val) {
         devlast = deviatn_val;
         bitlast = bits;
       } else {
-        if ((deviatn_val - input) < (input - devlast)) {
+        if ((deviatn_val - deviation) < (deviation - devlast)) {
           devlast = deviatn_val;
           bitlast = bits;
         }
@@ -172,9 +160,9 @@ String web_Devi_set(float input) {    /* Deviation set & calculation */
   }
 
 #ifdef debug
-  Serial.print(F("DB web_Devi_set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
+  Serial.print(F("DB web_Devi_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
 #endif
-  return String(bitlast, HEX);
+  return bitlast;
 }
 
 

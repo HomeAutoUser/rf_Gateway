@@ -2,39 +2,35 @@
   Copyright (c) 2022, HomeAutoUser & elektron-bbs
   All rights reserved.
 
-  - Arduino Nano mit debug´s (debug, debug_cc110x, debug_cc110x_ms, debug_eeprom & keine DEV Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 29330 Bytes (95%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-
   - Arduino Nano OHNE debug´s | FreeRam -> 320
-  Der Sketch verwendet 26148 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 960 Bytes (46%) des dynamischen Speichers, 1088 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 24336 Bytes (79%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 678 Bytes (33%) des dynamischen Speichers, 1370 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
-  Der Sketch verwendet 26234 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 960 Bytes (46%) des dynamischen Speichers, 1088 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 24422 Bytes (79%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 678 Bytes (33%) des dynamischen Speichers, 1370 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 28506 Bytes (99%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 929 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 26722 Bytes (93%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 647 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 39876 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39316 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
   ╠══ RODATA   4764     constants
-  ╚══ BSS      33304    zeroed variables
+  ╚══ BSS      32744    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 428148 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 427880 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     428148   code in flash
+  ╚══ IROM     427880   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 946010 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 46492 Bytes (14%) des dynamischen Speichers, 281188 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 944878 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 45924 Bytes (14%) des dynamischen Speichers, 281756 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
 
@@ -183,7 +179,6 @@ IPAddress edns;  // static IP - Domain Name Server
 #endif
 
 /* varible´s for output */
-boolean commandCHECK = true;
 const char compile_date[] = __DATE__ " " __TIME__;
 
 #ifdef SIGNALduino_comp
@@ -695,8 +690,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
     case '?':             /* command ? */
       if (!buf_input[1]) {
         MSG_OUTPUTLN(F("? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
-      } else {
-        commandCHECK = false;
       }
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':                                                                                         /* command f */
@@ -756,23 +749,17 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         input.toCharArray(In, input.length() + 1); /* String to char in buf */
         InputCommand(In);
         input = "";
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'm': /* command m */
-      if (!buf_input[1]) {
-        commandCHECK = false;
-      } else {
+      if (buf_input[1]) {
         /* command m<n>, check of decimal */
         if (isNumeric(input.substring(1)) == 1) {
           detachInterrupt(digitalPinToInterrupt(GDO2));
           ToggleAll = false;
           ToggleTime = 0;                                       // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
           byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
-          if (int_substr1_serial > RegistersCntMax) {
-            commandCHECK = false;
-          } else {
+          if (int_substr1_serial <= RegistersCntMax) {
             /* "Normal Option" - set all Register value´s */
             if (int_substr1_serial <= (RegistersCntMax - 1)) {
               if (CC1101_found == false) {
@@ -803,12 +790,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
               }
             } else if (int_substr1_serial == RegistersCntMax) { /* "Special Option" */
               MSG_OUTPUTLN(F("Developer gadget to test functions"));
-            } else {
-              commandCHECK = false;
             }
           }
-        } else {
-          commandCHECK = false;
         }
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -816,7 +799,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       if (!buf_input[1]) { /* command t */
         MSG_OUTPUTLN(uptime);
       } else {
-        commandCHECK = false;
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
           if (CC1101_found == true) {
             if (buf_input[2] == 's') { /* command tos<n> | allowed length 1 - 9 (max 12 completely serial) */
@@ -831,7 +813,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 MSG_OUTPUTLN(temp);
 
                 ToggleTime = 0;
-                commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime >= ToggleTimeMin)) { /* command tos<n> >= ToggleTime OK */
                 String temp = F("Toggle starts changing every ");
                 temp += IntTime;
@@ -850,7 +831,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                   }
                 }
 
-                commandCHECK = true;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime < ToggleTimeMin)) { /* command tos<n> < ToggleTimeMin -> min limit */
                 String temp = F("Toggle STOPPED, time to short [min ");
                 temp += ToggleTimeMin;
@@ -858,7 +838,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 MSG_OUTPUTLN(temp);
 
                 ToggleTime = 0;
-                commandCHECK = true;
               }
             } else if (buf_input[2] == 'b') { /* command tob */
               ToggleAll = false;
@@ -872,7 +851,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, 255); /* 255 is max value and reset value */
 
                     MSG_OUTPUT(F("ToggleBank ")); MSG_OUTPUT(input.substring(3, 4).toInt()); MSG_OUTPUTLN(F(" reset"));
-                    commandCHECK = true;
                   } else if (input.substring(4).toInt() < RegistersCntMax) { /* command tob<0-3><n> -> set togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, input.substring(4).toInt());
@@ -882,7 +860,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                     temp += Registers[input.substring(4).toInt()].name;
                     temp += F(" mode");
                     MSG_OUTPUTLN(temp);
-                    commandCHECK = true;
                   } else {
                     MSG_OUTPUTLN(F("Mode number greater RegistersCntMax"));
                   }
@@ -909,7 +886,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);
 
                 MSG_OUTPUTLN(F("ToggleBank 0-3 reset and STOP Toggle"));
-                commandCHECK = true;
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
 #ifdef debug
                 MSG_OUTPUTLN(F("DB Input, scan modes"));
@@ -948,11 +924,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             temp += F(" to PATABLE done");
             MSG_OUTPUTLN(temp);
           }
-        } else {
-          commandCHECK = false;
         }
-      } else {
-        commandCHECK = false;
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'C':
@@ -993,7 +965,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             MSG_OUTPUT_DecToHEX_lz(CC1101_ret);
             MSG_OUTPUTLN("");
 
-            commandCHECK = true;
           } else if (Cret == 153) { /* command C99 - ccreg */
             CC1101_readBurstReg(uiBuffer, 0x00, 47);
 
@@ -1015,7 +986,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             }
             MSG_OUTPUTLN("");
 
-            commandCHECK = true;
           } else if (Cret == 62) { /* command C3E - patable  */
             CC1101_readBurstReg(uiBuffer, 0x3E, 8);
 
@@ -1026,7 +996,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             }
             MSG_OUTPUTLN("");
 
-            commandCHECK = true;
           }
         } else if (buf_input[1] == 'G' && !buf_input[2]) { /* command CG */
           MSG_OUTPUTLN(F("MS=0;MU=0;MC=0;Mred=0;MN=1;"));
@@ -1038,10 +1007,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             MSG_OUTPUT_DecToHEX_lz(x);
           }
           MSG_OUTPUTLN("");
-
-          commandCHECK = true;
-        } else {
-          commandCHECK = false;
         }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -1085,8 +1050,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         MSG_OUTPUTLN(F(" }"));
         MSG_OUTPUT(F("ToggleTime (ms)     "));
         MSG_OUTPUTLN(ToggleTime);
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'M': /* command M */
@@ -1103,22 +1066,16 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
           }
         }
         MSG_OUTPUTLN(temp);
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'P': /* command P */
       if (!buf_input[1]) {
         MSG_OUTPUTLN(F("OK"));
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'R': /* command R */
       if (!buf_input[1]) {
         MSG_OUTPUTLN(freeRam());
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'S': /* command S */
@@ -1198,8 +1155,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
               digitalWriteFast(LED, LOW);  // LED off
             }
           }
-        } else {
-          commandCHECK = false;
         }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -1208,8 +1163,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
         MSG_OUTPUT(FPSTR(TXT_VERSION));
         MSG_OUTPUTLN(compile_date);
-      } else {
-        commandCHECK = false;
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'W': /* command W */
@@ -1233,8 +1186,6 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             MSG_OUTPUT_DecToHEX_lz(adr_dec);
             MSG_OUTPUT_DecToHEX_lz(val_dec);
             MSG_OUTPUTLN("");
-          } else {
-            commandCHECK = false;
           }
         } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
@@ -1251,15 +1202,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
             CC1101_cmdStrobe(CC1101_SIDLE);
             MSG_OUTPUTLN(F("cmdStrobeReg 36 chipStatus 01 delay1 00"));
           }
-        } else {
-          commandCHECK = false;
         }
       } else {
         MSG_OUTPUTLN(F("W and WS not available (no CC1101 found)"));
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     default:
-      commandCHECK = false;
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
   }
 }

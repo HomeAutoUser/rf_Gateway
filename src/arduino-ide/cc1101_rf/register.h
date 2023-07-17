@@ -15,7 +15,6 @@ struct Data {
 
 extern String activated_mode_name;
 extern float Freq_offset;
-extern String web_regData[47];
 extern struct Data Registers[];
 extern uint8_t RegistersCntMax;
 extern uint8_t ToggleArray[];

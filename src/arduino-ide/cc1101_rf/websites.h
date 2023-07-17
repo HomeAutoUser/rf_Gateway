@@ -448,16 +448,16 @@ void web_cc110x_detail() {
   }
 
   String afc = HttpServer.arg("afc");
-  String bandw = HttpServer.arg("bandw");
-  String datar = HttpServer.arg("datarate");
-  String dev = HttpServer.arg("deviation");
-  String freq = HttpServer.arg("freq");
-  String freqOff = HttpServer.arg("freq_off");
   String mod = HttpServer.arg("modulation");
-  String return_val;
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
   String web_stat = F("<span id=\"state\"></span>");
+  byte web_regData[47] = {};
+  float bandw = (HttpServer.arg("bandw").toFloat());
+  float deviation = (HttpServer.arg("deviation").toFloat());
+  float freqOff = (HttpServer.arg("freq_off").toFloat());
+  long datarate = (HttpServer.arg("datarate").toFloat()) * 1000;
+  long freq = (HttpServer.arg("freq").toFloat()) * 1000;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
   if (countargs != 0) {
@@ -468,17 +468,16 @@ void web_cc110x_detail() {
     Serial.print(F("DB web_cc1101_detail, freq       ")); Serial.println(freq);
     Serial.print(F("DB web_cc1101_detail, freqOff    ")); Serial.println(freqOff);
     Serial.print(F("DB web_cc1101_detail, bandw      ")); Serial.println(bandw);
-    Serial.print(F("DB web_cc1101_detail, datarate   ")); Serial.println(datar);
-    Serial.print(F("DB web_cc1101_detail, deviation  ")); Serial.println(dev);
-    Serial.print(F("DB web_cc1101_detail, modulation "));
-    Serial.println(mod);
+    Serial.print(F("DB web_cc1101_detail, datarate   ")); Serial.println(datarate);
+    Serial.print(F("DB web_cc1101_detail, deviation  ")); Serial.println(deviation);
+    Serial.print(F("DB web_cc1101_detail, modulation ")); Serial.println(mod);
 #endif
 
     if (countargs > 0) { /* register values from browser | set registers button -> into array */
       for (byte i = 0; i <= 46; i++) {
         temp = 'r';
         temp += i;
-        web_regData[i] = HttpServer.arg(temp);
+        web_regData[i] = HttpServer.arg(temp).toInt();
       }
     }
 
@@ -497,18 +496,18 @@ void web_cc110x_detail() {
       freqOffAcc = 0;                      // reset cc110x afc offset
       freqErrAvg = 0;                      // reset cc110x afc average
       CC1101_writeReg(CC1101_FSCTRL0, 0);  // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
-      Freq_offset = freqOff.toFloat();
+      Freq_offset = freqOff;
       EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
 #endif
-      return_val = web_Freq_set(freq);
+      byte value[3];
+      web_Freq_Set(freq, value);
       web_stat = F("Frequency & Frequency Offset set &#10004;");
 
       for (byte i = 0; i < 3; i++) {    /* write value to register 0D,0E,0F */
-        byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 13, value); // write in cc1101
-        EEPROMwrite(i + 13, value);     // write in flash
+        CC1101_writeReg(i + 13, value[i]); // write in cc1101
+        EEPROMwrite(i + 13, value[i]);     // write in flash
       }
     } else if (submit == "bbandw") {
 #ifdef debug_html
@@ -516,29 +515,31 @@ void web_cc110x_detail() {
       Serial.print(F("DB web_cc1101_detail, register 0x10 value is ")); Serial.println(web_regData[16]);
 #endif
       web_stat = F("Bandwidth set &#10004;");
-      int value = web_Bandw_cal(bandw.toInt(), (hexToDec(web_regData[16]) & 0x0f)); /* input complete | input split */
+      byte value = web_Bandw_cal(bandw, (web_regData[16] & 0x0f)); /* input complete | input split */
       CC1101_writeReg(16, value);                                                   // write in cc1101
       EEPROMwrite(16, value);                                                       // write in flash
     } else if (submit == "bdatarate") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set datarate pushed with ")); Serial.println(datar);
+      Serial.print(F("DB web_cc1101_detail, button set datarate pushed with ")); Serial.println(datarate);
 #endif
       web_stat = F("DataRate set &#10004;");
-      return_val = web_Datarate_set(datar.toFloat());
+
+      byte value[2];
+      web_Datarate_Set(datarate, value);
 
       for (byte i = 0; i < 2; i++) {    /* write value to register 0D,0E,0F */
-        byte value = hexToDec(return_val.substring(i * 2, i * 2 + 2));
-        CC1101_writeReg(i + 16, value); // write in cc1101
-        EEPROMwrite(i + 16, value);     // write in flash
+        CC1101_writeReg(i + 16, value[i]); // write in cc1101
+        EEPROMwrite(i + 16, value[i]);     // write in flash
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, button set deviation pushed with ")); Serial.println(dev);
 #endif
       web_stat = F("Deviation set &#10004;");
-      return_val = web_Devi_set(dev.toFloat());
-      CC1101_writeReg(21, hexToDec(return_val));  // write in cc1101
-      EEPROMwrite(21, hexToDec(return_val));      // write in flash
+
+      byte value = web_Devi_Set(deviation);
+      CC1101_writeReg(21, value);  // write in cc1101
+      EEPROMwrite(21, value);      // write in flash
     } else if (submit == "bmod") {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, set modulation to ")); Serial.println(mod);
@@ -572,7 +573,7 @@ void web_cc110x_detail() {
         Serial.print(F("] = ")); Serial.println(web_regData[i]);
 #endif
         /* compare value with value to be written */
-        temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+        byte temp = CC1101_readReg(i, READ_BURST);
         if (web_regData[i] != temp) {
 #ifdef debug_html
           if (i > 34 && i <= 40) {
@@ -586,11 +587,11 @@ void web_cc110x_detail() {
           Serial.print(F(" -> ")); Serial.println(web_regData[i]);
 #endif
           if (i == 6) { /* ToDo - probably not optimal -> if register 6 is changed (dependencies) ??? */
-            activated_mode_packet_length = hexToDec(web_regData[i]);
+            activated_mode_packet_length = web_regData[i];
           }
           /* write value to registe */
-          CC1101_writeReg(i, hexToDec(web_regData[i]));   // write in cc1101
-          EEPROMwrite(i, hexToDec(web_regData[i]));       // write in flash
+          CC1101_writeReg(i, web_regData[i]);   // write in cc1101
+          EEPROMwrite(i, web_regData[i]);       // write in flash
         }
       }
     }
@@ -656,13 +657,12 @@ void web_cc110x_detail() {
     website += i;
     website += F("\"></span></td><td class=\"ce\">");
     temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
-    website += F("<input class= \"vw\" size=\"2\" name=\"r");
+    website += F("<input class=\"vw\" size=\"2\" name=\"r");
     website += i;                                 /* registername for GET / POST */
     website += F("\" value=\"");
     website += temp;                              /* value for GET / POST */
-    website += F("\" type=\"text\" placeholder=\"");
-    website += temp;                              /* placeholder */
-    website += F("\"></td><td colspan=\"4\"><span id=\"n");
+    website += F("\" type=\"text\"");
+    website += F("></td><td colspan=\"4\"><span id=\"n");
     website += i;
     website += F("\"></span></td></tr>");
   }

@@ -37,8 +37,10 @@ function onMessage(event) {
    hex = i.toString(16)
   }
   document.getElementById(name_s).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + regExplanation_short[i];
-  document.getElementsByName(name)[0].pattern = "^[\\da-fA-F]{1,2}$";
   document.getElementsByName(name)[0].maxLength = "2";
+  document.getElementsByName(name)[0].pattern = "^[\\da-fA-F]{1,2}$";
+  document.getElementsByName(name)[0].placeholder = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, obj[i]);
+  document.getElementsByName(name)[0].title = "Input: 2 characters in hexadecimal";
   if (document.getElementsByName(name)[0].value != obj[i]) {
    document.getElementsByName(name)[0].value = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, obj[i]);
    document.getElementsByName(name)[0].placeholder = obj[i];

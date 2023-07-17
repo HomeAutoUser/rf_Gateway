@@ -1,9 +1,6 @@
 #include "config.h"
 #include "register.h"
 
-String web_regData[47] = {
-};
-
 /* all available CC1101 registers to set */
 const uint8_t Config_Default[] PROGMEM = {
   /*
