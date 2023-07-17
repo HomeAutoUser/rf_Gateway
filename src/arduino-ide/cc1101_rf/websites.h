@@ -71,12 +71,12 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
 
 
 void web_index() {
-  String website = String(html_meta);
+  String website = FPSTR(html_meta);
   website.reserve(2000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website = HTML_mod(website);
   website += F("<body><table><thead><tr><th colspan=2>Device - Information</th></tr></thead>"
                "<tbody><tr><td class=\"tdf\">Firmware compiled</td><td>");
@@ -106,7 +106,7 @@ void web_index() {
   website += F("</td></tr><tr><td>Uptime (Seconds)</td><td><span id=\"Uptime\">");
   website += uptime;
   website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
-  website += TXT_VERSION;
+  website += FPSTR(TXT_VERSION);
   website += F("</td></tr></tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
 }
@@ -115,11 +115,11 @@ void web_index() {
 void web_cc110x() {
   String website;
   website.reserve(2000);
-  website += String(html_meta);
+  website += FPSTR(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x.css\">"
                "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website = HTML_mod(website);
   website += F("<body>"
                "<table><thead>"
@@ -176,8 +176,6 @@ void web_cc110x_modes() {
   String tb = HttpServer.arg("tgb");
   unsigned long tgtime = HttpServer.arg("tgt").toInt();   // toggle time
   String web_status = F("<tr id=\"trLast\"><td class=\"ac\"><span id=\"stat\"></span></td>");
-  String website;
-  website.reserve(10000);
   uint8_t countargs = HttpServer.args();                  // Anzahl Argumente
   uint8_t tb_nr;                                          // togglebank nr
   uint8_t tb_val;                                         // togglebank value
@@ -267,10 +265,11 @@ void web_cc110x_modes() {
     InputCmd = "";  // reset String
   }
 
-  website += String(html_meta);
+  String website = FPSTR(html_meta);
+  website.reserve(10000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_modes.css\">"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website += F("<body>"
                "<script src=\"cc110x_modes.js\" type=\"text/javascript\"></script>"
                "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
@@ -336,9 +335,8 @@ void web_cc110x_modes() {
 
 
 void web_cc110x_detail_export() {
-  String website;
+  String website = FPSTR(html_meta);
   website.reserve(1500);
-  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_exp.css\"></head>");
 
   String website_p2;
@@ -375,14 +373,13 @@ void web_cc110x_detail_export() {
 void web_cc110x_detail_import() {
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
-  String website;
-  website.reserve(1000);
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String Part = "";
   String PartAdr = "";
   String PartVal = "";
 
-  website += String(html_meta);
+  String website = FPSTR(html_meta);
+  website.reserve(1000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_imp.css\"></head>");
   website += F("<body><form method=\"get\">"); /* form method wichtig für Daten von Button´s !!! */
 
@@ -461,8 +458,6 @@ void web_cc110x_detail() {
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
   String web_stat = F("<span id=\"state\"></span>");
-  String website;
-  website.reserve(16000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
   if (countargs != 0) {
@@ -507,7 +502,6 @@ void web_cc110x_detail() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
 #endif
-
       return_val = web_Freq_set(freq);
       web_stat = F("Frequency & Frequency Offset set &#10004;");
 
@@ -601,24 +595,23 @@ void web_cc110x_detail() {
       }
     }
     activated_mode_name = F("CC110x user configuration");
-  } else {
-
   }
   temp = "";
 
-  website += String(html_meta);
+  String website = FPSTR(html_meta);
+  website.reserve(13000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\">"
                "<script src=\"cc110x_detail.js\" type=\"text/javascript\"></script>"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table><thead><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
-               // Frequency (is | should)
-               "<tr><td colspan=\"2\">Frequency (is | should)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQ\"></span> | <span id=\"FREQis\"></span>"
+               // Frequency (should | is)
+               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQis\"></span> | <span id=\"FREQ\"></span>"
                " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"7\" maxlength=\"7\" id=\"p1\" name=\"freq\" value=\""
                "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
@@ -675,18 +668,15 @@ void web_cc110x_detail() {
   }
 
   website += F("</tbody></table></form></body></html>");
-  Serial.println(freeRam());
   HttpServer.send(200, "text/html", website);
-  Serial.println(freeRam());
 }
 
 
 void web_log() {
-  String website;
+  String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += String(html_meta);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website = HTML_mod(website);
 
   File logfile = LittleFS.open("/files/log.txt", "r");
@@ -718,16 +708,15 @@ void web_raw() {
   }
   String sd = HttpServer.arg("sd");         // welche Daten genutzt werden sollen
   String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
-  String website;
-  website.reserve(2000);
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
 
-  website += String(html_meta);
+  String website = FPSTR(html_meta);
+  website.reserve(2000);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
                "<script src=\"raw.js\" type=\"text/javascript\"></script>"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website += F("<table>"
                "<thead><tr><th colspan=\"3\">send data (with the current register settings)</th></tr></thead>"
                "<tr><td colspan=\"2\" class=\"tdsd\"><input class=\"inp\" size=\"70\" name=\"sd\" type=\"text\" maxlength=\"255\" pattern=\"^[\\da-fA-F]{2,255}$\" placeholder=\"input your hex data to send\"></td>"
@@ -788,8 +777,6 @@ void web_wlan() {
   String qsnm = HttpServer.arg("sn");           // Subnetzmaske  statisch
   String qssid = HttpServer.arg("setssid");     // Auswahl SSID
   String submit = HttpServer.arg("submit");     // welcher Button wurde betätigt
-  String website;
-  website.reserve(10000);
   uint8_t countargs = HttpServer.args();        // Anzahl Argumente
   used_ssid_mac = WiFi.BSSIDstr();
 
@@ -807,10 +794,11 @@ void web_wlan() {
   Serial.println(F("DB web_wlan, scan networks ..."));
 #endif
 
-  website += String(html_meta);
+  String website = FPSTR(html_meta);
+  website.reserve(10000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"wlan.css\">"
                "</head>");
-  website += String(html_head_table);
+  website += FPSTR(html_head_table);
   website = HTML_mod(website);
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                     /* START Tabelle gesamt */
@@ -1184,8 +1172,8 @@ void WebSocket_raw(const String & html_raw) {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("RAW,");
-    website += activated_mode_name;
     website.reserve(460);
+    website += activated_mode_name;
     website += ',';
     website += html_raw;
     website += ',';

@@ -72,7 +72,7 @@ function onMessage(event) {
    Freq = (26 * Freq) / 65536;
    document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
    document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-   Freq = Freq - (obj[49] * 1);
+   Freq = Freq + (obj[49] * 1);
    document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
    document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
    document.getElementsByName('freq')[0].value = Freq.toFixed(3);

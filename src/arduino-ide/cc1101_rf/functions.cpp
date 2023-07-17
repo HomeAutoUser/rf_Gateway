@@ -56,14 +56,14 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
 String web_Freq_set(String input) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
   String output = "";
   output.reserve(7);
-  float f;
+  int32_t f;
   int f2;
   int f1;
   int f0;
-  f = (input.toFloat() + Freq_offset) / 26 * 65536;
+  f = (input.toFloat() * 1000 + Freq_offset * 1000) / 26000 * 65536;
   f2 = f / 65536;
-  f1 = int(fmod(f, 65536)) / 256;
-  f0 = fmod(f, 256);
+  f1 = (f % 65536) / 256;
+  f0 = f % 256;
 
 #ifdef debug
   Serial.print(F("DB web_Freq_set, input ")); Serial.print(input); Serial.println(F(" MHz"));

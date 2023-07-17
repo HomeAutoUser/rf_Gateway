@@ -7,33 +7,33 @@
   Globale Variablen verwenden 1240 Bytes (60%) des dynamischen Speichers, 808 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 320
-  Der Sketch verwendet 26260 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1116 Bytes (54%) des dynamischen Speichers, 932 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26148 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 960 Bytes (46%) des dynamischen Speichers, 1088 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 575
-  Der Sketch verwendet 26346 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1116 Bytes (54%) des dynamischen Speichers, 932 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 26234 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 960 Bytes (46%) des dynamischen Speichers, 1088 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 28620 Bytes (99%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 1087 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 28506 Bytes (99%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 929 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 32824 - calloc - free(EEPROMread_ipaddress); // Speicher wieder freigeben ???
-  . Variables and constants in RAM (global, static), used 40068 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39876 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   4948     constants
-  ╚══ BSS      33312    zeroed variables
+  ╠══ RODATA   4764     constants
+  ╚══ BSS      33304    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 428956 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 428148 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     428956   code in flash
+  ╚══ IROM     428148   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ?
-  Der Sketch verwendet 947702 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Der Sketch verwendet 946010 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 46492 Bytes (14%) des dynamischen Speichers, 281188 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
@@ -133,7 +133,7 @@ WebServer HttpServer(80);
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
 #define WEBSOCKETS_SAVE_RAM              // moves all Header strings to Flash (~300 Byte)
-//#define WEBSOCKETS_SERVER_CLIENT_MAX  2  // so ist der Empfang besser, RAM (free heap) 29800
+//#define WEBSOCKETS_SERVER_CLIENT_MAX  2  // default 5
 WebSocketsServer webSocket = WebSocketsServer(81);
 String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
 
@@ -179,13 +179,12 @@ IPAddress edns;  // static IP - Domain Name Server
 /* --- END - all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------- */
 #else
 #define ICACHE_RAM_ATTR
+#define FPSTR String
 #endif
 
 /* varible´s for output */
 boolean commandCHECK = true;
 const char compile_date[] = __DATE__ " " __TIME__;
-static const char TXT_COMMANDS[] = "? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS";
-static const char TXT_COMMAND_unknown[] = "command or value is not supported";
 
 #ifdef SIGNALduino_comp
 /*  SIGNALduino helpful information !!!
@@ -193,16 +192,11 @@ static const char TXT_COMMAND_unknown[] = "command or value is not supported";
     2) version output must have cc1101 -> check in 00_SIGNALduino.pm
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
-static const char TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) ";
-static const char TXT_RawPreamble[] = "MN;D=";
-static const char TXT_RawRSSI[] = ";R=";
-static const char TXT_RawFP2[] = ";A=";
-byte CC1101_writeReg_offset = 2;
+
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) "; // PROGMEM used 40004
+byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
-static const char TXT_RawPreamble[] = "data: ";
-static const char TXT_RawRSSI[] = "; RSSI=";
-static const char TXT_RawFP2[] = "; FREQAFC=";
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -321,7 +315,6 @@ void Interupt_Variant(byte nr) {
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
   msg.reserve(255);
-
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
   Serial.println();
@@ -499,9 +492,9 @@ void setup() {
 
 void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  /* https://arduino-esp8266.readthedocs.io/en/3.0.0/reference.html#timing-and-delays
-    delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
-  delay(10);  // receiving better | delay(1); // receiving ok
+  /* https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#timing-and-delays
+     delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
+  delay(1);
 
   ArduinoOTA.handle();  /* OTA Updates */
   Telnet();             /* Telnet Input´s */
@@ -527,7 +520,7 @@ void loop() {
     msg = Serial.readString();
     msg.trim();                                           /* String, strip off any leading/trailing space and \r \n */
     char BUFFER_Serial[msg.length() + 1];
-    msg.toCharArray(BUFFER_Serial, msg.length() + 1);   /* String to char in buf */
+    msg.toCharArray(BUFFER_Serial, msg.length() + 1);     /* String to char in buf */
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
@@ -566,9 +559,11 @@ void loop() {
     uint8_t uiBuffer[activated_mode_packet_length]; // Array anlegen
     CC1101_readBurstReg(uiBuffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO */
 #ifdef SIGNALduino_comp
-    msg += char(2);  // STX
+    msg += char(2);     // STX
+    msg += F("MN;D=");  // "MN;D=" | "data: "
+#else
+    msg += F("data: "); // "MN;D=" | "data: "
 #endif
-    msg += TXT_RawPreamble;                                   // "MN;D=" | "data: "
     for (byte i = 0; i < activated_mode_packet_length; i++) { /* RawData */
       String hex = onlyDecToHex2Digit(uiBuffer[i]);
       msg += hex;
@@ -576,9 +571,17 @@ void loop() {
       html_raw += hex;
 #endif
     }
-    msg += TXT_RawRSSI; // ";R=" | "; RSSI="
+#ifdef SIGNALduino_comp
+    msg += F(";R="); // ";R=" | "; RSSI="
+#else
+    msg += F(" RSSI="); // ";R=" | "; RSSI="
+#endif
     msg += rssi;
-    msg += TXT_RawFP2;  // ";A=" | "; ..."
+#ifdef SIGNALduino_comp
+    msg += F(";A=");  // ";A=" | "; FREQAFC="
+#else
+    msg += F("; FREQAFC=");  // ";A=" | "; FREQAFC="
+#endif
     msg += freqErr;
     msg += ';';
 
@@ -691,7 +694,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
   switch (buf_input[0]) { /* integrated ? m t tob tos x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
     case '?':             /* command ? */
       if (!buf_input[1]) {
-        MSG_OUTPUTLN(TXT_COMMANDS);
+        MSG_OUTPUTLN(F("? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
       } else {
         commandCHECK = false;
       }
@@ -1202,7 +1205,8 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'V': /* command V */
       if (!buf_input[1]) {
-        MSG_OUTPUT(TXT_VERSION);
+        // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
+        MSG_OUTPUT(FPSTR(TXT_VERSION));
         MSG_OUTPUTLN(compile_date);
       } else {
         commandCHECK = false;
