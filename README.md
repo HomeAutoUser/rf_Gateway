@@ -25,7 +25,8 @@ System to receive digital signals and provide them to other systems for demodula
 Just clone the repo and open the project file with Visual Studio (only available for windows) or VSCode.
 You can also open it with the Arduino IDE. 
 Compile it and have fun.
-If you are using the Arduino IDE, you have to copy all the libs into your sketch folder and modify some includes.
+If you are using the Arduino IDE, you have to copy all the libs into your sketch folder and modify some includes.<br>
+required libraries: [digitalWriteFast](https://www.arduino.cc/reference/en/libraries/digitalwritefast/), [WebSockets](https://www.arduino.cc/reference/en/libraries/websockets/)
 
 ### Using cc1101_rf_Gateway in FHEM
 
