@@ -519,7 +519,7 @@ void loop() {
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
-      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(input);
+      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(BUFFER_Serial);
 #endif
       client_now = 255;                                     /* current client is set where data is received */
       InputCommand(BUFFER_Serial);
