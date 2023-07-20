@@ -512,7 +512,11 @@ void loop() {
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
+#ifdef CODE_AVR
+      Serial.print(F("DB loop, Serial.available > 0 ")); Serial.println(BUFFER_Serial);
+#elif CODE_ESP
       MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(BUFFER_Serial);
+#endif
 #endif
       client_now = 255;                                     /* current client is set where data is received */
       InputCommand(BUFFER_Serial);
@@ -542,7 +546,11 @@ void loop() {
     html_raw.reserve(128);
 #endif
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef CODE_AVR
+    Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#elif CODE_ESP
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#endif
 #endif
     uint8_t uiBuffer[activated_mode_packet_length]; // Array anlegen
     CC1101_readBurstReg(uiBuffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO */
@@ -634,7 +642,11 @@ void loop() {
 
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef CODE_AVR
+    Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#elif CODE_ESP
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#endif
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_raw(html_raw); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
@@ -701,7 +713,11 @@ void ToggleOnOff() {
     if (ToggleValues <= 1) {
       ToggleTime = 0;
 #ifdef debug
+#ifdef CODE_AVR
+      Serial.println(F("Toggle STOPPED, no toggle values in togglebank!"));
+#elif CODE_ESP
       MSG_OUTPUTLN(F("Toggle STOPPED, no toggle values in togglebank!"));
+#endif
 #endif
       return;
     }
@@ -871,11 +887,19 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 Interupt_Variant(int_substr1_serial);
 
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef CODE_AVR
+                Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#elif CODE_ESP
                 MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+#endif
 #endif
 
 #ifdef debug
+#ifdef CODE_AVR
+                Serial.println(F("DB Input, writes all current values to EEPROM"));
+#elif CODE_ESP
                 MSG_OUTPUTLN(F("DB Input, writes all current values to EEPROM"));
+#endif
 #endif
                 for (byte i = 0; i < Registers[int_substr1_serial].length; i++) { /* write register values ​​to flash */
                   EEPROMwrite(i, pgm_read_byte_near(Registers[int_substr1_serial].reg_val + i));
@@ -1017,7 +1041,11 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
 #endif
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
 #ifdef debug
+#ifdef CODE_AVR
+                Serial.println(F("DB Input, scan modes"));
+#elif CODE_ESP
                 MSG_OUTPUTLN(F("DB Input, scan modes"));
+#endif
 #endif
                 ToggleAll = true;
                 ToggleTime = 15000;  // set to default and start
@@ -1337,7 +1365,11 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
       } else {
         if (buf_input[1] && buf_input[1] == 'N' && buf_input[2] == ';') { /* command SN */
 #ifdef debug
+#ifdef CODE_AVR
+          Serial.println(F("DB Input | SN; raw message"));
+#elif CODE_ESP
           MSG_OUTPUTLN(F("DB Input | SN; raw message"));
+#endif
 #endif
           // SN;R=5;D=9A46036AC8D3923EAEB470AB; //
 
@@ -1481,8 +1513,12 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
 #ifdef debug
+#ifdef CODE_AVR
+          Serial.print(F("DB Input | cmd WS with value=")); Serial.print(buf_input[2]); Serial.println(buf_input[3]);
+#elif CODE_ESP
           tmp = F("DB Input | cmd WS with value="); tmp += String(buf_input[2]); tmp += String(buf_input[3]);
           MSG_OUTPUTLN(tmp);
+#endif
 #endif
           if (buf_input[3] == '4') {
             CC1101_cmdStrobe(CC1101_SRX);
