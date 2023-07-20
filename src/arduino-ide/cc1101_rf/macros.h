@@ -9,11 +9,6 @@
 
 /* --- all SETTINGS for Arduino Nano ---------------------------------------------------------------------------------------------------------- */
 #if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
-#define MSG_OUTPUT(...) { Serial.print(__VA_ARGS__); }
-#define MSG_OUTPUTLN(...) { Serial.println(__VA_ARGS__); }
-#define MSG_OUTPUTALL(...) { Serial.print(__VA_ARGS__); }
-#define MSG_OUTPUTALLLN(...) { Serial.println(__VA_ARGS__); }
-
 /* output DEC to HEX with a leading zero to serial without ln (all dec values < 16 obtain a zero in HEX value) */
 #define MSG_OUTPUT_DecToHEX_lz(dec) {                             \
     uint8_t output = dec;                                         \

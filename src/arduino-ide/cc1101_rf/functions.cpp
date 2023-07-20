@@ -193,6 +193,8 @@ boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 =
   for (unsigned int i = 0; i < stringLength; ++i) {
     if (isDigit(str.charAt(i))) {
       continue;
+    } else if ( i == 0 && str.charAt(0) == '-') {
+      continue;
     }
     if (str.charAt(i) == '.') {
       if (seenDecimal) {

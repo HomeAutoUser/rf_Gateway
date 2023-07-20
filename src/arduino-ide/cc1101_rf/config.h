@@ -12,11 +12,13 @@
 #define GDO0          4           // GDO0     => ESP8266 (Pin TX out - PIN_SEND)
 #define GDO2          5           // GDO2     => ESP8266 (Pin RX in  - PIN_RECEIVE)
 #define LED           16          // LED      => ESP8266 (OK msg & WIFI)
+#define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_ARCH_ESP32)
 #define EEPROM_SIZE   512
 #define GDO0          4           // GDO0     => ESP32 (Pin TX out - PIN_SEND)
 #define GDO2          13          // GDO2     => ESP32 (Pin RX in  - PIN_RECEIVE)
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
+#define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_RADINOCC1101)
 #define EEPROM_SIZE   512
 #define GDO0          9           // GDO0     => Radino (Pin TX out - PIN_SEND)
@@ -25,16 +27,19 @@
 #define digitalPinToInterrupt(p) ((p) == 0 ? 2 : ((p) == 1 ? 3 : ((p) == 2 ? 1 : ((p) == 3 ? 0 : ((p) == 7 ? 4 : NOT_AN_INTERRUPT)))))
 #define PIN_MARK433   4
 #define SS            8
+#define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_PRO)
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Pro Mini (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
+#define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #else
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Nano (OK msg)
+#define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #endif
 
 

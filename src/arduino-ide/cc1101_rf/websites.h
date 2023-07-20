@@ -6,7 +6,7 @@
 */
 
 #include <Arduino.h>
-#include "wifi.h"
+#include "wlan.h"
 
 extern void InputCommand(char* buf_input);
 extern String onlyDecToHex2Digit(byte Dec);
@@ -447,7 +447,7 @@ void web_cc110x_detail() {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
 
-  String afc = HttpServer.arg("afc");
+  byte afc = HttpServer.arg("afc").toInt();
   String mod = HttpServer.arg("modulation");
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
@@ -486,12 +486,7 @@ void web_cc110x_detail() {
       Serial.println(F("DB web_cc1101_detail, submit set frequency & offset pushed"));
 #endif
 
-      if (afc == "1") {
-        freqAfc = 1;
-      } else {
-        afc = '0';
-        freqAfc = 0;
-      }
+      freqAfc = afc;
       EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
       freqOffAcc = 0;                      // reset cc110x afc offset
       freqErrAvg = 0;                      // reset cc110x afc average
@@ -533,7 +528,7 @@ void web_cc110x_detail() {
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
-      Serial.print(F("DB web_cc1101_detail, button set deviation pushed with ")); Serial.println(dev);
+      Serial.print(F("DB web_cc1101_detail, button set deviation pushed with ")); Serial.println(deviation);
 #endif
       web_stat = F("Deviation set &#10004;");
 
@@ -597,7 +592,6 @@ void web_cc110x_detail() {
     }
     activated_mode_name = F("CC110x user configuration");
   }
-  temp = "";
 
   String website = FPSTR(html_meta);
   website.reserve(13000);
@@ -656,11 +650,10 @@ void web_cc110x_detail() {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
     website += F("\"></span></td><td class=\"ce\">");
-    temp = onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     website += F("<input class=\"vw\" size=\"2\" name=\"r");
     website += i;                                 /* registername for GET / POST */
     website += F("\" value=\"");
-    website += temp;                              /* value for GET / POST */
+    website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST)); /* value */
     website += F("\" type=\"text\"");
     website += F("></td><td colspan=\"4\"><span id=\"n");
     website += i;
