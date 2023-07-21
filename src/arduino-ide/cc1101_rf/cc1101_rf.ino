@@ -2,34 +2,34 @@
   Copyright (c) 2022, HomeAutoUser & elektron-bbs
   All rights reserved.
 
-  - Arduino Nano OHNE debug´s | FreeRam -> 974
-  Der Sketch verwendet 23612 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 678 Bytes (33%) des dynamischen Speichers, 1370 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - Arduino Nano OHNE debug´s | FreeRam -> 993
+  Der Sketch verwendet 23468 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 676 Bytes (33%) des dynamischen Speichers, 1372 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 23696 Bytes (77%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 678 Bytes (33%) des dynamischen Speichers, 1370 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 23554 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 676 Bytes (33%) des dynamischen Speichers, 1372 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 25982 Bytes (90%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 647 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 25840 Bytes (90%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 645 Bytes des dynamischen Speichers.
 
-  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33296
-  . Variables and constants in RAM (global, static), used 39316 / 80192 bytes (49%)
+  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
+  . Variables and constants in RAM (global, static), used 39300 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   4764     constants
+  ╠══ RODATA   4748     constants
   ╚══ BSS      32744    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 425252 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 425240 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     425252   code in flash
+  ╚══ IROM     425240   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 947149 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Der Sketch verwendet 947145 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51352 Bytes (15%) des dynamischen Speichers, 276328 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
@@ -147,7 +147,13 @@ String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
   ESP32 Bibliothek -> LittleFS_esp32
 */
 
+#ifdef ESP32_core_v1
+#include <LITTLEFS.h>
+#define LittleFS LITTLEFS
+#else
 #include <LittleFS.h>
+#endif
+
 WiFiServer TelnetServer(TELNET_PORT);
 WiFiClient TelnetClient[TELNET_CLIENTS_MAX];
 
@@ -247,7 +253,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 
 /* void predefinitions */
-void InputCommand(char* buf_input);
+void InputCommand(String input);
 void ToggleOnOff();
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -507,19 +513,17 @@ void loop() {
   if (Serial.available() > 0) { /* Serial Input´s */
     msg = Serial.readString();
     msg.trim();                                           /* String, strip off any leading/trailing space and \r \n */
-    char BUFFER_Serial[msg.length() + 1];
-    msg.toCharArray(BUFFER_Serial, msg.length() + 1);     /* String to char in buf */
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
 #ifdef CODE_AVR
-      Serial.print(F("DB loop, Serial.available > 0 ")); Serial.println(BUFFER_Serial);
+      Serial.print(F("DB loop, Serial.available > 0 ")); Serial.println(msg);
 #elif CODE_ESP
-      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(BUFFER_Serial);
+      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(msg);
 #endif
 #endif
       client_now = 255;                                     /* current client is set where data is received */
-      InputCommand(BUFFER_Serial);
+      InputCommand(msg);
     }
   }
 
@@ -742,21 +746,16 @@ void ToggleOnOff() {
 }
 
 
-void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | marker, 255 = Serial | 0...254 = Telnet */
-  String input = "";      // for all inputs
+void InputCommand(String input) { /* all InputCommand´s , String | Char | marker, 255 = Serial | 0...254 = Telnet */
 #ifdef CODE_ESP
   String tmp = "";        // for temp outputs print
 #endif
   uint8_t uiBuffer[47];   // Array anlegen
-
-  for (byte i = 0; i < strlen(buf_input); i++) {
-    input += buf_input[i];
-  }
-  input += "\0";
-
+  char buf_input[input.length() + 1];
+  input.toCharArray(buf_input, input.length() + 1); /* String to char in buf */
 #ifdef debug
 #ifdef CODE_AVR
-  Serial.print(F("DB InputCommand, String ")); Serial.println(input);
+  Serial.print(F("DB InputCommand, String = ")); Serial.println(input);
 
   for (byte i = 0; i < input.length(); i++) {
     Serial.print(F("DB InputCommand [")); Serial.print(i); Serial.print(F("] = ")); Serial.println(buf_input[i]);
@@ -848,10 +847,7 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
         MSG_OUTPUTLN(F("CC110x_Frequency, send testsignal"));
 #endif
         input = F("SN;D=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;R=50;");
-        char In[input.length() + 1];
-        input.toCharArray(In, input.length() + 1); /* String to char in buf */
-        InputCommand(In);
-        input = "";
+        InputCommand(input);
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'm': /* command m */
@@ -1040,12 +1036,10 @@ void InputCommand(char* buf_input) { /* all InputCommand´s , String | Char | ma
                 MSG_OUTPUTLN(tmp);
 #endif
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
-#ifdef debug
 #ifdef CODE_AVR
-                Serial.println(F("DB Input, scan modes"));
+                Serial.println(F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
 #elif CODE_ESP
-                MSG_OUTPUTLN(F("DB Input, scan modes"));
-#endif
+                MSG_OUTPUTLN(F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
 #endif
                 ToggleAll = true;
                 ToggleTime = 15000;  // set to default and start
@@ -1620,11 +1614,9 @@ void Telnet() {
         client_now = i; /* current telnet client is set where data is received */
         msg = TelnetClient[i].readString();
         msg.trim();   /* String, strip off any leading/trailing space and \r \n */
-        char BUFFER_Telnet[msg.length() + 1];
-        msg.toCharArray(BUFFER_Telnet, msg.length() + 1); /* String to char in buf */
 
         if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
-          InputCommand(BUFFER_Telnet);
+          InputCommand(msg);
         }
       }
     }

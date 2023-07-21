@@ -8,7 +8,7 @@
 #include <Arduino.h>
 #include "wlan.h"
 
-extern void InputCommand(char* buf_input);
+extern void InputCommand(String input);
 extern String onlyDecToHex2Digit(byte Dec);
 extern boolean freqAfc;
 
@@ -260,7 +260,6 @@ void web_cc110x_modes() {
       }
     }
 
-    InputCmd.toCharArray(InCmdBuf, 11);
     InputCommand(InCmdBuf);
     InputCmd = "";  // reset String
   }

@@ -47,6 +47,9 @@
 #define ToggleTimeMin   15000     //   15000 milliseconds ->  15 seconds
 #define ToggleTimeMax   1800000   // 3600000 milliseconds -> 0.5 hour
 
+/* some backward compatibility */
+//#define ESP32_core_v1     1    // to compatible for ESP32 core v1.0.6 
+
 /* Definitions for program code */
 //#define debug             1    // to debug other
 //#define debug_cc110x      1    // to debug CC1101 routines

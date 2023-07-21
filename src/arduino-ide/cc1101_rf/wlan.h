@@ -145,6 +145,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
 /* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WPS/WPS.ino */
 
 void ESP32_wpsInitConfig() {
+  //config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;   /* not absolutely necessary for function with core v1 | no longer works on core v2 */
   config.wps_type = ESP_WPS_MODE;
   strcpy(config.factory_info.device_name, ESP_DEVICE_NAME);
 }
@@ -160,7 +161,11 @@ String ESP32_wpspin2string(uint8_t a[]) {
 }
 
 
+#ifdef ESP32_core_v1
+void ESP32_WiFiEvent(WiFiEvent_t event, system_event_info_t info) {
+#else
 void ESP32_WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
+#endif
   /* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFi.cpp
      https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/esp_event.html
      https://github.com/pycom/pycom-esp-idf/blob/master/components/esp32/include/esp_event.h */
@@ -200,7 +205,11 @@ void ESP32_WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
       esp_wifi_wps_start(0);
       break;
     case SYSTEM_EVENT_STA_WPS_ER_PIN:
+#ifdef ESP32_core_v1
+      Serial.println("WPS_PIN = " + ESP32_wpspin2string(info.sta_er_pin.pin_code));
+#else
       Serial.println("WPS_PIN = " + ESP32_wpspin2string(info.wps_er_pin.pin_code));
+#endif
       break;
     default:
       break;
@@ -283,6 +292,29 @@ String WLAN_encryptionType(uint8_t i) {
       return F("unknown");
       break;
 #elif ARDUINO_ARCH_ESP32
+#ifdef ESP32_core_v1
+    case 0:
+      return F("Open");
+      break;
+    case 1:
+      return F("WEP");
+      break;
+    case 2:
+      return F("WPA_PSK");
+      break;
+    case 3:
+      return F("WPA2_PSK");
+      break;
+    case 4:
+      return F("WPA_WPA2_PSK");
+      break;
+    case 5:
+      return F("WPA2_ENTERPRISE");
+      break;
+    default:
+      return F("unknown");
+      break;
+#else
     case WIFI_AUTH_OPEN:
       return F("Open");
       break;
@@ -313,6 +345,7 @@ String WLAN_encryptionType(uint8_t i) {
     default:
       return F("unknown");
       break;
+#endif
 #endif
   }
 }

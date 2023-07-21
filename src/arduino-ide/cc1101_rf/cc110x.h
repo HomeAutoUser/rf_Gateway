@@ -22,7 +22,7 @@ void CC1101_setTransmitMode();
 void CC1101_setReceiveMode();
 void CC1101_sendFIFO(char *startpos);
 
-extern void InputCommand(char* In);
+extern void InputCommand(String input);
 extern int RSSI_dez;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
