@@ -82,6 +82,7 @@
 #define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
+#define X_Sense                 1
 
 /* under development */
 //#define HomeMatic               1

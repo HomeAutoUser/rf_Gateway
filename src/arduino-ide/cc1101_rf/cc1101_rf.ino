@@ -15,22 +15,22 @@
   Globale Variablen verwenden 645 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39300 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39332 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1808     initialized variables
-  ╠══ RODATA   4748     constants
-  ╚══ BSS      32744    zeroed variables
+  ╠══ DATA     1824     initialized variables
+  ╠══ RODATA   4756     constants
+  ╚══ BSS      32752    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 425208 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 425256 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     425208   code in flash
+  ╚══ IROM     425256   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 947141 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 51352 Bytes (15%) des dynamischen Speichers, 276328 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 947205 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51368 Bytes (15%) des dynamischen Speichers, 276312 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
 

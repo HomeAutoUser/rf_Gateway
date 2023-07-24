@@ -1250,6 +1250,83 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
 };
 #endif
 
+#ifdef X_Sense
+const uint8_t Config_X_Sense[] PROGMEM = {
+  /*
+    Address Config = No address check
+    Base Frequency = 869.259949
+    CRC Autoflush = false
+    CRC Enable = false
+    Carrier Frequency = 869.259949
+    Channel Number = 0
+    Channel Spacing = 199.951172
+    Data Format = Normal mode
+    Data Rate = 9.9926
+    Deviation = 57.128906
+    Device Address = 0
+    Manchester Enable = false
+    Modulated = true
+    Modulation Format = GFSK
+    PA Ramping = true
+    Packet Length = 6
+    Packet Length Mode = Fixed packet length mode. Length configured in PKTLEN register
+    Preamble Count = 4
+    RX Filter BW = 116.071429
+    Sync Word Qualifier Mode = 16/16 sync word bits detected
+    TX Power = unknown
+    Whitening = false
+  */
+
+  0x01,  // IOCFG2              GDO2 Output Pin Configuration
+  0x2E,  // IOCFG1              GDO1 Output Pin Configuration
+  0x2E,  // IOCFG0              GDO0 Output Pin Configuration
+  0x41,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x2C,  // SYNC1               Sync Word, High Byte
+  0x4C,  // SYNC0               Sync Word, Low Byte
+  0x06,  // PKTLEN              Packet Length
+  0x80,  // PKTCTRL1            Packet Automation Control
+  0x00,  // PKTCTRL0            Packet Automation Control
+  0x00,  // ADDR                Device Address
+  0x00,  // CHANNR              Channel Number
+  0x06,  // FSCTRL1             Frequency Synthesizer Control
+  0x00,  // FSCTRL0             Frequency Synthesizer Control
+  0x21,  // FREQ2               Frequency Control Word, High Byte
+  0x6E,  // FREQ1               Frequency Control Word, Middle Byte
+  0xDE,  // FREQ0               Frequency Control Word, Low Byte
+  0xB8,  // MDMCFG4             Modem Configuration
+  0x93,  // MDMCFG3             Modem Configuration
+  0x12,  // MDMCFG2             Modem Configuration
+  0x22,  // MDMCFG1             Modem Configuration
+  0xF8,  // MDMCFG0             Modem Configuration
+  0x51,  // DEVIATN             Modem Deviation Setting
+  0x07,  // MCSM2               Main Radio Control State Machine Configuration
+  0x00,  // MCSM1               Main Radio Control State Machine Configuration
+  0x18,  // MCSM0               Main Radio Control State Machine Configuration
+  0x15,  // FOCCFG              Frequency Offset Compensation Configuration
+  0x6C,  // BSCFG               Bit Synchronization Configuration
+  0x43,  // AGCCTRL2            AGC Control
+  0x68,  // AGCCTRL1            AGC Control
+  0x91,  // AGCCTRL0            AGC Control
+  0x87,  // WOREVT1             High Byte Event0 Timeout
+  0x6B,  // WOREVT0             Low Byte Event0 Timeout
+  0xF8,  // WORCTRL             Wake On Radio Control
+  0xB6,  // FREND1              Front End RX Configuration
+  0x11,  // FREND0              Front End TX Configuration
+  0xEF,  // FSCAL3              Frequency Synthesizer Calibration (x)
+  0x2B,  // FSCAL2              Frequency Synthesizer Calibration (x)
+  0x14,  // FSCAL1              Frequency Synthesizer Calibration (x)
+  0x1F,  // FSCAL0              Frequency Synthesizer Calibration (x)
+  0x41,  // RCCTRL1             RC Oscillator Configuration       (x)
+  0x00,  // RCCTRL0             RC Oscillator Configuration       (x)
+  //0x59,  // FSTEST              Frequency Synthesizer Calibration Control
+  //0x7F,  // PTEST               Production Test
+  //0x3F,  // AGCTEST             AGC Test
+  //0x81,  // TEST2               Various Test Settings
+  //0x35,  // TEST1               Various Test Settings
+  //0x09,  // TEST0               Various Test Settings
+};
+#endif
+
 
 /* !!!!!!!!!!!!!!
    in development
@@ -1700,6 +1777,9 @@ struct Data Registers[] = {
 #endif
 #ifdef Rojaflex
   { Config_Rojaflex,  sizeof(Config_Rojaflex) / sizeof(Config_Rojaflex[0]), "Rojaflex", 12  },
+#endif
+#ifdef X_Sense
+  { Config_X_Sense,  sizeof(Config_X_Sense) / sizeof(Config_X_Sense[0]), "X_Sense", 6  },
 #endif
 
   /* under development */
