@@ -279,8 +279,13 @@ void web_cc110x_modes() {
 
   for (byte i = 0; i < RegistersCntMax; i++) {
     website += F("<tr><td>");
+    if (i <= 9) {
+      website += F("&nbsp;");
+    }
+    website += i;
+    website += F(" - ");
     website += Registers[i].name;
-    website += F("</td><td class=\"ac\">set to bank&nbsp;&nbsp;");
+    website += F("</td><td class=\"ac\">set to bank&ensp;");
 
     for (byte i2 = 0; i2 < 4; i2++) {
       website += F("<button class=");
