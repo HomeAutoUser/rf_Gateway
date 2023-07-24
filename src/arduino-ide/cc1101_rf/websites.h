@@ -179,7 +179,6 @@ void web_cc110x_modes() {
   uint8_t countargs = HttpServer.args();                  // Anzahl Argumente
   uint8_t tb_nr;                                          // togglebank nr
   uint8_t tb_val;                                         // togglebank value
-  char InCmdBuf[11];
 
 #ifdef debug_html
   Serial.println(F("###########################"));
@@ -259,9 +258,7 @@ void web_cc110x_modes() {
         web_status += F("toggle reseted & stopped &#10004;</td>");
       }
     }
-
-    InputCommand(InCmdBuf);
-    InputCmd = "";  // reset String
+    InputCommand(InputCmd);
   }
 
   String website = FPSTR(html_meta);
@@ -476,7 +473,10 @@ void web_cc110x_detail() {
       for (byte i = 0; i <= 46; i++) {
         temp = 'r';
         temp += i;
-        web_regData[i] = HttpServer.arg(temp).toInt();
+        web_regData[i] = hexToDec(HttpServer.arg(temp));
+#ifdef debug_html
+        Serial.print(F("DB web_cc1101_detail, web_regData[")); Serial.print(i); Serial.print(F("] = ")); Serial.println(web_regData[i]);
+#endif
       }
     }
 
@@ -563,19 +563,15 @@ void web_cc110x_detail() {
 
       for (byte i = 0; i <= 46; i++) { /* all registers */
 #ifdef debug_html
-        Serial.print(F("DB web_cc1101_detail, regData[")); Serial.print(i);
-        Serial.print(F("] = ")); Serial.println(web_regData[i]);
+        Serial.print(F("DB web_cc1101_detail, regData["));
+        Serial.print(i); Serial.print(F("] = ")); Serial.println(web_regData[i]);
 #endif
         /* compare value with value to be written */
         byte temp = CC1101_readReg(i, READ_BURST);
         if (web_regData[i] != temp) {
 #ifdef debug_html
-          if (i > 34 && i <= 40) {
-            Serial.println(F("DB web_cc1101_detail, automatic control register"));
-          }
-          if (i > 40) {
-            Serial.println(F("DB web_cc1101_detail, test register"));
-          }
+          /* i > 34 && <= 40    | automatic control register */
+          /* i > 40             | test register */
           Serial.print(F("DB web_cc1101_detail, regData[")); Serial.print(i);
           Serial.print(F("] value has changed ")); Serial.print(temp);
           Serial.print(F(" -> ")); Serial.println(web_regData[i]);
