@@ -5,13 +5,9 @@
 
 a:link.RAW, a:visited.RAW { color: #cc00cc; }
 
-.tdsd {
+.td1 {
  text-align: center;
-}
-
-.tdsb {
- text-align: center;
- width: 16.6%;
+ /* width: 16.6%; */
 }
 
 .inp {
@@ -32,4 +28,8 @@ a:link.RAW, a:visited.RAW { color: #cc00cc; }
 :root {
   --rssi_bad: #ff0000;    /* > -50  */
   --rssi_good: #28a428;   /* <= -80 */
+}
+
+input[type="number"] {
+ text-align: center;
 }

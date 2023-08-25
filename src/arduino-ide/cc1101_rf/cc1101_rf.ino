@@ -3,39 +3,46 @@
   All rights reserved.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 993
-  Der Sketch verwendet 23468 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 676 Bytes (33%) des dynamischen Speichers, 1372 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 23644 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 708 Bytes (34%) des dynamischen Speichers, 1340 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  cc1101_rf_v117pre_230728
+  Der Sketch verwendet 23820 Bytes (77%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 714 Bytes (34%) des dynamischen Speichers, 1334 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  cc1101_rf_v117pre_230728-Kopie
+  Der Sketch verwendet 22468 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 23554 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 676 Bytes (33%) des dynamischen Speichers, 1372 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 23594 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 708 Bytes (34%) des dynamischen Speichers, 1340 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 25840 Bytes (90%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 645 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 25884 Bytes (90%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 679 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39332 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39336 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1824     initialized variables
-  ╠══ RODATA   4756     constants
-  ╚══ BSS      32752    zeroed variables
+  ╠══ RODATA   4768     constants
+  ╚══ BSS      32744    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 424400 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 423948 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     424400   code in flash
+  ╚══ IROM     423948   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 946485 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Der Sketch verwendet 946541 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51368 Bytes (15%) des dynamischen Speichers, 276312 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
-  - ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen (aktuell ca. 14 x 82 --> 1148 Bytes)
+  - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
   commands:
   ?                 - available commands
+  e                 - set default registers
   fafc<n>           - frequency automatic control | valid value 0 (off) or 1 (on)
   foff<n>           - frequency offset
   ft                - frequency testsignal SN;R=99;D=FF;
@@ -218,6 +225,10 @@ byte MsgLen;                                  // ToDo, kann ggf ersetzt werden d
 int16_t first;                                // Pointer to first buffer entry
 int16_t last;                                 // Pointer to last buffer entry
 String msg;                                   // RAW (only serial/telnet, not HTML output) & Serial Input
+byte msgrep1 = 0;                             // senden - Wiederholungszähler RAW von Einstellung
+byte msgrep2 = 0;                             // senden - Wiederholungszähler RAW aktuell gesendet
+unsigned long msgSendStart = 0;               // senden - Startpunkt Zeit
+unsigned long msgSendInterval = 0;            // senden - Intervall Zeit
 byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
 byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
 byte MOD_FORMAT;                              // Marker - Modulation
@@ -226,6 +237,7 @@ bool valid;
 
 /* predefinitions of the functions */
 inline void doDetect();
+void NO_CC110x();
 void Interupt_Variant(byte nr);
 void MSGBuild();
 void PatReset();
@@ -666,10 +678,11 @@ void loop() {
       delay(1);
       if (i == 254) {
 #ifdef CODE_AVR
-        Serial.println(F("loop, ERROR read CC1101_MARCSTATE, READ_BURST !"));
+        Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTALLLN(F("loop, ERROR read CC1101_MARCSTATE, READ_BURST !"));
+        MSG_OUTPUTALLLN(
 #endif
+          F("loop, ERROR read CC1101_MARCSTATE, READ_BURST !"));
       }
     }
     digitalWriteFast(LED, LOW); /* LED off */
@@ -678,6 +691,20 @@ void loop() {
     while (FiFo.count() > 0 ) {         // Puffer auslesen und an Dekoder uebergeben
       int aktVal = FiFo.dequeue();      // get next element
       decode(aktVal);
+    }
+  }
+
+  /* check data to send */
+  if (msgrep1 != 0) {
+    if (millis() >= msgSendStart && msgrep2 < msgrep1) {
+      msgrep2++;
+      Serial.println(msgSendStart);
+      msgSendStart = millis() + msgSendInterval;
+      if (msgrep1 == msgrep2) {
+        CC1101_setReceiveMode();  /* enable RX */
+        msgrep1 = 0;
+        msgrep2 = 0;
+      }
     }
   }
 }
@@ -718,10 +745,11 @@ void ToggleOnOff() {
       ToggleTime = 0;
 #ifdef debug
 #ifdef CODE_AVR
-      Serial.println(F("Toggle STOPPED, no toggle values in togglebank!"));
+      Serial.println(
 #elif CODE_ESP
-      MSG_OUTPUTLN(F("Toggle STOPPED, no toggle values in togglebank!"));
+      MSG_OUTPUTLN(
 #endif
+        F("Toggle STOPPED, no toggle values in togglebank!"));
 #endif
       return;
     }
@@ -775,99 +803,116 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case '?':             /* command ? */
       if (!buf_input[1]) {
 #ifdef CODE_AVR
-        Serial.println(F("? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
+        Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTLN(F("? Use one of fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
+        MSG_OUTPUTLN(
 #endif
+          F("? Use one of e, fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
       }
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':                                                                                         /* command f */
-      if (buf_input[1] == 'o' && buf_input[2] == 'f' && buf_input[3] == 'f') { /* command foff<n> */
-        if (isNumeric(input.substring(4)) == 1) {
-          Freq_offset = input.substring(4).toFloat();
-          if (Freq_offset > 10.0 || Freq_offset < -10.0) {
-            Freq_offset = 0;
+      if (CC1101_found == false) {
+        NO_CC110x();
+      } else {
+        if (buf_input[1] == 'o' && buf_input[2] == 'f' && buf_input[3] == 'f') { /* command foff<n> */
+          if (isNumeric(input.substring(4)) == 1) {
+            Freq_offset = input.substring(4).toFloat();
+            if (Freq_offset > 10.0 || Freq_offset < -10.0) {
+              Freq_offset = 0;
 #ifdef CODE_AVR
-            Serial.println(F("CC110x_Freq.Offset resets (value is not range -10 to 10 MHz)"));
+              Serial.println(
 #elif CODE_ESP
-            MSG_OUTPUTLN(F("CC110x_Freq.Offset resets (value is not range -10 to 10 MHz)"));
+              MSG_OUTPUTLN(
+#endif
+                F("CC110x_Freq.Offset resets (value is not range -10 to 10 MHz)"));
+            }
+            EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+            EEPROM.commit();
+#endif
+            CC1101_writeReg(CC1101_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#ifdef CODE_AVR
+            Serial.print(F("CC110x_Freq.Offset saved to ")); Serial.print(Freq_offset); Serial.println(F(" MHz"));
+#elif CODE_ESP
+            tmp = F("CC110x_Freq.Offset saved to "); tmp += Freq_offset; tmp += F(" MHz");
+#endif
+          } else {
+#ifdef CODE_AVR
+            Serial.println(F("CC110x_Freq.Offset value is not nummeric"));
+#elif CODE_ESP
+            tmp = F("CC110x_Freq.Offset value is not nummeric");
 #endif
           }
-          EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-          EEPROM.commit();
-#endif
-          CC1101_writeReg(CC1101_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
-#ifdef CODE_AVR
-          Serial.print(F("CC110x_Freq.Offset saved to ")); Serial.print(Freq_offset); Serial.println(F(" MHz"));
-#elif CODE_ESP
-          tmp = F("CC110x_Freq.Offset saved to "); tmp += Freq_offset; tmp += F(" MHz");
-#endif
-        } else {
-#ifdef CODE_AVR
-          Serial.println(F("CC110x_Freq.Offset value is not nummeric"));
-#elif CODE_ESP
-          tmp = F("CC110x_Freq.Offset value is not nummeric");
-#endif
-        }
 #ifdef CODE_ESP
-        MSG_OUTPUTLN(tmp);
+          MSG_OUTPUTLN(tmp);
 #endif
-      }
-
-      if (buf_input[1] == 'a' && buf_input[2] == 'f' && buf_input[3] == 'c' && !buf_input[5]) { /* command fafc<n> */
-        CC1101_writeReg(CC1101_FSCTRL0, 0);                                                     // 0x0C: FSCTRL0 – Frequency Synthesizer Control
-
-        if (buf_input[4] == '0') { /* command fafc0 */
-#ifdef CODE_AVR
-          Serial.println(F("CC110x_Frequency, Afc off"));
-#elif CODE_ESP
-          tmp = F("CC110x_Frequency, Afc off");
-#endif
-          freqAfc = 0;
         }
-        if (buf_input[4] == '1') { /* command fafc1 */
+
+        if (buf_input[1] == 'a' && buf_input[2] == 'f' && buf_input[3] == 'c' && !buf_input[5]) { /* command fafc<n> */
+          CC1101_writeReg(CC1101_FSCTRL0, 0);                                                     // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+
+          if (buf_input[4] == '0') { /* command fafc0 */
 #ifdef CODE_AVR
-          Serial.println(F("CC110x_Frequency, Afc on"));
+            Serial.println(F("CC110x_Frequency, Afc off"));
 #elif CODE_ESP
-          tmp = F("CC110x_Frequency, Afc on");
+            tmp = F("CC110x_Frequency, Afc off");
 #endif
-          freqAfc = 1;
-        }
+            freqAfc = 0;
+          }
+          if (buf_input[4] == '1') { /* command fafc1 */
+#ifdef CODE_AVR
+            Serial.println(F("CC110x_Frequency, Afc on"));
+#elif CODE_ESP
+            tmp = F("CC110x_Frequency, Afc on");
+#endif
+            freqAfc = 1;
+          }
 #ifdef CODE_ESP
-        MSG_OUTPUTLN(tmp);
+          MSG_OUTPUTLN(tmp);
 #endif
-        EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
-      }
+          EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
+        }
 
-      if (buf_input[1] == 't' && !buf_input[2]) { /* command ft */
+        if (buf_input[1] == 't' && !buf_input[2]) { /* command ft */
 #ifdef CODE_AVR
-        Serial.println(F("CC110x_Frequency, send testsignal"));
+          Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTLN(F("CC110x_Frequency, send testsignal"));
+          MSG_OUTPUTLN(
 #endif
-        input = F("SN;D=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;R=50;");
-        InputCommand(input);
+            F("CC110x_Frequency, send testsignal"));
+          input = F("SN;D=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;R=50;");
+          InputCommand(input);
+        }
+      }
+      break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
+    case 'e': /* command e */
+      if (CC1101_found == false) {
+        NO_CC110x();
+        break;
+      } else {
+        for (byte i = 0; i < RegistersCntMax; i++) {
+          if (strcmp(Registers[i].name, "OOK_MU_433") == 0) {
+            // if (Registers[i].name == "OOK_MU_433") { // warning: comparison with string literal results in unspecified behavior [-Waddress]
+            Interupt_Variant(i);
+            break;
+          }
+        }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'm': /* command m */
       if (buf_input[1]) {
         /* command m<n>, check of decimal */
         if (isNumeric(input.substring(1)) == 1) {
-          detachInterrupt(digitalPinToInterrupt(GDO2));
-          ToggleAll = false;
-          ToggleTime = 0;                                       // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
-          byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
-          if (int_substr1_serial <= RegistersCntMax) {
-            /* "Normal Option" - set all Register value´s */
-            if (int_substr1_serial <= (RegistersCntMax - 1)) {
-              if (CC1101_found == false) {
-#ifdef CODE_AVR
-                Serial.println(F("Mode not settable (no CC1101 found)"));
-#elif CODE_ESP
-                MSG_OUTPUTLN(F("Mode not settable (no CC1101 found)"));
-#endif
-              } else {
+          if (CC1101_found == false) {
+            NO_CC110x();
+          } else {
+            detachInterrupt(digitalPinToInterrupt(GDO2));
+            ToggleAll = false;
+            ToggleTime = 0;                                       // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
+            byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
+            if (int_substr1_serial <= RegistersCntMax) {
+              /* "Normal Option" - set all Register value´s */
+              if (int_substr1_serial <= (RegistersCntMax - 1)) {
                 if (int_substr1_serial == 0) {
                   Freq_offset = 0;  // reset FrequencOffset
                 }
@@ -892,22 +937,24 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 
 #ifdef debug
 #ifdef CODE_AVR
-                Serial.println(F("DB Input, writes all current values to EEPROM"));
+                Serial.println(
 #elif CODE_ESP
-                MSG_OUTPUTLN(F("DB Input, writes all current values to EEPROM"));
+                MSG_OUTPUTLN(
 #endif
+                  F("DB Input, writes all current values to EEPROM"));
 #endif
                 for (byte i = 0; i < Registers[int_substr1_serial].length; i++) { /* write register values ​​to flash */
                   EEPROMwrite(i, pgm_read_byte_near(Registers[int_substr1_serial].reg_val + i));
                 }
                 EEPROMwrite(EEPROM_ADDR_Prot, int_substr1_serial); /* write enabled protocoll */
-              }
-            } else if (int_substr1_serial == RegistersCntMax) { /* "Special Option" */
+              } else if (int_substr1_serial == RegistersCntMax) { /* "Special Option" */
 #ifdef CODE_AVR
-              Serial.println(F("Developer gadget to test functions"));
+                Serial.println(
 #elif CODE_ESP
-              MSG_OUTPUTLN(F("Developer gadget to test functions"));
+                MSG_OUTPUTLN(
 #endif
+                  F("Developer gadget to test functions"));
+              }
             }
           }
         }
@@ -916,13 +963,16 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case 't':
       if (!buf_input[1]) { /* command t */
 #ifdef CODE_AVR
-        Serial.println(uptime);
+        Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTLN(uptime);
+        MSG_OUTPUTLN(
 #endif
+          uptime);
       } else {
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
-          if (CC1101_found == true) {
+          if (CC1101_found == false) {
+            NO_CC110x();
+          } else {
             if (buf_input[2] == 's') { /* command tos<n> | allowed length 1 - 9 (max 12 completely serial) */
               unsigned long IntTime = input.substring(3).toInt();
 
@@ -1037,21 +1087,16 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
 #ifdef CODE_AVR
-                Serial.println(F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
+                Serial.println(
 #elif CODE_ESP
-                MSG_OUTPUTLN(F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
+                MSG_OUTPUTLN(
 #endif
+                  F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
                 ToggleAll = true;
                 ToggleTime = 15000;  // set to default and start
                 ToggleOnOff();
               }
             }
-          } else {
-#ifdef CODE_AVR
-            Serial.println(F("tob and tos not available (no CC1101 found)"));
-#elif CODE_ESP
-            MSG_OUTPUTLN(F("tob and tos not available (no CC1101 found)"));
-#endif
           }
         }
       }
@@ -1069,11 +1114,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
           }
           if (CC1101_found == false) {
-#ifdef CODE_AVR
-            Serial.println(F("Current registers unreadable, write patable stopped (no CC1101 found)"));
-#elif CODE_ESP
-            MSG_OUTPUTLN(F("Current registers unreadable, write patable stopped (no CC1101 found)"));
-#endif
+            NO_CC110x();
           } else {
             CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
 #ifdef CODE_AVR
@@ -1088,11 +1129,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'C':
       if (CC1101_found == false) {
-#ifdef CODE_AVR
-        Serial.println(F("Current registers unreadable (no CC1101 found)"));
-#elif CODE_ESP
-        MSG_OUTPUTLN(F("Current registers unreadable (no CC1101 found)"));
-#endif
+        NO_CC110x();
       } else {
         if (!buf_input[1]) { /* command C - Read all values from Register */
 #ifdef CODE_AVR
@@ -1214,10 +1251,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           }
         } else if (buf_input[1] == 'G' && !buf_input[2]) { /* command CG */
 #ifdef CODE_AVR
-          Serial.println(F("MS=0;MU=0;MC=0;Mred=0;MN=1;"));
+          Serial.println(
 #elif CODE_ESP
-          MSG_OUTPUTLN(F("MS=0;MU=0;MC=0;Mred=0;MN=1;"));
+          MSG_OUTPUTLN(
 #endif
+            F("MS=0;MU=0;MC=0;Mred=0;MN=1;"));
         } else if (buf_input[1] == '0' && buf_input[2] == 'D' && buf_input[3] == 'n' && buf_input[4] == 'F' && !buf_input[5]) { /* command C0DnF - conf */
 #ifdef CODE_AVR
           Serial.print(F("C0Dn11="));
@@ -1248,12 +1286,12 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
         tmp = F("# # #   current status   # # #\n");
 #endif
-        if (activated_mode_name == "" && CC1101_found == true) {
-          activated_mode_name = F("CC110x configuration");  // activated_mode_name if uC restart
-        } else if (activated_mode_name != "" && CC1101_found == true) {
-          // activated_mode_name is set with command m<n>
-        } else {
-          activated_mode_name = F("CC110x NOT recognized");  // activated_mode_name if no cc1101
+        if (activated_mode_name == "" && CC1101_found == true) {          // activated_mode_name if uC restart
+          activated_mode_name = F("CC110x configuration");
+        } else if (activated_mode_name != "" && CC1101_found == true) {   // activated_mode_name is set with command m<n>
+
+        } else {                                                          // activated_mode_name if no cc1101
+          activated_mode_name = F("CC110x NOT recognized");
         }
 
         if (CC1101_found == true) {
@@ -1263,45 +1301,53 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           Serial.print(F("CC110x_Freq.Offset  ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
         }
         Serial.print(F("ReceiveMode         ")); Serial.println(activated_mode_name);
-        Serial.print(F("ToggleAll (Scan)    ")); Serial.println(ToggleAll == 1 ? "on" : "off");
-        Serial.print(F("ToggleBank 0-3      { "));
+        Serial.print(F("ReceiveMessageCount ")); Serial.println(msgCount);
 
-        for (byte i = 0; i < 4; i++) {
-          if (ToggleArray[i] == 255) {
-            Serial.print('-');
-          } else {
-            Serial.print(ToggleArray[i]);
-          }
+        if (CC1101_found == true) {
+          Serial.print(F("ToggleAll (Scan)    ")); Serial.println(ToggleAll == 1 ? "on" : "off");
+          Serial.print(F("ToggleBank 0-3      { "));
 
-          if (i != 3) {
-            Serial.print(F(" | "));
+          for (byte i = 0; i < 4; i++) {
+            if (ToggleArray[i] == 255) {
+              Serial.print('-');
+            } else {
+              Serial.print(ToggleArray[i]);
+            }
+
+            if (i != 3) {
+              Serial.print(F(" | "));
+            }
           }
+          Serial.println(F(" }"));
+          Serial.print(F("ToggleTime (ms)     "));
+          Serial.println(ToggleTime);
         }
-        Serial.println(F(" }"));
-        Serial.print(F("ToggleTime (ms)     "));
-        Serial.println(ToggleTime);
 #elif CODE_ESP
           tmp += F("CC110x_MARCSTATE    "); tmp += onlyDecToHex2Digit(CC1101_readReg(CC1101_MARCSTATE, READ_BURST));  tmp += "\n"; // MARCSTATE – Main Radio Control State Machine State
           tmp += F("CC110x_Freq.Afc     "); tmp += (freqAfc == 1 ? F("on (1)") : F("off (0)")); tmp += "\n";
           tmp += F("CC110x_Freq.Offset  "); tmp += String(Freq_offset, 3); tmp += F(" MHz"); tmp += "\n";
         }
         tmp += F("ReceiveMode         "); tmp += activated_mode_name; tmp += "\n";
-        tmp += F("ToggleAll (Scan)    "); tmp += (ToggleAll == 1 ? "on" : "off"); tmp += "\n";
-        tmp += F("ToggleBank 0-3      { ");
+        tmp += F("ReceiveMessageCount "); tmp += msgCount; tmp += "\n";
 
-        for (byte i = 0; i < 4; i++) {
-          if (ToggleArray[i] == 255) {
-            tmp += '-';
-          } else {
-            tmp += ToggleArray[i];
-          }
+        if (CC1101_found == true) {
+          tmp += F("ToggleAll (Scan)    "); tmp += (ToggleAll == 1 ? "on" : "off"); tmp += "\n";
+          tmp += F("ToggleBank 0-3      { ");
 
-          if (i != 3) {
-            tmp += F(" | ");
+          for (byte i = 0; i < 4; i++) {
+            if (ToggleArray[i] == 255) {
+              tmp += '-';
+            } else {
+              tmp += ToggleArray[i];
+            }
+
+            if (i != 3) {
+              tmp += F(" | ");
+            }
           }
+          tmp += F(" }"); tmp += "\n";
+          tmp += F("ToggleTime (ms)     "); tmp += ToggleTime;
         }
-        tmp += F(" }"); tmp += "\n";
-        tmp += F("ToggleTime (ms)     "); tmp += ToggleTime;
         MSG_OUTPUTLN(tmp);
 #endif
       }
@@ -1334,36 +1380,35 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case 'P': /* command P */
       if (!buf_input[1]) {
 #ifdef CODE_AVR
-        Serial.println(F("OK"));
+        Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTLN(F("OK"));
+        MSG_OUTPUTLN(
 #endif
+          F("OK"));
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'R': /* command R */
       if (!buf_input[1]) {
 #ifdef CODE_AVR
-        Serial.println(freeRam());
+        Serial.println(
 #elif CODE_ESP
-        MSG_OUTPUTLN(freeRam());
+        MSG_OUTPUTLN(
 #endif
+          freeRam());
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'S': /* command S */
       if (CC1101_found == false) {
-#ifdef CODE_AVR
-        Serial.println(F("no sending possible (no CC1101 found)"));
-#elif CODE_ESP
-        MSG_OUTPUTLN(F("no sending possible (no CC1101 found)"));
-#endif
+        NO_CC110x();
       } else {
         if (buf_input[1] && buf_input[1] == 'N' && buf_input[2] == ';') { /* command SN */
 #ifdef debug
 #ifdef CODE_AVR
-          Serial.println(F("DB Input | SN; raw message"));
+          Serial.println(
 #elif CODE_ESP
-          MSG_OUTPUTLN(F("DB Input | SN; raw message"));
+          MSG_OUTPUTLN(
 #endif
+            F("DB Input | SN; raw message"));
 #endif
           // SN;R=5;D=9A46036AC8D3923EAEB470AB; //
 
@@ -1421,10 +1466,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 } else {
                   datavalid = 0;
 #ifdef CODE_AVR
-                  Serial.println(F("SN; found odd number of nibbles, no send !!!"));
+                  Serial.println(
 #elif CODE_ESP
-                  MSG_OUTPUTLN(F("SN; found odd number of nibbles, no send !!!"));
+                  MSG_OUTPUTLN(
 #endif
+                    F("SN; found odd number of nibbles, no send !!!"));
                 }
               }
               ptr = strtok(NULL, delimiter);
@@ -1476,7 +1522,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'W': /* command W */
-      if (CC1101_found == true) {
+      if (CC1101_found == false) {
+        NO_CC110x();
+      } else {
         if (buf_input[1] && buf_input[1] != 'S' && buf_input[1] > 47 && buf_input[1] < 52 && buf_input[2] && buf_input[3] && buf_input[4] && !buf_input[5]) {
           /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... */
           byte adr_dec = hexToDec(input.substring(1, 3));
@@ -1503,40 +1551,23 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             tmp = 'W'; tmp += onlyDecToHex2Digit(adr_dec); tmp += onlyDecToHex2Digit(val_dec);
             MSG_OUTPUTLN(tmp);
 #endif
+            activated_mode_name = F("CC110x user configuration");
           }
         } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
-#ifdef debug
+          uint8_t reg = hexToDec(input.substring(2, 4));
+          String val = onlyDecToHex2Digit( CC1101_cmdStrobe(reg) >> 4 );
+          delay(1);
+          String val1 = onlyDecToHex2Digit( CC1101_cmdStrobe(CC1101_SNOP) >> 4 );
+
 #ifdef CODE_AVR
-          Serial.print(F("DB Input | cmd WS with value=")); Serial.print(buf_input[2]); Serial.println(buf_input[3]);
+          Serial.print(F("cmdStrobeReg ")); Serial.print(onlyDecToHex2Digit(reg)); Serial.print(F(" chipStatus "));
+          Serial.print(val); Serial.print(F(" delay1 ")); Serial.println(val1);
 #elif CODE_ESP
-          tmp = F("DB Input | cmd WS with value="); tmp += String(buf_input[2]); tmp += String(buf_input[3]);
+          tmp = F("cmdStrobeReg "); tmp += onlyDecToHex2Digit(reg); tmp += F(" chipStatus "); tmp += val; tmp += F(" delay1 "); tmp += val1;
           MSG_OUTPUTLN(tmp);
 #endif
-#endif
-          if (buf_input[3] == '4') {
-            CC1101_cmdStrobe(CC1101_SRX);
-#ifdef CODE_AVR
-            Serial.println(F("cmdStrobeReg 34 chipStatus 00 delay1 01"));
-#elif CODE_ESP
-            MSG_OUTPUTLN(F("cmdStrobeReg 34 chipStatus 00 delay1 01"));
-#endif
-          }
-          if (buf_input[3] == '6') {
-            CC1101_cmdStrobe(CC1101_SIDLE);
-#ifdef CODE_AVR
-            Serial.println(F("cmdStrobeReg 36 chipStatus 01 delay1 00"));
-#elif CODE_ESP
-            MSG_OUTPUTLN(F("cmdStrobeReg 36 chipStatus 01 delay1 00"));
-#endif
-          }
         }
-      } else {
-#ifdef CODE_AVR
-        Serial.println(F("W and WS not available (no CC1101 found)"));
-#elif CODE_ESP
-        MSG_OUTPUTLN(F("W and WS not available (no CC1101 found)"));
-#endif
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     default:
@@ -1756,10 +1787,11 @@ void MSGBuild() {     /* Nachrichtenausgabe */
     raw.replace("M", "M");
     raw += char(3); raw += char(10);
 #ifdef CODE_AVR
-    Serial.print(raw);
+    Serial.print(
 #elif CODE_ESP
-    MSG_OUTPUTALL(raw);
+    MSG_OUTPUTALL(
 #endif
+      raw);
     msgCount++;
     digitalWriteFast(LED, LOW);  // LED off
   }
@@ -1828,4 +1860,14 @@ void PatReset() {     /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
     ArPaSu[i] = 0;
     ArPaT[i] = 0;
   }
+}
+
+
+void NO_CC110x() {
+#ifdef CODE_AVR
+  Serial.println(
+#elif CODE_ESP
+  MSG_OUTPUTLN(
+#endif
+    F("Operation not executable (no CC110x found)"));
 }

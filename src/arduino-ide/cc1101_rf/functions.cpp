@@ -1,6 +1,7 @@
 #include "config.h"
 #include "cc110x.h"
 #include "register.h"
+#include "macros.h"
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <ESP8266WiFi.h>    // need for ESP8266 function system_get_free_heap_size (include failed, so separate)
@@ -441,32 +442,32 @@ uint8_t * EEPROMread_ipaddress(int address) {             /* read IP-Address fro
 /* Speicherbereich auslesen
    gibt einen Dump des Speicherinhalts in tabellarischer Form über den seriellen Port aus. */
 void EEPROMread_table() {
+  uint8_t j = 0;
   Serial.println(F("-----------------------------------------------------"));
   Serial.println(F("EEPROM read all bytes"));
-  int bytesPerRow = 16;
-  int i;
-  int j = 0;
-  byte b;
-  char buf[10];
   Serial.print(F("Addr. "));
-  for (i = 0; i < bytesPerRow; i++) {
-    sprintf(buf, "%02X ", i);
-    Serial.print(buf);
+  for (uint8_t i = 0; i < 16; i++) {
+    Serial.print(onlyDecToHex2Digit(i));
+    Serial.print(' ');
   }
   Serial.println();
   Serial.println(F("-----------------------------------------------------"));
-  for (i = 0; i < EEPROM_SIZE; i++) {
+  for (uint16_t i = 0; i < EEPROM_SIZE; i++) {
     if (j == 0) {
-      sprintf(buf, "%04X: ", i);
-      Serial.print(buf);
+      Serial.print(onlyDecToHex2Digit(i >> 8));
+      Serial.print(onlyDecToHex2Digit(i & 0x00FF));
+      Serial.print(": ");
     }
-    b = EEPROM.read(i);
-    sprintf(buf, "%02X ", b);
+    uint8_t b = EEPROM.read(i);
+    String hex = onlyDecToHex2Digit(b);
+    hex += ' ';
     j++;
-    if (j == bytesPerRow) {
+    if (j == 16) {
       j = 0;
-      Serial.println(buf);
-    } else Serial.print(buf);
+      Serial.println(hex);
+    } else {
+      Serial.print(hex);
+    }
   }
   Serial.println(F("-----------------------------------------------------"));
 }

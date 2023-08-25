@@ -98,9 +98,11 @@
 #define WLAN_password_ap        "config-gateway"            // AP - Passwort
 #define WLAN_hostname           "cc110x_rf_Gateway"         // Hostname
 #else
+#define Bresser_5in1            1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 #define OOK_MU_433              1
+#define X_Sense                 1
 #endif
 
 /* varible´s for Serial & TelNet TimeOut´s | sets the maximum milliseconds to wait for data. */

@@ -10,7 +10,11 @@ document.head.appendChild(js);
 function onMessage(event) {
  console.log('received message: ' + event.data);
 
- if (event.data.includes('MODE,') ) {
+ if (event.data.includes('Connected') ) {
+  document.getElementsByName('tgt')[0].maxLength = "7";
+  document.getElementsByName('tgt')[0].pattern = "^[\\d]{1,7}$";
+  document.getElementsByName('tgt')[0].title = "Input: 15000 ... 1800000 ms";
+ } else if (event.data.includes('MODE,') ) {
   const obj=event.data.split(',');
 
   /* erste Spalte | automatischer Farbwechsel aktiver Modus

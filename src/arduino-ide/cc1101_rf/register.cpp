@@ -1254,15 +1254,15 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
 const uint8_t Config_X_Sense[] PROGMEM = {
   /*
     Address Config = No address check
-    Base Frequency = 869.259949
+    Base Frequency = 869.294861
     CRC Autoflush = false
     CRC Enable = false
-    Carrier Frequency = 869.259949
+    Carrier Frequency = 869.294861
     Channel Number = 0
     Channel Spacing = 199.951172
     Data Format = Normal mode
     Data Rate = 9.9926
-    Deviation = 57.128906
+    Deviation = 41.259766
     Device Address = 0
     Manchester Enable = false
     Modulated = true
@@ -1291,14 +1291,14 @@ const uint8_t Config_X_Sense[] PROGMEM = {
   0x06,  // FSCTRL1             Frequency Synthesizer Control
   0x00,  // FSCTRL0             Frequency Synthesizer Control
   0x21,  // FREQ2               Frequency Control Word, High Byte
-  0x6E,  // FREQ1               Frequency Control Word, Middle Byte
-  0xDE,  // FREQ0               Frequency Control Word, Low Byte
+  0x6F,  // FREQ1               Frequency Control Word, Middle Byte
+  0x36,  // FREQ0               Frequency Control Word, Low Byte
   0xB8,  // MDMCFG4             Modem Configuration
   0x93,  // MDMCFG3             Modem Configuration
   0x12,  // MDMCFG2             Modem Configuration
   0x22,  // MDMCFG1             Modem Configuration
   0xF8,  // MDMCFG0             Modem Configuration
-  0x51,  // DEVIATN             Modem Deviation Setting
+  0x45,  // DEVIATN             Modem Deviation Setting
   0x07,  // MCSM2               Main Radio Control State Machine Configuration
   0x00,  // MCSM1               Main Radio Control State Machine Configuration
   0x18,  // MCSM0               Main Radio Control State Machine Configuration

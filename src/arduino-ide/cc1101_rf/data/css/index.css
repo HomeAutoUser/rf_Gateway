@@ -8,3 +8,19 @@ a:link.HOME, a:visited.HOME { color: #cc00cc; }
 .tdf {
   width: 24.9%; /* 220px moved to the header cell */
 }
+
+button.btn {
+ background-color: #3399ff;
+ border-radius: 14px 14px 14px 14px;
+ color: white;
+ cursor: pointer;
+ float: right;
+ font-size : 11px;
+ text-align: center;
+ width: 105px;
+}
+
+button.btn:hover {
+ background-color: #ffff00;
+ color: black;
+}

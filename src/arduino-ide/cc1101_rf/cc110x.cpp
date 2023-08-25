@@ -34,7 +34,6 @@ boolean CC1101_found = false;                   // against not clearly defined e
 /**********
   functions
  * ********/
-
 void CC1101_init() { /* CC1101 - Set default´s */
 #ifdef debug_cc110x
   Serial.println(F("DB CC1101_init starting"));

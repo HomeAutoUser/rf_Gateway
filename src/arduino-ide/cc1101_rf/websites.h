@@ -11,7 +11,9 @@
 extern void InputCommand(String input);
 extern String onlyDecToHex2Digit(byte Dec);
 extern boolean freqAfc;
-
+extern byte msgrep1;
+extern unsigned long msgSendStart;
+extern unsigned long msgSendInterval;
 /* predefinitions of the functions */
 void WebSocket_cc110x();
 /* {"MODE":"Lacrosse_mode2","MS":"8","ToggleBank":"{ 11 12 - - }","Time":"30000"} */
@@ -71,8 +73,16 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
 
 
 void web_index() {
+  String submit = HttpServer.arg("submit");               // welcher Button wurde betätigt
   String website = FPSTR(html_meta);
   website.reserve(2000);
+
+  if (submit == "MSG0") {
+    msgCount = 0; // danach funktioniert count per minute/hour nicht mehr korrekt
+  } else if (submit == "SWRESET") {
+    ESP.restart();
+  }
+
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
                "<script src=\"index.js\" type=\"text/javascript\"></script>"
                "</head>");
@@ -87,10 +97,12 @@ void web_index() {
 #else
                "standalone"
 #endif
-               "</td></tr><tr><td>Message count</td><td><span id=\"MSGcnt\">");
+               "</td></tr><tr>"
+               "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
+               "<td>Message count</td><td><span id=\"MSGcnt\">");
   website += msgCount;
-  website += F("</span>");
-  website += F("</td></tr><tr><td>RAM (free heap)</td><td><span id=\"RAM\">");
+  website += F("</span>"
+               "<button class=\"btn\" type=\"submit\" name=\"submit\" value=\"MSG0\">RESET Counter</button></td></tr><tr><td>RAM (free heap)</td><td><span id=\"RAM\">");
   website += freeRam();
   website += F("</span></td></tr>"
                "<tr><td>RSSI (WLAN connection)</td><td><span id=\"WLANdB\">");
@@ -105,7 +117,9 @@ void web_index() {
 #endif
   website += F("</td></tr><tr><td>Uptime (Seconds)</td><td><span id=\"Uptime\">");
   website += uptime;
-  website += F("</span></td></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
+  website += F("</span>"
+               "<button class=\"btn\" type=\"submit\" name=\"submit\" value=\"SWRESET\" onClick=\"refresh()\">RESTART ESP</button>"
+               "</td></form></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
   website += FPSTR(TXT_VERSION);
   website += F("</td></tr></tbody></table></body></html>");
   HttpServer.send(200, "text/html", website);
@@ -329,6 +343,10 @@ void web_cc110x_modes() {
 
 
 void web_cc110x_detail_export() {
+  if (!CC1101_found) {
+    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+  }
+
   String website = FPSTR(html_meta);
   website.reserve(1500);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_exp.css\"></head>"
@@ -363,6 +381,9 @@ void web_cc110x_detail_export() {
 
 
 void web_cc110x_detail_import() {
+  if (!CC1101_found) {
+    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+  }
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
@@ -686,9 +707,11 @@ void web_raw() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String sd = HttpServer.arg("sd");         // welche Daten genutzt werden sollen
-  String submit = HttpServer.arg("submit"); // welcher Button wurde betätigt
-  uint8_t countargs = HttpServer.args();    // Anzahl Argumente
+  String sd = HttpServer.arg("sd");                     // hexdata to send
+  msgrep1 = HttpServer.arg("rep").toInt();          // repeats to send
+  unsigned long rept = HttpServer.arg("rept").toInt();  // time between send packages
+  String submit = HttpServer.arg("submit");             // button send
+  uint8_t countargs = HttpServer.args();                // Anzahl Argumente
 
   String website = FPSTR(html_meta);
   website.reserve(2000);
@@ -698,33 +721,41 @@ void web_raw() {
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<table>"
-               "<thead><tr><th colspan=\"3\">send data (with the current register settings)</th></tr></thead>"
-               "<tr><td colspan=\"2\" class=\"tdsd\"><input class=\"inp\" size=\"74\" name=\"sd\" type=\"text\"></td>"
-               "<td class=\"tdsb\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"send\">send</button></td></tr>");
+               "<thead><tr><th colspan=\"5\">send data (with the current register settings)</th></tr></thead>"
+               "<tr>"
+               "<td class=\"td1\" colspan=\"2\"><input class=\"inp\" name=\"sd\" type=\"text\"></td>"
+               "<td class=\"td1\">repeats <input name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
+               "<td class=\"td1\">time (ms) <input name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==5) return false;\"></td>"
+               "<td class=\"td1\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"send\">send</button></td>"
+               "</tr>");
 
   if (countargs != 0) {
 #ifdef debug_html
     Serial.print(F("DB web_raw, countargs ")); Serial.println(countargs);
     Serial.print(F("DB web_raw, submit ")); Serial.println(submit);
     Serial.print(F("DB web_raw, sd ")); Serial.println(sd);
+    Serial.print(F("DB web_raw, rep ")); Serial.println(msgrep1);
+    Serial.print(F("DB web_raw, rept ")); Serial.println(rept);
 #endif
 
     if (submit == "send") { /* SEND DATA */
-      if (sd != "") {
+      if (sd != "" && msgrep1 != 0 && rept != 0) {
         if (sd.length() % 2 == 0) { /* check datapart is odd */
           char senddata[sd.length() + 1];
           sd.toCharArray(senddata, sd.length() + 1);
           CC1101_setTransmitMode(); /* enable TX */
+
+          // jump to loop, in function ???
+          msgSendInterval = rept;
+          msgSendStart = millis() + rept;
+
           CC1101_sendFIFO(senddata);
-          CC1101_setReceiveMode();  /* enable RX */
+
         } else {
-#ifdef debug_html
-          Serial.println(F("DB web_raw, found odd number of nibbles"));
-#endif
-          website += F("<tr><td colspan=\"3\" class=\"sd\">found odd number of nibbles, no send !!!</td></tr>");
+          website += F("<tr><td colspan=\"4\" class=\"sd\">found odd number of nibbles, no send !!!</td></tr>");
         }
       } else {
-        website += F("<tr><td colspan=\"3\" class=\"sd\">Please input data ;-)</td></tr>");
+        website += F("<tr><td colspan=\"4\" class=\"sd\">Please input all data &#128521;</td></tr>");
       }
     }
   }
@@ -733,7 +764,7 @@ void web_raw() {
                "<div><table id=\"dataTable\"><thead>"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += activated_mode_name;
-  website += F("</span></th><th class=\"dd\">RSSI in dB</th><th class=\"dd\">Offset in kHz</th></tr>"
+  website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
                "</thead></table></div>"
                "</body></html>");
   HttpServer.send(200, "text/html", website);
@@ -1022,30 +1053,32 @@ void WebSocket_cc110x() {
 #ifdef debug_websocket
   Serial.println(F("DB WebSocket_cc110x running"));
 #endif
-  if (webSocket.connectedClients() > 0) {
-    String website = activated_mode_name;
-    website.reserve(55);
-    website += ',';
-    website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
-    website += F(",{ ");
+  if (CC1101_found) {
+    if (webSocket.connectedClients() > 0) {
+      String website = activated_mode_name;
+      website.reserve(55);
+      website += ',';
+      website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
+      website += F(",{ ");
 
-    for (byte i = 0; i < 4; i++) {
-      if (ToggleArray[i] == 255) {
-        website += '-';
-      } else {
-        website += ToggleArray[i];
+      for (byte i = 0; i < 4; i++) {
+        if (ToggleArray[i] == 255) {
+          website += '-';
+        } else {
+          website += ToggleArray[i];
+        }
+        if (i != 3) {
+          website += ' ';
+        }
       }
-      if (i != 3) {
-        website += ' ';
-      }
-    }
 
-    website += F(" },");
-    website += ToggleTime;
+      website += F(" },");
+      website += ToggleTime;
 
-    for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == "/cc110x") {
-        webSocket.sendTXT(num, website);
+      for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+        if (webSocketSite[num] == "/cc110x") {
+          webSocket.sendTXT(num, website);
+        }
       }
     }
   }
@@ -1057,7 +1090,6 @@ void WebSocket_cc110x_detail() {
   Serial.println(F("DB WebSocket_cc110x_detail running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-
     String website = "";
     website.reserve(200);
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */

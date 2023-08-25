@@ -29,3 +29,9 @@ function onMessage(event) {
   document.getElementById("WLANdB").innerHTML = obj[4];
  }
 }
+
+function refresh() {
+ setTimeout(() => {
+  document.location.reload();
+ }, 2000);
+}

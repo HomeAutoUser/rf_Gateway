@@ -10,7 +10,21 @@ document.head.appendChild(js);
 function onMessage(event) {
  console.log('received message: ' + event.data);
 
- if (event.data.includes('RAW,') ) {
+ if (event.data.includes('Connected') ) {
+  document.getElementsByName('sd')[0].maxLength = "60";
+  document.getElementsByName('sd')[0].pattern = "^[\\da-fA-F]{2,60}$";
+  document.getElementsByName('sd')[0].placeholder = "hex data to send (max 60 characters)";
+  document.getElementsByName('sd')[0].title = "Input: only hexadecimal characters";
+  document.getElementsByName('sd')[0].setAttribute('size', '60');
+  document.getElementsByName('rep')[0].max = "99";
+  document.getElementsByName('rep')[0].min = "1";
+  document.getElementsByName('rep')[0].setAttribute('size', '4');
+  document.getElementsByName('rep')[0].value = "1";
+  document.getElementsByName('rept')[0].max = "30000";
+  document.getElementsByName('rept')[0].min = "2";
+  document.getElementsByName('rept')[0].setAttribute('size', '7');
+  document.getElementsByName('rept')[0].value = "1";
+ } else if (event.data.includes('RAW,') ) {
   var time = new Date().toLocaleTimeString();
   const obj=event.data.split(',');
 
