@@ -96,9 +96,9 @@ void CC1101_init() { /* CC1101 - Set default´s */
       uint8_t uiBuffer[8]; // Array anlegen
       for (byte i = 0; i < 8; i++) {
         uiBuffer[i] = EEPROM.read(EEPROM_ADDR_PATABLE + i);
-        if (uiBuffer[i] == 255) {  // EEPROM gelöscht
+        if (uiBuffer[i] == 255) {   // EEPROM gelöscht
           if (i == 1) {
-            uiBuffer[i] = 0x81;  // 5dB Default
+            uiBuffer[i] = 0x81;     // 5dB Default
           } else {
             uiBuffer[i] = 0x00;
           }

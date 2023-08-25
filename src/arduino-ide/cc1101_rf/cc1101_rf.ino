@@ -3,40 +3,34 @@
   All rights reserved.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 993
-  Der Sketch verwendet 23644 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 708 Bytes (34%) des dynamischen Speichers, 1340 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-  cc1101_rf_v117pre_230728
-  Der Sketch verwendet 23820 Bytes (77%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 714 Bytes (34%) des dynamischen Speichers, 1334 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-  cc1101_rf_v117pre_230728-Kopie
-  Der Sketch verwendet 22468 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Der Sketch verwendet 22484 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 23594 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 708 Bytes (34%) des dynamischen Speichers, 1340 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 22566 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 25884 Bytes (90%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 679 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 24846 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 675 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39336 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39348 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1824     initialized variables
-  ╠══ RODATA   4768     constants
-  ╚══ BSS      32744    zeroed variables
+  ╠══ RODATA   4764     constants
+  ╚══ BSS      32760    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 423948 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 424508 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     423948   code in flash
+  ╚══ IROM     424508   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 946541 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 51368 Bytes (15%) des dynamischen Speichers, 276312 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 947557 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51384 Bytes (15%) des dynamischen Speichers, 276296 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
@@ -207,11 +201,11 @@ byte CC1101_writeReg_offset = 0;
 #endif
 
 /* varible´s for Toggle */
-byte ToggleOrder[4] = { 255, 255, 255, 255 }; /* Toggle, order */
-byte ToggleValues = 0;                        /* Toggle, registervalue */
-byte ToggleCnt = 0;                           /* Toggle, register counter for loop */
-boolean ToggleAll = false;                    /* Toggle, all (scan modes) */
-unsigned long ToggleTime = 0;                 /* Toggle, Time in ms (0 - 4294967295) */
+byte ToggleOrder[4] = { 255, 255, 255, 255 }; // Toggle, Reihenfolge
+byte ToggleValues = 0;                        // Toggle, Registerwerte
+byte ToggleCnt = 0;                           // Toggle, Registerzähler für Schleife
+boolean ToggleAll = false;                    // Toggle, Markierung alles (Scan-Modus)
+unsigned long ToggleTime = 0;                 // Toggle, Zeit in ms (0 - 4294967295)
 
 /* Settings for OOK messages without Sync Pulse (MU) */
 #define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
@@ -222,9 +216,9 @@ signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen
 byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
 byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
 byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
-int16_t first;                                // Pointer to first buffer entry
-int16_t last;                                 // Pointer to last buffer entry
-String msg;                                   // RAW (only serial/telnet, not HTML output) & Serial Input
+int16_t first;                                // Zeiger auf den ersten Puffereintrag
+int16_t last;                                 // Zeiger auf den letzten Puffereintrag
+String msg;                                   // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
 byte msgrep1 = 0;                             // senden - Wiederholungszähler RAW von Einstellung
 byte msgrep2 = 0;                             // senden - Wiederholungszähler RAW aktuell gesendet
 unsigned long msgSendStart = 0;               // senden - Startpunkt Zeit
@@ -246,14 +240,14 @@ void findpatt(int val);
 /* END - Settings for OOK messages without Sync Pulse (MU) - END */
 
 /* varible´s for other */
-#define BUFFER_MAX 70                         /* !!! maximum number of characters to send !!! */
-int8_t freqErr = 0;                           /* for automatic Frequency Synthesizer Control */
-int8_t freqOffAcc = 0;                        /* for automatic Frequency Synthesizer Control */
-float freqErrAvg = 0;                         /* for automatic Frequency Synthesizer Control */
-boolean freqAfc = 0;                          /* AFC on or off */
-uint32_t msgCount = 0;                        /* message counter over all received messages */
-byte client_now;
-unsigned long secTick = 0;                    /* time that the clock last "ticked" */
+#define BUFFER_MAX 70                         // maximale Anzahl der zu sendenden Zeichen
+int8_t freqErr = 0;                           // CC110x automatic Frequency Synthesizer Control
+int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synthesizer Control
+float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
+boolean freqAfc = 0;                          // CC110x AFC an oder aus
+uint32_t msgCount = 0;                        // Nachrichtenzähler über alle empfangenen Nachrichten
+byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
+unsigned long secTick = 0;                    // Zeit, zu der die Uhr zuletzt „tickte“
 unsigned long toggleTick = 0;
 unsigned long uptime = 0;
 
@@ -279,9 +273,9 @@ IRAM_ATTR void Interupt() {     /* Pulseauswertung */
 #else
 void Interupt() {
 #endif
-  if (MOD_FORMAT != 3) { /* not OOK */
+  if (MOD_FORMAT != 3) {  /* not OOK */
     FSK_RAW = 1;
-  } else { /* OOK */
+  } else {                /* OOK */
     const unsigned long Time = micros();
     const signed long duration = Time - lastTime;
     lastTime = Time;
@@ -292,11 +286,11 @@ void Interupt() {
       } else {
         sDuration = t_maxP;         // Maximalwert
       }
-      if (digitalReadFast(GDO2)) {  // Wenn jetzt high ist, dann muss vorher low gewesen sein, und dafuer gilt die gemessene Dauer.
+      if (digitalReadFast(GDO2)) {  // Wenn jetzt high ist, dann muss vorher low gewesen sein, und dafür gilt die gemessene Dauer.
         sDuration = -sDuration;
       }
       FiFo.enqueue(sDuration);      // add an sDuration
-    }                               // else => trash
+    }                               // sonst => Müll
   }
 }
 
@@ -483,18 +477,18 @@ void setup() {
   Serial.println(F("-> found board with WLAN"));
 #else
   Serial.println(F("-> found unknown board"));
-#endif    // END microcontrollers
+#endif    // END ARDUINO_AVR_NANO || ARDUINO_RADINOCC1101 || ARDUINO_AVR_PRO
 #endif    // END debug
 
   CC1101_init();
   toggleTick = ToggleTime;
-  if (ToggleTime == 0) { // switch to last activated receiving mode
+  if (ToggleTime == 0) {                    // wechseln in den zuletzt aktivierten Empfangsmodus
     activated_mode_packet_length = Registers[activated_mode_nr].packet_length;
-    Interupt_Variant(activated_mode_nr);    // set receive variant & register
+    Interupt_Variant(activated_mode_nr);    // Empfangsvariante & Register einstellen
   }
 }
-
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
+
 
 void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -502,21 +496,21 @@ void loop() {
      delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
   delay(1);
 
-  ArduinoOTA.handle();  /* OTA Updates */
-  Telnet();             /* Telnet Input´s */
+  ArduinoOTA.handle();        // OTA Updates
+  Telnet();                   // Telnet Input´s
   HttpServer.handleClient();
-  webSocket.loop();     /* 53 µS */
+  webSocket.loop();           // 53 µS
 #endif
 
   if ((millis() - secTick) >= 1000UL) { // jede Sekunde
     secTick += 1000UL;
     uptime++;
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_index(); // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
+    WebSocket_index();                  // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
 #endif
-    if (ToggleTime > 0) { /* Toggle Option */
-      if (millis() - toggleTick > ToggleTime) { /* Abfragen, ob Zeit zum Einschalten erreicht */
-        toggleTick = millis();                 /* Zeit merken, an der Eingeschaltet wurde. */
+    if (ToggleTime > 0) {               // Toggle Option
+      if (millis() - toggleTick > ToggleTime) { // Abfragen, ob Zeit zum einschalten erreicht
+        toggleTick = millis();                  // Zeit merken, an der eingeschaltet wurde
         ToggleOnOff();
       }
     }
@@ -524,7 +518,7 @@ void loop() {
 
   if (Serial.available() > 0) { /* Serial Input´s */
     msg = Serial.readString();
-    msg.trim();                                           /* String, strip off any leading/trailing space and \r \n */
+    msg.trim();                 /* String, strip off any leading/trailing space and \r \n */
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
@@ -534,7 +528,7 @@ void loop() {
       MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(msg);
 #endif
 #endif
-      client_now = 255;                                     /* current client is set where data is received */
+      client_now = 255;         /* current client is set where data is received */
       InputCommand(msg);
     }
   }
@@ -549,40 +543,40 @@ void loop() {
     FSK_RAW = 0;
     digitalWriteFast(LED, HIGH);    /* LED on */
     int rssi = CC1101_readRSSI();
-    freqErr = CC1101_readReg(CC1101_FREQEST, READ_BURST);  // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
+    freqErr = CC1101_readReg(CC1101_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     msgCount++;
     if (freqAfc == 1) {
       freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung
       freqOffAcc += round(freqErrAvg);
-      CC1101_writeReg(CC1101_FSCTRL0, freqOffAcc);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+      CC1101_writeReg(CC1101_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
     }
     msg = "";
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    String html_raw = "";        // for the output on web server
+    String html_raw = "";   // für die Ausgabe auf dem Webserver
     html_raw.reserve(128);
 #endif
-#ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
+#ifdef debug_cc110x_ms      /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
     Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
     MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
-    uint8_t uiBuffer[activated_mode_packet_length]; // Array anlegen
-    CC1101_readBurstReg(uiBuffer, CC1101_RXFIFO, activated_mode_packet_length); /* read data from FIFO */
+    uint8_t uiBuffer[activated_mode_packet_length];                             // Array anlegen
+    CC1101_readBurstReg(uiBuffer, CC1101_RXFIFO, activated_mode_packet_length); // Daten aus dem FIFO lesen
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
-    Serial.print(char(2));     // STX
-    Serial.print(F("MN;D="));  // "MN;D=" | "data: "
+    Serial.print(char(2));    // STX
+    Serial.print(F("MN;D=")); // "MN;D=" | "data: "
 #elif CODE_ESP
-    msg += char(2);     // STX
-    msg += F("MN;D=");  // "MN;D=" | "data: "
+    msg += char(2);           // STX
+    msg += F("MN;D=");        // "MN;D=" | "data: "
 #endif
 #else
 #ifdef CODE_AVR
-    Serial.print(F("data: ")); // "MN;D=" | "data: "
+    Serial.print(F("data: "));  // "MN;D=" | "data: "
 #elif CODE_ESP
-    msg += F("data: "); // "MN;D=" | "data: "
+    msg += F("data: ");         // "MN;D=" | "data: "
 #endif
 #endif
     for (byte i = 0; i < activated_mode_packet_length; i++) { /* RawData */
@@ -597,15 +591,15 @@ void loop() {
     }
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
-    Serial.print(F(";R="));        // ";R=" | "; RSSI="
+    Serial.print(F(";R="));     // ";R=" | "; RSSI="
 #elif CODE_ESP
-    msg += F(";R=");        // ";R=" | "; RSSI="
+    msg += F(";R=");            // ";R=" | "; RSSI="
 #endif
 #else
 #ifdef CODE_AVR
-    Serial.print(F(" RSSI="));     // ";R=" | "; RSSI="
+    Serial.print(F(" RSSI="));  // ";R=" | "; RSSI="
 #elif CODE_ESP
-    msg += F(" RSSI=");     // ";R=" | "; RSSI="
+    msg += F(" RSSI=");         // ";R=" | "; RSSI="
 #endif
 #endif
 
@@ -617,15 +611,15 @@ void loop() {
 
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
-    Serial.print(F(";A="));        // ";A=" | "; FREQAFC="
+    Serial.print(F(";A="));     // ";A=" | "; FREQAFC="
 #elif CODE_ESP
-    msg += F(";A=");        // ";A=" | "; FREQAFC="
+    msg += F(";A=");            // ";A=" | "; FREQAFC="
 #endif
 #else
 #ifdef CODE_AVR
-    Serial.print(F("; FREQAFC=")); // ";A=" | "; FREQAFC="
+    Serial.print(F("; FREQAFC="));  // ";A=" | "; FREQAFC="
 #elif CODE_ESP
-    msg += F("; FREQAFC="); // ";A=" | "; FREQAFC="
+    msg += F("; FREQAFC=");         // ";A=" | "; FREQAFC="
 #endif
 #endif
 
@@ -637,23 +631,23 @@ void loop() {
 
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
-    Serial.print(char(3));         // ETX
+    Serial.print(char(3));    // ETX
 #elif CODE_ESP
-    msg += char(3);         // ETX
+    msg += char(3);           // ETX
 #endif
 #else
 #ifdef CODE_AVR
-    Serial.print(char(13));        // CR
+    Serial.print(char(13));   // CR
 #elif CODE_ESP
-    msg += char(13);        // CR
+    msg += char(13);          // CR
 #endif
 #endif
 
 #ifdef CODE_AVR
-    Serial.print(char(10));        // LF
+    Serial.print(char(10));   // LF
 #elif CODE_ESP
-    msg += char(10);        // LF
-    MSG_OUTPUTALL(msg); /* output msg to all */
+    msg += char(10);          // LF
+    MSG_OUTPUTALL(msg);   /* output msg to all */
 #endif
 
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
@@ -665,9 +659,9 @@ void loop() {
 #endif
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw(html_raw); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+    WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
-    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
+    if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x11) {   // RXFIFO_OVERFLOW
       CC1101_cmdStrobe(CC1101_SFRX);
     }
     CC1101_cmdStrobe(CC1101_SRX);
@@ -688,8 +682,8 @@ void loop() {
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
     /* OOK */
-    while (FiFo.count() > 0 ) {         // Puffer auslesen und an Dekoder uebergeben
-      int aktVal = FiFo.dequeue();      // get next element
+    while (FiFo.count() > 0 ) {       // Puffer auslesen und an Dekoder uebergeben
+      int aktVal = FiFo.dequeue();    // get next element
       decode(aktVal);
     }
   }
@@ -701,23 +695,17 @@ void loop() {
       Serial.println(msgSendStart);
       msgSendStart = millis() + msgSendInterval;
       if (msgrep1 == msgrep2) {
-        CC1101_setReceiveMode();  /* enable RX */
+        CC1101_setReceiveMode();      /* enable RX */
         msgrep1 = 0;
         msgrep2 = 0;
       }
     }
   }
 }
-
 /* --------------------------------------------------------------------------------------------------------------------------------- void loop end */
 
 
-/*
-   ################################
-   Function´s with macro dependency
-   ################################
-*/
-
+/* #### ab hier, Funktionen mit Makroabhängigkeit #### */
 void ToggleOnOff() {
   detachInterrupt(digitalPinToInterrupt(GDO2));
 #ifdef debug
@@ -772,6 +760,7 @@ void ToggleOnOff() {
     ToggleCnt = 0;
   }
 }
+/* ----------------------------------------------------------------- void ToggleOnOff end */
 
 
 void InputCommand(String input) { /* all InputCommand´s , String | Char | marker, 255 = Serial | 0...254 = Telnet */
@@ -1574,10 +1563,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
   }
 }
+/* ----------------------------------------------------------------- void InputCommand end */
 
 
 /* ############### !!! only ESP8266 and ESP32 !!! ############### */
-
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 void Telnet() {
   TELNET_CLIENT_COUNTER = 0;
@@ -1654,9 +1643,8 @@ void Telnet() {
   }
 }
 
-//=====================================================
-//function process event: new data received from client
-//=====================================================
+
+/* #### Prozessereignis: Neue Daten vom Client empfangen #### */
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch (type) {
     case WStype_PING: /* pong will be send automatically */
@@ -1689,6 +1677,11 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       // webSocket.sendTXT(num, "message here"); /* send message to client */
       // webSocket.broadcastTXT("message here"); /* send data to all connected clients */
       {
+
+        // ohne:        . Variables and constants in RAM (global, static), used 39348 / 80192 bytes (49%)
+        // mit:         . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
+        // umstellung:  . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
+        
 #if defined debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
@@ -1718,7 +1711,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 
 /* for OOK modulation */
-void decode(const int pulse) {    /* Pulsübernahme und Weitergabe */
+void decode(const int pulse) {  /* Pulsübernahme und Weitergabe */
   if (MsgLen > 0) {
     last = first;
   } else {
@@ -1729,7 +1722,7 @@ void decode(const int pulse) {    /* Pulsübernahme und Weitergabe */
 }
 
 
-inline void doDetect() {      /* Pulsprüfung und Weitergabe an Patternprüfung */
+inline void doDetect() {        /* Pulsprüfung und Weitergabe an Patternprüfung */
   valid = (MsgLen == 0 || last == 0 || (first ^ last) < 0);   // true if a and b have opposite signs
   valid &= (MsgLen == MsgLenMax) ? false : true;
   valid &= ( (first > -t_maxP) && (first < t_maxP) );         // if low maxPulse detected, start processMessage()
@@ -1748,10 +1741,10 @@ inline void doDetect() {      /* Pulsprüfung und Weitergabe an Patternprüfung 
 }
 
 
-void MSGBuild() {     /* Nachrichtenausgabe */
+void MSGBuild() {               /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
-    uint8_t rssi = CC1101_readReg(0x34, 0xC0); // not converted
-    digitalWriteFast(LED, HIGH);  // LED on
+    uint8_t rssi = CC1101_readReg(0x34, 0xC0);  // nicht konvertiert
+    digitalWriteFast(LED, HIGH);                // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
     String raw = "";

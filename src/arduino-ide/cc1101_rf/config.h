@@ -61,7 +61,7 @@
 //#define debug_wifi        1    // to debug all wifi
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
-#define SIGNALduino_comp        1       // for compatibility in FHEM
+#define SIGNALduino_comp  1   // for compatibility in FHEM
 
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
@@ -92,11 +92,11 @@
 //#define WMBus_T                 1
 
 /* Configuration for WLAN devices */
-#define TELNET_CLIENTS_MAX      3                           // maximum number of Telnet clients
-#define TELNET_PORT             23                          // Telnet Port
-#define WLAN_ssid_ap            "cc110x_rf_Gateway"         // AP - SSID
-#define WLAN_password_ap        "config-gateway"            // AP - Passwort
-#define WLAN_hostname           "cc110x_rf_Gateway"         // Hostname
+#define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
+#define TELNET_PORT             23                      // Telnet Port
+#define WLAN_ssid_ap            "cc110x_rf_Gateway"     // AP - SSID
+#define WLAN_password_ap        "config-gateway"        // AP - Passwort
+#define WLAN_hostname           "cc110x_rf_Gateway"     // Hostname
 #else
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1
@@ -110,7 +110,7 @@
 #define Timeout_Telnet          125
 
 /* varible´s for EEPROM */
-#define Prog_Ident1             0xDE    /* fictitious identifier to identify FW */
+#define Prog_Ident1             0xDE    /* fiktive Kennung zur Identifizierung von FW */
 #define Prog_Ident2             0x22
 
 /* varible´s for SerialSpeed´s */
@@ -141,6 +141,6 @@
 #define EEPROM_ADDR_DHCP        172     /* Flag´s */
 #define EEPROM_ADDR_AP          173
 #define EEPROM_ADDR_PATABLE     174
-#define EEPROM_ADDR_CHK         183     /* FW - Checksum over packet_length 183 - 184 */
+#define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über packet_length 183–184 */
 #define EEPROM_ADDR_FOFFSET     185     /* cc110x freq offset | 185 - 188 */
 #define EEPROM_ADDR_AFC         189     /* cc110x afc */
