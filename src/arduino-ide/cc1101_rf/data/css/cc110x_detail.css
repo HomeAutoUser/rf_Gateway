@@ -1,11 +1,6 @@
-﻿/*
-  color theme style for website CC110x|detail information /cc110x_detail - cc110x_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
-*/
-
-input {
- text-align: center;
+﻿input {
  color: #0000b3;
+ text-align: center;
 }
 
 div.txt {
@@ -20,11 +15,11 @@ a:link.CC110x, a:visited.CC110x {
 
 .btn {
  background-color: #3399ff;
- color: white;
- padding: 2px 6px;
- cursor: pointer;
- text-align: center;
  border-radius: 11px 11px 11px 11px;
+ color: white;
+ cursor: pointer;
+ padding: 2px 6px;
+ text-align: center;
 }
 
 .btn:hover {
@@ -32,22 +27,15 @@ a:link.CC110x, a:visited.CC110x {
  color: black;
 }
 
-.ce {
+.ce,#ce,#di,#t0,#t1,#t2,#t3,#t4,#t5,#t6,#t7,#t8,#t9,#t10,#t11,#t12,#t13,#t14,#t15,#t16,#t17,#t18,#t19,#t20,#t21,#t22,#t23,#t24,#t25,#t26,#t27,#t28,#t29,#t30,#t31,#t32,#t33,#t34,#t35,#t36,#t37,#t38,#t39,#t40,#t41,#t42,#t43,#t44,#t45,#t46 {
  text-align: center;
 }
 
-/* detail information */
-.di {
- text-align: center;
-}
-
-/* Output information after button press */
 .in {
  color: green;
  text-align: center;
 }
 
-/* one cell width to default -> Frequency*/
 .f1 {
  width: 33.2%;
 }
@@ -56,7 +44,6 @@ a:link.CC110x, a:visited.CC110x {
  width: 16.6%;
 }
 
-/* cell with register name */
 .f4 {
  width: 24.8%;
 }
@@ -65,4 +52,48 @@ a:link.CC110x, a:visited.CC110x {
 :root {
   --val_std: #0000b3;
   --val_diff: #ff0000;
+}
+
+
+/* all settings for Modal, Modal Content, Close Button ... */
+.mod {
+  background-color: rgb(0,0,0);      /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  display: none;
+  height: 100%;
+  left: 0;
+  overflow: auto;
+  padding-top: 100px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.mod-cont {
+  background-color: #fefefe;
+  border: 1px solid #888;
+  margin: auto;
+  padding: 20px;
+  table-layout: fixed;
+  text-align: left;
+  width: 80%;
+}
+
+.mod-cont table {
+  width: 100%;
+}
+
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  cursor: pointer;
+  text-decoration: none;
 }

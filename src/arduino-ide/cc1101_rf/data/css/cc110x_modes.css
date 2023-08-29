@@ -1,28 +1,21 @@
-﻿/*
-  color theme style for website CC110x|receive modes /cc110x_modes - cc110x_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
-*/
-
-/* all inactive buttons */
-.btn {
+﻿.btn {
  background-color: #3399FF;
- color: white;
- padding: 2px 6px;
- margin: 0px 5px 0px 5px;
- cursor: pointer;
- text-align: center;
  border-radius: 11px 11px 11px 11px;
+ color: white;
+ cursor: pointer;
+ margin: 0px 5px 0px 5px;
+ padding: 2px 6px;
+ text-align: center;
 }
 
-/* all active buttons */
 .btn2 {
  background-color: #33b06b;
- color: white;
- padding: 2px 6px;
- margin: 0px 5px 0px 5px;
- cursor: pointer;
- text-align: center;
  border-radius: 11px 11px 11px 11px;
+ color: white;
+ cursor: pointer;
+ margin: 0px 5px 0px 5px;
+ padding: 2px 6px;
+ text-align: center;
 }
 
 .btn:hover {
@@ -34,7 +27,6 @@
  text-align: center;
 }
 
-/* name of register value | set to ... | modes */
 .thf1 {
  width: 33.2%;
 }

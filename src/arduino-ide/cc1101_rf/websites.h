@@ -211,7 +211,7 @@ void web_cc110x_modes() {
 #endif
       web_status = F("<td class=\"in grn\">");
       web_status += Registers[submit.toInt()].name;
-      web_status += F(" &#10004;</td>");
+      web_status += F(" &#10004; | &#128721; toogle</td>");
     }
 
     if (submit != "" && submit == "time") {  // button "START"
@@ -281,7 +281,7 @@ void web_cc110x_modes() {
   website += FPSTR(html_head_table);
   website += F("<body>"
                "<script src=\"cc110x_modes.js\" type=\"text/javascript\"></script>"
-               "<form method=\"get\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
+               "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<table id=\"rec_mod\">"
                "<thead><tr>"
                "<th class=\"thf1\"><a href=\"cc110x\">general information</a></th>"
@@ -394,7 +394,7 @@ void web_cc110x_detail_import() {
   String website = FPSTR(html_meta);
   website.reserve(1000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_imp.css\"></head>"
-               "<body><form method=\"get\">"); /* form method wichtig für Daten von Button´s !!! */
+               "<body><form method=\"post\">"); /* form method wichtig für Daten von Button´s !!! */
 
   if (countargs != 0) {
 #ifdef debug_html
@@ -609,44 +609,46 @@ void web_cc110x_detail() {
                "<script src=\"cc110x_detail.js\" type=\"text/javascript\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
-  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<table><thead><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
                "</thead><tbody>"
                // Frequency (should | is)
-               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"di\" colspan=\"2\"><span id=\"FREQis\"></span> | <span id=\"FREQ\"></span>"
+               "<tr><td colspan=\"2\">Frequency (should | is)</td><td id=\"di\" colspan=\"2\"><span id=\"FREQis\"></span> | <span id=\"FREQ\"></span>"
                " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"6\" id=\"p1\" name=\"freq\" value=\""
                "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? F(" checked") : F(""));
-  website += F("></td><td class=\"di\">");
+  website += F("></td><td id=\"di\">");
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
   website += F("\"><div class=\"txt\">&ensp;MHz</div></td></tr>"
                // Bandwidth
-               "<tr><td colspan=\"2\">Bandwidth</td><td class=\"di\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
+               "<tr><td colspan=\"2\">Bandwidth</td><td id=\"di\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"Bw\" size=\"6\" id=\"p3\" name=\"bandw\" value=\"\">"
                "<div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
                // DataRate
-               "<tr><td colspan=\"2\">DataRate</td><td class=\"di\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
+               "<tr><td colspan=\"2\">DataRate</td><td id=\"di\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"datra\" size=\"6\" id=\"p4\" name=\"datarate\" value=\"\">"
                "<div class=\"txt\">&ensp;kBaud</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
                // Deviation
-               "<tr><td colspan=\"2\">Deviation</td><td class=\"di\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
+               "<tr><td colspan=\"2\">Deviation</td><td id=\"di\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"devi\" size=\"6\" id=\"p5\" name=\"deviation\" value=\"\">"
                "<div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
                // Modulation
-               "<tr><td colspan=\"2\">Modulation</td><td class=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>"
+               "<tr><td colspan=\"2\">Modulation</td><td id=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>"
                "<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"></select></td>"
                "<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"
+               // NUM_PREAMBLE
+               "<tr><td colspan=\"2\">Number of preamble</td><td id=\"ce\" colspan=\"4\"><span id=\"MDMCFG1\"></span></td></tr>"
                // Packet length config
-               "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Packet length config</td><td id=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
                // Sync-word qualifier mode
-               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td id=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
                // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
@@ -659,13 +661,15 @@ void web_cc110x_detail() {
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
-    website += F("\"></span></td><td class=\"ce\"><input class=\"vw\" name=\"r"); /* registername for GET / POST */
+    website += F("\"></span></td><td id=\"ce\"><input name=\"r"); /* registername for GET / POST */
     website += i;
     website += F("\" value=\"");
     website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));                 /* value */
-    website += F("\" type=\"text\"></td><td colspan=\"4\"><span id=\"n");
+    website += F("\" type=\"text\"></td><td colspan=\"3\"><span id=\"n");
     website += i;
-    website += F("\"></span></td></tr>");
+    website += F("\"></span></td><td id=\"t");
+    website += i;
+    website += F("\">i</td></tr>");
   }
 
   website += F("</tbody></table></form></body></html>");
@@ -715,7 +719,7 @@ void web_raw() {
 
   String website = FPSTR(html_meta);
   website.reserve(2000);
-  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
                "<script src=\"raw.js\" type=\"text/javascript\"></script>"
                "</head>");
@@ -724,8 +728,8 @@ void web_raw() {
                "<thead><tr><th colspan=\"5\">send data (with the current register settings)</th></tr></thead>"
                "<tr>"
                "<td class=\"td1\" colspan=\"2\"><input class=\"inp\" name=\"sd\" type=\"text\"></td>"
-               "<td class=\"td1\">repeats <input name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
-               "<td class=\"td1\">time (ms) <input name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==5) return false;\"></td>"
+               "<td class=\"td1\">repeats <input aria-label=\"n1\" name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
+               "<td class=\"td1\">time (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==5) return false;\"></td>"
                "<td class=\"td1\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"send\">send</button></td>"
                "</tr>");
 
@@ -811,7 +815,7 @@ void web_wlan() {
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
-  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                     /* START Tabelle gesamt */
                "<thead>"
                "<tr><th colspan=\"6\">WLAN - Device status</th></tr>"

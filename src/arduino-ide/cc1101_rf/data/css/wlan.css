@@ -1,9 +1,4 @@
-﻿/*
-  color theme style for website WLAN /wlan - cc110x_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
-*/
-
-a:link.WLAN, a:visited.WLAN {
+﻿a:link.WLAN, a:visited.WLAN {
  color: #cc00cc;
 }
 
@@ -11,7 +6,6 @@ th.fw {
  width: 66.6%;
 }
 
-/* https://wiki.selfhtml.org/wiki/CSS/Tutorials/Boxmodell/Rahmen */
 td.b1 {
  border-bottom: 2px solid black;
  border-left: 2px solid white;
@@ -56,13 +50,13 @@ td.s3red {
 }
 
 .btn {
- width: 50%;
  background-color: #3399ff;
- color: white;
- padding: 2px 2px;
- cursor: pointer;
- text-align: center;
  border-radius: 14px 14px 14px 14px;
+ color: white;
+ cursor: pointer;
+ padding: 2px 2px;
+ text-align: center;
+ width: 50%;
 }
 
 .btn:hover {
@@ -94,7 +88,6 @@ input {
  text-align: center;
 }
 
-/* wlan - CH */
 .wch {
  text-align: center;
  width: 28px;

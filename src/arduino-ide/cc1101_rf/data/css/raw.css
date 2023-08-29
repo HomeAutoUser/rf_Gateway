@@ -1,9 +1,4 @@
-﻿/*
-  color theme style for website RAW data /raw - cc110x_rf_Gateway
-  Copyright (c) 2022 <HomeAutoUser & elektron-bbs>
-*/
-
-a:link.RAW, a:visited.RAW { color: #cc00cc; }
+﻿a:link.RAW, a:visited.RAW { color: #cc00cc; }
 
 .td1 {
  text-align: center;

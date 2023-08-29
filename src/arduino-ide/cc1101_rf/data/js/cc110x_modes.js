@@ -19,11 +19,10 @@ function onMessage(event) {
 
   /* erste Spalte | automatischer Farbwechsel aktiver Modus
     Zählweise Tabellen ID
-    0,1,2
+    0,1,2 
     ...
     33,34,35
     ...
-    ENDE
   */
 
   const cell = document.getElementById("rec_mod").getElementsByTagName("td");
@@ -34,7 +33,7 @@ function onMessage(event) {
     var myEle = document.querySelector(bt);   /* to check element of error: Cannot set properties of null (setting 'innerHTML') */
 
     if (myEle!=null && bt != 'null' && bt != 'NULL') {
-     if (btnr == obj[2]) {        /* current button status */
+     if (btnr == obj[2]) {
       document.querySelector(bt).innerHTML = 'active reception';
       document.querySelector(bt).className = 'btn2';
      } else {
@@ -44,7 +43,7 @@ function onMessage(event) {
     }
    }
 
-   if (cell[i].innerHTML == obj[1]) {
+   if (cell[i].innerHTML.indexOf(' - ' + obj[1]) >= 0) {
     var btnr = i / 3;
     cell[i].style.backgroundColor = color1;     /* MODE */
     cell[i+1].style.backgroundColor = color1;   /* set to bank 0 1 2 3 */
