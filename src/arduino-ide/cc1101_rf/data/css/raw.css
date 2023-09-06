@@ -1,11 +1,6 @@
 ﻿a:link.RAW, a:visited.RAW { color: #cc00cc; }
 
-.td1 {
- text-align: center;
- /* width: 16.6%; */
-}
-
-.inp {
+.td1,.inp,input[type="number"]{
  text-align: center;
 }
 
@@ -13,18 +8,8 @@
  width: 8.3%;
 }
 
-/* found odd number of nibbles */
-.sd {
- color: red;
- text-align: center;
-}
-
 /* color of rssi value */
 :root {
   --rssi_bad: #ff0000;    /* > -50  */
   --rssi_good: #28a428;   /* <= -80 */
-}
-
-input[type="number"] {
- text-align: center;
 }

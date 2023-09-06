@@ -16,17 +16,17 @@ function onMessage(event) {
   var UptTxt = dd + ' day(s)&emsp;' + hh + ' hour(s)&emsp;' + mm + ' minute(s)&emsp;' + ss + ' second(s)';
   document.getElementById("UptimeTxT").innerHTML = UptTxt;
   if (obj[2]>= 3600) {
-   var MSGcntCal = obj[3] / (obj[2] / 3600);
-   var MSGcntTXT = obj[3] + '&emsp;(' + Math.ceil(MSGcntCal) + ' per hour)';
+   var MSGcntCal = obj[4] / ((obj[2] - obj[3]) / 3600);
+   var MSGcntTXT = obj[4] + '&emsp;(' + Math.ceil(MSGcntCal) + ' per hour)';
    document.getElementById("MSGcnt").innerHTML = MSGcntTXT;
   } else if (obj[2]>= 60) {
-   var MSGcntCal = obj[3] / (obj[2] / 60);
-   var MSGcntTXT = obj[3] + '&emsp;(' + Math.ceil(MSGcntCal) + ' per minute)';
+   var MSGcntCal = obj[4] / ((obj[2] - obj[3]) / 60);
+   var MSGcntTXT = obj[4] + '&emsp;(' + Math.ceil(MSGcntCal) + ' per minute)';
    document.getElementById("MSGcnt").innerHTML = MSGcntTXT;
   } else {
-   document.getElementById("MSGcnt").innerHTML = obj[3];
+   document.getElementById("MSGcnt").innerHTML = obj[4];
   }
-  document.getElementById("WLANdB").innerHTML = obj[4];
+  document.getElementById("WLANdB").innerHTML = obj[5];
  }
 }
 
@@ -35,3 +35,7 @@ function refresh() {
   document.location.reload();
  }, 2000);
 }
+
+/* 
+obj[3]
+*/

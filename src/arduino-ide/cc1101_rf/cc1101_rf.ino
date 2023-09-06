@@ -6,31 +6,31 @@
   Der Sketch verwendet 22484 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
-  - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 22566 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
+  Der Sketch verwendet 22446 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 24846 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 675 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 24734 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 669 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39348 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39492 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1824     initialized variables
-  ╠══ RODATA   4764     constants
-  ╚══ BSS      32760    zeroed variables
+  ╠══ DATA     1820     initialized variables
+  ╠══ RODATA   4776     constants
+  ╚══ BSS      32896    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 424508 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 424844 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     424508   code in flash
+  ╚══ IROM     424844   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 947557 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 51384 Bytes (15%) des dynamischen Speichers, 276296 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 947633 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51512 Bytes (15%) des dynamischen Speichers, 276168 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
@@ -90,22 +90,87 @@
 */
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
+#include <digitalWriteFast.h>                 // https://github.com/ArminJo/digitalWriteFast
 #include "config.h"
-int RSSI_dez;                           // for the output on web server
+int RSSI_dez;                                 // for the output on web server
 #include "cc110x.h"
 #include "macros.h"
 #include "functions.h"
 #include "register.h"
 
 /* Settings for OOK messages without Sync Pulse (MU) */
-#define MsgLenMin               24      // message minimum length
-#define MsgLenMax               254     // message maximum length
-#define PatMaxCnt               8       // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
-#define PatTol                  0.20    // pattern tolerance
-#define FIFO_LENGTH             90      // 90 from SIGNALduino FW
+#define MsgLenMin               24            // message minimum length
+#define MsgLenMax               254           // message maximum length
+#define PatMaxCnt               8             // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
+#define PatTol                  0.20          // pattern tolerance
+#define FIFO_LENGTH             90            // 90 from SIGNALduino FW
 #include "SimpleFIFO.h"
-SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;  // store FIFO_LENGTH # ints
+SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;        // store FIFO_LENGTH # ints
+
+/* varible´s for output */
+const char compile_date[] = __DATE__ " " __TIME__;
+
+#ifdef SIGNALduino_comp
+/*  SIGNALduino helpful information !!!
+    1) for sduino compatible need version the true value from RegEx check with -> [V\s.*SIGNAL(?:duino|ESP|STM).*(?:\s\d\d:\d\d:\d\d)]
+    2) version output must have cc1101 -> check in 00_SIGNALduino.pm
+    3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
+*/
+
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) "; // PROGMEM used 40004
+byte CC1101_writeReg_offset = 2; // stimmt das noch?
+#else
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
+byte CC1101_writeReg_offset = 0;
+#endif
+
+/* varible´s for Toggle */
+byte ToggleOrder[4] = { 255, 255, 255, 255 }; // Toggle, Reihenfolge
+byte ToggleValues = 0;                        // Toggle, Registerwerte
+byte ToggleCnt = 0;                           // Toggle, Registerzähler für Schleife
+boolean ToggleAll = false;                    // Toggle, Markierung alles (Scan-Modus)
+unsigned long ToggleTime = 0;                 // Toggle, Zeit in ms (0 - 4294967295)
+
+/* Settings for OOK messages without Sync Pulse (MU) */
+#define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
+#define t_minP 75                             // Zeitdauer minimum für gültigen Puls in µs
+unsigned long lastTime = 0;                   // Zeit, letzte Aktion
+int16_t ArPaT[PatMaxCnt];                     // Pattern Array für Zeiten
+signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
+byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
+byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
+byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
+int16_t first;                                // Zeiger auf den ersten Puffereintrag
+int16_t last;                                 // Zeiger auf den letzten Puffereintrag
+String msg;                                   // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
+byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
+byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
+byte MOD_FORMAT;                              // Marker - Modulation
+byte FSK_RAW;                                 // Marker - FSK Modulation RAW interrupt
+bool valid;
+
+/* predefinitions of the functions */
+inline void doDetect();
+void NO_CC110x();
+void Interupt_Variant(byte nr);
+void MSGBuild();
+void PatReset();
+void decode(const int pulse);
+void findpatt(int val);
+void InputCommand(String input);
+void ToggleOnOff();
+
+/* varible´s for other */
+#define BUFFER_MAX 70                         // maximale Anzahl der zu sendenden Zeichen
+int8_t freqErr = 0;                           // CC110x automatic Frequency Synthesizer Control
+int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synthesizer Control
+float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
+boolean freqAfc = 0;                          // CC110x AFC an oder aus
+uint32_t msgCount = 0;                        // Nachrichtenzähler über alle empfangenen Nachrichten
+byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
+unsigned long secTick = 0;                    // Zeit, zu der die Uhr zuletzt „tickte“
+unsigned long toggleTick = 0;
+unsigned long uptime = 0;
 
 /* --- all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------------- */
 #ifdef ARDUINO_ARCH_ESP8266
@@ -173,97 +238,26 @@ boolean WLAN_AP = false;                      // WiFi AP opened
 boolean WLAN_OK = false;                      // WiFi connected
 uint8_t WifiNetworks;                         // Anzahl Wifi-Netzwerke
 
+#define SENDDATA_LENGTH     129               // Weboberfläche | senden - max Länge
+char senddata_esp[SENDDATA_LENGTH];           // Weboberfläche | senden - Daten
+uint8_t msgRepeats;                           // Weboberfläche | senden - Wiederholungszähler RAW von Einstellung
+uint32_t msgSendInterval = 0;                 // Weboberfläche | senden - Intervall Zeit
+unsigned long msgSendStart = 0;               // Weboberfläche | senden - Startpunkt Zeit
+
 IPAddress eip;                                // static IP - IP-Adresse
 IPAddress esnm;                               // static IP - Subnetzmaske
 IPAddress esgw;                               // static IP - Standard-Gateway
 IPAddress edns;                               // static IP - Domain Name Server
+
+unsigned long uptimeReset = 0;
+#include "websites.h"
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
+void Telnet();
+
 /* --- END - all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------- */
 #else
 #define ICACHE_RAM_ATTR
 #define FPSTR String
-#endif
-
-/* varible´s for output */
-const char compile_date[] = __DATE__ " " __TIME__;
-
-#ifdef SIGNALduino_comp
-/*  SIGNALduino helpful information !!!
-    1) for sduino compatible need version the true value from RegEx check with -> [V\s.*SIGNAL(?:duino|ESP|STM).*(?:\s\d\d:\d\d:\d\d)]
-    2) version output must have cc1101 -> check in 00_SIGNALduino.pm
-    3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
-*/
-
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) "; // PROGMEM used 40004
-byte CC1101_writeReg_offset = 2; // stimmt das noch?
-#else
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
-byte CC1101_writeReg_offset = 0;
-#endif
-
-/* varible´s for Toggle */
-byte ToggleOrder[4] = { 255, 255, 255, 255 }; // Toggle, Reihenfolge
-byte ToggleValues = 0;                        // Toggle, Registerwerte
-byte ToggleCnt = 0;                           // Toggle, Registerzähler für Schleife
-boolean ToggleAll = false;                    // Toggle, Markierung alles (Scan-Modus)
-unsigned long ToggleTime = 0;                 // Toggle, Zeit in ms (0 - 4294967295)
-
-/* Settings for OOK messages without Sync Pulse (MU) */
-#define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
-#define t_minP 75                             // Zeitdauer minimum für gültigen Puls in µs
-unsigned long lastTime = 0;                   // Zeit, letzte Aktion
-int16_t ArPaT[PatMaxCnt];                     // Pattern Array für Zeiten
-signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
-byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
-byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
-byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
-int16_t first;                                // Zeiger auf den ersten Puffereintrag
-int16_t last;                                 // Zeiger auf den letzten Puffereintrag
-String msg;                                   // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
-byte msgrep1 = 0;                             // senden - Wiederholungszähler RAW von Einstellung
-byte msgrep2 = 0;                             // senden - Wiederholungszähler RAW aktuell gesendet
-unsigned long msgSendStart = 0;               // senden - Startpunkt Zeit
-unsigned long msgSendInterval = 0;            // senden - Intervall Zeit
-byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
-byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
-byte MOD_FORMAT;                              // Marker - Modulation
-byte FSK_RAW;                                 // Marker - FSK Modulation RAW interrupt
-bool valid;
-
-/* predefinitions of the functions */
-inline void doDetect();
-void NO_CC110x();
-void Interupt_Variant(byte nr);
-void MSGBuild();
-void PatReset();
-void decode(const int pulse);
-void findpatt(int val);
-/* END - Settings for OOK messages without Sync Pulse (MU) - END */
-
-/* varible´s for other */
-#define BUFFER_MAX 70                         // maximale Anzahl der zu sendenden Zeichen
-int8_t freqErr = 0;                           // CC110x automatic Frequency Synthesizer Control
-int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synthesizer Control
-float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
-boolean freqAfc = 0;                          // CC110x AFC an oder aus
-uint32_t msgCount = 0;                        // Nachrichtenzähler über alle empfangenen Nachrichten
-byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
-unsigned long secTick = 0;                    // Zeit, zu der die Uhr zuletzt „tickte“
-unsigned long toggleTick = 0;
-unsigned long uptime = 0;
-
-/* now all websites, all settings are available here */
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-#include "websites.h"
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-#endif
-
-
-/* void predefinitions */
-void InputCommand(String input);
-void ToggleOnOff();
-
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-void Telnet();
 #endif
 
 
@@ -688,19 +682,45 @@ void loop() {
     }
   }
 
-  /* check data to send */
-  if (msgrep1 != 0) {
-    if (millis() >= msgSendStart && msgrep2 < msgrep1) {
-      msgrep2++;
-      Serial.println(msgSendStart);
+  /* only for send data from webfonted -> ESP devices */
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  if (msgRepeats > 0) {
+    if (millis() >= msgSendStart) {
+      //Serial.print(F("send ")); Serial.println(msgRepeats);
+      uint8_t PKTLENis = CC1101_readReg(CC1101_PKTLEN, READ_BURST);
+
+      for (int i = 0; i < SENDDATA_LENGTH; i++) {
+        if (senddata_esp[i] == '\0') {
+          CC1101_writeReg(CC1101_PKTLEN, i / 2);
+          break;
+        }
+      }
+
+      CC1101_setTransmitMode();     /* enable TX */
+      CC1101_sendFIFO(senddata_esp);
+
+      for (uint8_t i = 0; i < 255; i++) {
+        if (CC1101_readReg(CC1101_MARCSTATE, READ_BURST) == 0x01) {  /* 1 (0x01) IDLE IDLE */
+          break;
+        }
+        delay(1);
+      }
+
       msgSendStart = millis() + msgSendInterval;
-      if (msgrep1 == msgrep2) {
-        CC1101_setReceiveMode();      /* enable RX */
-        msgrep1 = 0;
-        msgrep2 = 0;
+      msgRepeats--;
+      CC1101_writeReg(CC1101_PKTLEN, PKTLENis);
+      CC1101_setReceiveMode();    /* enable RX */
+
+      if (msgRepeats == 0) {
+        for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
+          if (webSocketSite[num] == "/raw") {
+            webSocket.sendTXT(num, "TX_ready");
+          }
+        }
       }
     }
   }
+#endif
 }
 /* --------------------------------------------------------------------------------------------------------------------------------- void loop end */
 
@@ -1681,7 +1701,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
         // ohne:        . Variables and constants in RAM (global, static), used 39348 / 80192 bytes (49%)
         // mit:         . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
         // umstellung:  . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
-        
+
 #if defined debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
         Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
@@ -1693,6 +1713,17 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           WebSocket_cc110x();
         } else if (payloadString == "help") {
           WebSocket_help();
+        } else if (payloadString.substring(0, 5) == "send,") {    /* input: send,1269A5900F41,2,3 */
+          String hex;
+          uint8_t pos1;
+          uint8_t pos2;
+          pos1 = payloadString.indexOf(',', 5);
+          hex = payloadString.substring(5, pos1);
+          pos2 = payloadString.indexOf(',', pos1 + 1);
+          msgRepeats = payloadString.substring(pos1 + 1, pos2).toInt() + 1;
+          msgSendStart = 0;
+          msgSendInterval = payloadString.substring(pos2 + 1).toInt();
+          hex.toCharArray(senddata_esp, hex.length() + 1);
         }
       }
       break;

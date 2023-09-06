@@ -11,9 +11,6 @@
 extern void InputCommand(String input);
 extern String onlyDecToHex2Digit(byte Dec);
 extern boolean freqAfc;
-extern byte msgrep1;
-extern unsigned long msgSendStart;
-extern unsigned long msgSendInterval;
 /* predefinitions of the functions */
 void WebSocket_cc110x();
 /* {"MODE":"Lacrosse_mode2","MS":"8","ToggleBank":"{ 11 12 - - }","Time":"30000"} */
@@ -49,8 +46,7 @@ const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to h
                                    "<html lang=\"de\">"
                                    "<head>"
                                    "<meta charset=\"utf-8\">"
-                                   "<meta http-equiv=\"Cache-Control\" content=\"no-cache, no-store, must-revalidate\"/>"
-                                   "<meta http-equiv=\"Pragma\" content=\"no-cache\"/>"
+                                   "<meta http-equiv=\"Cache-Control\" content=\"max-age=3600, must-revalidate\"/>"
                                    "<meta http-equiv=\"Expires\" content=\"0\"/>"
                                    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
                                    "<link rel=\"stylesheet\" href=\"all.css\" type=\"text/css\">"
@@ -78,7 +74,8 @@ void web_index() {
   website.reserve(2000);
 
   if (submit == "MSG0") {
-    msgCount = 0; // danach funktioniert count per minute/hour nicht mehr korrekt
+    msgCount = 0;
+    uptimeReset = uptime;
   } else if (submit == "SWRESET") {
     ESP.restart();
   }
@@ -711,11 +708,6 @@ void web_raw() {
   if (!CC1101_found) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
-  String sd = HttpServer.arg("sd");                     // hexdata to send
-  msgrep1 = HttpServer.arg("rep").toInt();          // repeats to send
-  unsigned long rept = HttpServer.arg("rept").toInt();  // time between send packages
-  String submit = HttpServer.arg("submit");             // button send
-  uint8_t countargs = HttpServer.args();                // Anzahl Argumente
 
   String website = FPSTR(html_meta);
   website.reserve(2000);
@@ -729,42 +721,27 @@ void web_raw() {
                "<tr>"
                "<td class=\"td1\" colspan=\"2\"><input class=\"inp\" name=\"sd\" type=\"text\"></td>"
                "<td class=\"td1\">repeats <input aria-label=\"n1\" name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
-               "<td class=\"td1\">time (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==5) return false;\"></td>"
-               "<td class=\"td1\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"send\">send</button></td>"
-               "</tr>");
-
-  if (countargs != 0) {
-#ifdef debug_html
-    Serial.print(F("DB web_raw, countargs ")); Serial.println(countargs);
-    Serial.print(F("DB web_raw, submit ")); Serial.println(submit);
-    Serial.print(F("DB web_raw, sd ")); Serial.println(sd);
-    Serial.print(F("DB web_raw, rep ")); Serial.println(msgrep1);
-    Serial.print(F("DB web_raw, rept ")); Serial.println(rept);
-#endif
-
-    if (submit == "send") { /* SEND DATA */
-      if (sd != "" && msgrep1 != 0 && rept != 0) {
-        if (sd.length() % 2 == 0) { /* check datapart is odd */
-          char senddata[sd.length() + 1];
-          sd.toCharArray(senddata, sd.length() + 1);
-          CC1101_setTransmitMode(); /* enable TX */
-
-          // jump to loop, in function ???
-          msgSendInterval = rept;
-          msgSendStart = millis() + rept;
-
-          CC1101_sendFIFO(senddata);
-
-        } else {
-          website += F("<tr><td colspan=\"4\" class=\"sd\">found odd number of nibbles, no send !!!</td></tr>");
-        }
-      } else {
-        website += F("<tr><td colspan=\"4\" class=\"sd\">Please input all data &#128521;</td></tr>");
-      }
+               "<td class=\"td1\">pause (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==6) return false;\"></td>"
+               "<td class=\"td1\"><input class=\"btn\" type=\"button\" value=\"send\" onclick=\"msgSend()\"></td>"
+               "</tr><tr><td class=\"td1\" colspan=\"5\"><span id=\"val\">");
+  if (msgRepeats != 0) {
+    website += F("sending process active (");
+    website += msgRepeats;
+    website += F(" repeats with ");
+    website += msgSendInterval;
+    website += F(" ms pause) | finished in ");
+    if ((msgRepeats * msgSendInterval / 1000) > 60) {
+      website += (msgRepeats * msgSendInterval / 1000) / 60;
+      website += F(" minutes");
+    } else {
+      website += (msgRepeats * msgSendInterval / 1000);
+      website += F(" seconds");
     }
+  } else {
+    website += F("ready to broadcast");
   }
 
-  website += F("</table><br>"
+  website += F("</span></td></tr></table><br>"
                "<div><table id=\"dataTable\"><thead>"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += activated_mode_name;
@@ -1169,6 +1146,8 @@ void WebSocket_index() {
     website += ',';
     website += uptime;
     website += ',';
+    website += uptimeReset;
+    website += ',';
     website += msgCount;
     website += ',';
     website += WiFi.RSSI();
@@ -1218,27 +1197,27 @@ void routing_websites() {
   HttpServer.on("/log", web_log);
   HttpServer.on("/raw", web_raw);
   HttpServer.on("/wlan", web_wlan);
-  HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css");
-  HttpServer.serveStatic("/all.js", LittleFS, "/js/all.js");
-  HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css");
-  HttpServer.serveStatic("/cc110x.js", LittleFS, "/js/cc110x.js");
-  HttpServer.serveStatic("/cc110x_detail.css", LittleFS, "/css/cc110x_detail.css");
-  HttpServer.serveStatic("/cc110x_detail.js", LittleFS, "/js/cc110x_detail.js");
-  HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css");
-  HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css");
-  HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css");
-  HttpServer.serveStatic("/cc110x_modes.js", LittleFS, "/js/cc110x_modes.js");
-  HttpServer.serveStatic("/favicon.ico", LittleFS, "/favicon.ico");
-  HttpServer.serveStatic("/help", LittleFS, "/html/help.html"); //TODO Fehler weil ohne WEBSOCKET
-  HttpServer.serveStatic("/help.css", LittleFS, "/css/help.css");
-  HttpServer.serveStatic("/help.js", LittleFS, "/js/help.js");
-  HttpServer.serveStatic("/index.css", LittleFS, "/css/index.css");
-  HttpServer.serveStatic("/index.js", LittleFS, "/js/index.js");
-  HttpServer.serveStatic("/log.css", LittleFS, "/css/log.css");
-  HttpServer.serveStatic("/raw.css", LittleFS, "/css/raw.css");
-  HttpServer.serveStatic("/raw.js", LittleFS, "/js/raw.js");
-  HttpServer.serveStatic("/wlan.css", LittleFS, "/css/wlan.css");
-  HttpServer.serveStatic("/wlan.js", LittleFS, "/js/wlan.js");
+  HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css", "max-age=3600");
+  HttpServer.serveStatic("/all.js", LittleFS, "/js/all.js", "max-age=3600");
+  HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css", "max-age=3600");
+  HttpServer.serveStatic("/cc110x.js", LittleFS, "/js/cc110x.js", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_detail.css", LittleFS, "/css/cc110x_detail.css", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_detail.js", LittleFS, "/js/cc110x_detail.js", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css", "max-age=3600");
+  HttpServer.serveStatic("/cc110x_modes.js", LittleFS, "/js/cc110x_modes.js", "max-age=3600");
+  HttpServer.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "max-age=3600");
+  HttpServer.serveStatic("/help", LittleFS, "/html/help.html", "max-age=3600"); //TODO Fehler weil ohne WEBSOCKET
+  HttpServer.serveStatic("/help.css", LittleFS, "/css/help.css", "max-age=3600");
+  HttpServer.serveStatic("/help.js", LittleFS, "/js/help.js", "max-age=3600");
+  HttpServer.serveStatic("/index.css", LittleFS, "/css/index.css", "max-age=3600");
+  HttpServer.serveStatic("/index.js", LittleFS, "/js/index.js", "max-age=3600");
+  HttpServer.serveStatic("/log.css", LittleFS, "/css/log.css", "max-age=3600");
+  HttpServer.serveStatic("/raw.css", LittleFS, "/css/raw.css", "max-age=3600");
+  HttpServer.serveStatic("/raw.js", LittleFS, "/js/raw.js", "max-age=3600");
+  HttpServer.serveStatic("/wlan.css", LittleFS, "/css/wlan.css", "max-age=3600");
+  HttpServer.serveStatic("/wlan.js", LittleFS, "/js/wlan.js", "max-age=3600");
 
   HttpServer.onNotFound([]() {
     HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
