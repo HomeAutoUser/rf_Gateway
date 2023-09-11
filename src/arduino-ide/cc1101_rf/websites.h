@@ -677,7 +677,9 @@ void web_cc110x_detail() {
 void web_log() {
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\"></head>");
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\">"
+               "<script src=\"log.js\" type=\"text/javascript\"></script>"
+               "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
 
@@ -689,16 +691,20 @@ void web_log() {
     website += F("No file log.txt found. (File system incomplete)</html>");
   } else {
     uint8_t lineCnt = 0;
+
     while (logfile.available()) {
+      website += F("<div id=\"logtxt\" hidden>");
       website += logfile.readStringUntil('\n');
-      website += F("<br>");
+      website += F("</div>");
       lineCnt++;
     }
     logfile.close();
     if (lineCnt == 0) {
       website += F("Log file is empty");
     }
-    website += F("</html>");
+    website += F("<p id=\"uptime\" hidden>");
+    website += uptime;
+    website += F("</p></html>");
   }
   HttpServer.send(200, "text/html", website);
 }
@@ -1214,6 +1220,7 @@ void routing_websites() {
   HttpServer.serveStatic("/index.css", LittleFS, "/css/index.css", "max-age=3600");
   HttpServer.serveStatic("/index.js", LittleFS, "/js/index.js", "max-age=3600");
   HttpServer.serveStatic("/log.css", LittleFS, "/css/log.css", "max-age=3600");
+  HttpServer.serveStatic("/log.js", LittleFS, "/js/log.js", "max-age=3600");
   HttpServer.serveStatic("/raw.css", LittleFS, "/css/raw.css", "max-age=3600");
   HttpServer.serveStatic("/raw.js", LittleFS, "/js/raw.js", "max-age=3600");
   HttpServer.serveStatic("/wlan.css", LittleFS, "/css/wlan.css", "max-age=3600");
