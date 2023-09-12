@@ -185,6 +185,7 @@ ADC_MODE(ADC_VCC);                  // vcc read
 #ifdef ARDUINO_ARCH_ESP32
 #include <WebServer.h>
 #include <WiFi.h>
+#include <esp_wps.h>
 WebServer HttpServer(80);
 #endif
 /* --- END - all SETTINGS for the ESP32-- ----------------------------------------------------------------------------------------------------- */
