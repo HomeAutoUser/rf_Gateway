@@ -179,7 +179,7 @@ byte web_Mod_set(byte input) {
   output = output | reg12_6_4;
   return output;
 }
-#endif
+#endif // Ende #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */

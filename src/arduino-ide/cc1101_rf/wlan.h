@@ -1,4 +1,5 @@
 #pragma once
+extern void appendLogFile(String logText);
 
 /*
     This file provides us with important information about the functional prototypes available to us,
@@ -15,13 +16,6 @@ static esp_wps_config_t config;
 #endif
 
 
-String WLAN_MAC_String(uint8_t* MAC) { /* return MAC in format EC:FA:BC:C5:38:57 */
-  char str[18];
-  sprintf(str, "%02X:%02X:%02X:%02X:%02X:%02X", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
-  return str;
-}
-
-
 void start_WLAN_AP(String ssid_ap, String password_ap) {
   WiFi.disconnect();
   WiFi.mode(WIFI_AP);                /* WIFI set mode */
@@ -35,21 +29,13 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
     Serial.print(F("WIFI HOSTNAME    ")); Serial.println(OwnStationHostname);
 #endif
     WLAN_AP = true;
-    WLAN_OK = true;
-    File logfile = LittleFS.open("/files/log.txt", "a");         // Datei mit Schreibrechten öffnen
-    if (logfile) {
-      String logText = String(uptime);
-      logText += F(" - WIFI Access point active");
-      logfile.println(logText);
-      logfile.close(); /* Schließen der Datei */
-    }
+    appendLogFile(F("WIFI Access point active"));
   } else {
 #ifdef debug_wifi
     Serial.println(F("WIFI AP Failed!"));
 #endif
     used_dhcp = 1;
     WLAN_AP = false;
-    WLAN_OK = false;
   }
 }
 
@@ -112,30 +98,30 @@ void start_WLAN_STATION(String qssid, String qpass) {
       Serial.println(F("WIFI Settings from EEPROM"));
 #endif
     }
-
-    File logfile = LittleFS.open("/files/log.txt", "a");  // Datei mit Schreibrechten öffnen
-    if (logfile) {
-      String logText = String(uptime);
-      logText += F(" - WIFI connected to ");
-      logText += qssid;
-      logfile.println(logText);
-      logfile.close(); /* Schließen der Datei */
-    }
+    String logText = F("WIFI connected to ");
+    logText += qssid;
+    appendLogFile(logText);
 
     WLAN_AP = false;
-    WLAN_OK = true;
     WLAN_reco_cnt = 0;
-    used_ssid = qssid;
-    used_ssid_mac = WLAN_MAC_String(WiFi.BSSID());
   } else {
     WLAN_reco_cnt++;
     if (WLAN_reco_cnt <= 1) {
-      Serial.print(F("WIFI connection failed, old settings attempt ")); Serial.println(WLAN_reco_cnt);
+#ifdef debug_wifi
+      Serial.print(F("WIFI connection failed, use WEB settings, attempt ")); Serial.println(WLAN_reco_cnt);
+#endif
+      start_WLAN_STATION(qssid, qpass);
+    } else if (WLAN_reco_cnt <= 3) {
+#ifdef debug_wifi
+      Serial.print(F("WIFI connection failed, use EEPROM settings, attempt ")); Serial.println(WLAN_reco_cnt);
+#endif
       start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
     } else {
-      start_WLAN_AP(ssid_ap, password_ap);
+#ifdef debug_wifi
+      Serial.print(F("WIFI connection failed, start AP ")); Serial.println(WLAN_ssid_ap);
+#endif
+      start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
       WLAN_reco_cnt = 0;
-      used_ssid = "";
     }
   }
 }
@@ -183,10 +169,8 @@ void ESP32_WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
       break;
     case SYSTEM_EVENT_STA_WPS_ER_SUCCESS:
       Serial.println("WPS Successful, stopping WPS and connecting to: " + String(WiFi.SSID()));
-      used_ssid = WiFi.SSID();
-      used_ssid_pass = WiFi.psk();
-      EEPROMwrite_string(EEPROM_ADDR_SSID, used_ssid);       // write String to EEPROM
-      EEPROMwrite_string(EEPROM_ADDR_PASS, used_ssid_pass);  // write String to EEPROM
+      EEPROMwrite_string(EEPROM_ADDR_SSID, WiFi.SSID());       // write String to EEPROM
+      EEPROMwrite_string(EEPROM_ADDR_PASS, WiFi.psk());        // write String to EEPROM
       EEPROMwrite(EEPROM_ADDR_AP, 0);
       esp_wifi_wps_disable();
       delay(10);
@@ -215,11 +199,13 @@ void ESP32_WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
       break;
   }
 }
-#endif
+#endif // Ende #ifdef ARDUINO_ARCH_ESP32
 
 
 bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
+#ifdef debug_wifi
   Serial.println(F("WIFI WPS started"));
+#endif
   bool wpsSuccess;
 #ifndef ARDUINO_ARCH_ESP32           /* ESP32 andere WPS Einbindung !!! */
   WiFi.hostname(OwnStationHostname); /* WIFI set hostname */
@@ -228,31 +214,34 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
   wpsSuccess = WiFi.beginWPSConfig();
   if (wpsSuccess) {
     String qssid = WiFi.SSID();
-    String qssidmac = WiFi.BSSIDstr();
-
     if (qssid.length() > 0 && WiFi.psk().length() > 0) {
       /* WPSConfig has already connected in STA mode successfully to the new station. */
       char* chrOwnHostname = &OwnStationHostname[0];
       wifi_station_set_hostname(chrOwnHostname);
 
-#ifdef debug
+#ifdef debug_wifi
       Serial.print(F("DB WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
 #endif
-      used_ssid = qssid;            // SSID übernehmen
-      used_ssid_pass = WiFi.psk();  // Wifi Passwort übernehmen
       used_dhcp = 1;
       WLAN_AP = false;
-      EEPROMwrite_string(EEPROM_ADDR_SSID, used_ssid);       // write String to EEPROM
-      EEPROMwrite_string(EEPROM_ADDR_PASS, used_ssid_pass);  // write String to EEPROM
+      EEPROMwrite_string(EEPROM_ADDR_SSID, qssid);       // write String to EEPROM
+      EEPROMwrite_string(EEPROM_ADDR_PASS, WiFi.psk());  // write String to EEPROM
       EEPROMwrite(EEPROM_ADDR_AP, 0);
-      Serial.println(F("WIFI WPS connection successful"));
+      String logText = F("WIFI WPS connected to ");
+      logText += qssid;
+      appendLogFile(logText);
+#ifdef debug_wifi
+      Serial.println(logText);
+#endif
     } else {
-      Serial.println(F("WIFI WPS connection failed!"));
       wpsSuccess = false;
+#ifdef debug_wifi
+      Serial.println(F("WIFI WPS connection failed!"));
+#endif
     }
   }
   return wpsSuccess;
-#else
+#else // ESP32
   /*
     ESP32 anderes WPS Handling
     https://github.com/espressif/ESP31_RTOS_SDK/blob/master/include/esp_wps.h
@@ -265,7 +254,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
   esp_wifi_wps_enable(&config);
   esp_wifi_wps_start(0);
   wpsSuccess = true;
-#endif
+#endif // #ifndef ARDUINO_ARCH_ESP32           /* ESP32 andere WPS Einbindung !!! */
   return wpsSuccess;
 }
 

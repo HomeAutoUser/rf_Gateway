@@ -26,9 +26,11 @@
 }
 
 function wlan_conn() {
-  document.getElementById("StatCon").innerHTML = "- new wlan settings -";
+ document.getElementById("StatCon").innerHTML = "- new wlan settings -";
+ setTimeout(function(){window.location.href='wlan'},45000);
 }
 
 function wlan_wps() {
-  document.getElementById("StatWPS").innerHTML = "- WPS starting -";
+ document.getElementById("StatCon").innerHTML = "- WPS starting -";
+ setTimeout(function(){window.location.href='wlan'},45000);
 }

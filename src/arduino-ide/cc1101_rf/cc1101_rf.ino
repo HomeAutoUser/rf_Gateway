@@ -3,8 +3,8 @@
   All rights reserved.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 993
-  Der Sketch verwendet 22484 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 22358 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22446 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -15,22 +15,22 @@
   Globale Variablen verwenden 669 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39492 / 80192 bytes (49%)
+  . Variables and constants in RAM (global, static), used 39336 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╠══ DATA     1820     initialized variables
-  ╠══ RODATA   4776     constants
-  ╚══ BSS      32896    zeroed variables
+  ╠══ DATA     1812     initialized variables
+  ╠══ RODATA   4788     constants
+  ╚══ BSS      32736    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 424844 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 424476 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     424844   code in flash
+  ╚══ IROM     424476   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 947633 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 51512 Bytes (15%) des dynamischen Speichers, 276168 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 953121 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51620 Bytes (15%) des dynamischen Speichers, 276060 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (Websocket) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (2023-10-16) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (Websocket) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (2023-10-16) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -227,16 +227,9 @@ byte TELNET_CLIENTS_ARRAY[TELNET_CLIENTS_MAX];
 byte TELNET_CLIENT_COUNTER = 0;
 bool TELNET_ConnectionEstablished;            // Telnet Flag for successfully handled connection
 byte WLAN_reco_cnt = 0;                       // counter for connection, if cnt 3, WLAN jump zu AP
-const char* ssid_ap = WLAN_ssid_ap;
-const char* password_ap = WLAN_password_ap;
 String OwnStationHostname = WLAN_hostname;
-String used_ssid;                             // for the output on web server
-String used_ssid_mac;                         // for the output on web server
-String used_ssid_pass;                        // for the output on web server
 byte used_dhcp = 0;                           // IP-Adresse mittels DHCP
 boolean WLAN_AP = false;                      // WiFi AP opened
-boolean WLAN_OK = false;                      // WiFi connected
-uint8_t WifiNetworks;                         // Anzahl Wifi-Netzwerke
 
 #define SENDDATA_LENGTH     129               // Weboberfläche | senden - max Länge
 char senddata_esp[SENDDATA_LENGTH];           // Weboberfläche | senden - Daten
@@ -340,10 +333,13 @@ void setup() {
     Serial.println(F("Starting LittleFS"));
 #endif
   }
-  File logfile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
-  if (logfile) {
-    String logText = String(uptime);
-    logText += F(" - Systemstart (");
+  File logFile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
+  if (!logFile) {
+#if defined debug
+    Serial.println(F("LittleFS file creation failed"));
+#endif
+  } else {
+    String logText = F("Systemstart (");
 #if defined(ARDUINO_ARCH_ESP8266)
     logText += ESP.getResetReason();
 #endif
@@ -388,8 +384,8 @@ void setup() {
     }
 #endif
     logText += ')';
-    logfile.println(logText);
-    logfile.close(); /* Schließen der Datei */
+    logFile.close(); /* Schließen der Datei */
+    appendLogFile(logText);
   }
 
   EEPROM.begin(EEPROM_SIZE); /* Puffergröße die verwendet werden soll */
@@ -416,7 +412,7 @@ void setup() {
 
   OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
   if (EEPROMread(EEPROM_ADDR_AP) == 255 || EEPROMread(EEPROM_ADDR_AP) == 1) {
-    start_WLAN_AP(ssid_ap, password_ap);
+    start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
   }
   if (EEPROMread(EEPROM_ADDR_AP) == 0) {
     start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
@@ -1605,17 +1601,13 @@ void Telnet() {
     for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
       if (!TelnetClient[i]) { /* find free socket */
         TelnetClient[i] = TelnetServer.available();
-        Serial.print(F("Telnet client "));
-        Serial.print(TelnetClient[i].remoteIP());
-        Serial.println(F(" connected new session"));
-        File logfile = LittleFS.open("/files/log.txt", "a");  // open logfile for append to end of file
-        if (logfile) {
-          logfile.print(uptime);
-          logfile.print(F(" - Telnet client "));
-          logfile.print(TelnetClient[i].remoteIP());
-          logfile.println(F(" connected"));
-        }
-        logfile.close();         // close logfile
+        String logText = F("Telnet client ");
+        logText += TelnetClient[i].remoteIP().toString();
+        logText += F(" connected");
+#ifdef debug_wifi
+        Serial.println(logText);
+#endif
+        appendLogFile(logText); // append to logfile
         TelnetClient[i].flush(); /* clear input buffer, else you get strange characters */
         TelnetClient[i].print(F("Telnet session ("));
         TelnetClient[i].print(i);
@@ -1895,3 +1887,19 @@ void NO_CC110x() {
 #endif
     F("Operation not executable (no CC110x found)"));
 }
+
+#if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32
+void appendLogFile(String logText) {
+  File logFile = LittleFS.open("/files/log.txt", "a");  // open logfile for append to end of file
+  if (logFile) {
+    if (uptime == 0) {
+      logFile.print(millis() / 1000);
+    } else {
+      logFile.print(uptime);
+    }
+    logFile.print(F(" - "));
+    logFile.println(logText);
+    logFile.close();
+  }
+}
+#endif

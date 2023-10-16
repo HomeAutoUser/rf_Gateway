@@ -11,6 +11,7 @@
 extern void InputCommand(String input);
 extern String onlyDecToHex2Digit(byte Dec);
 extern boolean freqAfc;
+extern void appendLogFile(String logText);
 /* predefinitions of the functions */
 void WebSocket_cc110x();
 /* {"MODE":"Lacrosse_mode2","MS":"8","ToggleBank":"{ 11 12 - - }","Time":"30000"} */
@@ -76,6 +77,7 @@ void web_index() {
   if (submit == "MSG0") {
     msgCount = 0;
     uptimeReset = uptime;
+    appendLogFile(F("Message counter reset"));
   } else if (submit == "SWRESET") {
     ESP.restart();
   }
@@ -776,7 +778,8 @@ void web_wlan() {
   String qssid = HttpServer.arg("setssid");     // Auswahl SSID
   String submit = HttpServer.arg("submit");     // welcher Button wurde betätigt
   uint8_t countargs = HttpServer.args();        // Anzahl Argumente
-  used_ssid_mac = WiFi.BSSIDstr();
+  String used_ssid_mac = WiFi.BSSIDstr();
+  String used_ssid = WiFi.SSID();               // for the output on web server
 
 #ifdef debug_html
   Serial.print(F("DB web_wlan, setssid    ")); Serial.println(qssid);
@@ -820,10 +823,10 @@ void web_wlan() {
                "<tr><td class=\"b1\" colspan=\"6\"></td></tr>"
                "<thead><tr><th colspan=\"6\">WLAN - available networks</th></tr>"
                "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr></thead>");
-  WifiNetworks = WiFi.scanNetworks();  // Scanne Netzwerke
+  int WifiNetworks = WiFi.scanNetworks();  // Anzahl Netzwerke
 
-  for (uint8_t i = 0; i < WifiNetworks; ++i) {
-    WifiMAC = WLAN_MAC_String(WiFi.BSSID(i));
+  for (int i = 0; i < WifiNetworks; ++i) {
+    WifiMAC = WiFi.BSSIDstr(i); // Returns a String from MAC address of a network discovered during the scan.
     WifiEncryptionType = WLAN_encryptionType(WiFi.encryptionType(i));
     /* Tabelle WLAN - available networks */
     website += F("<tr><td class=\"ra1\"><input aria-label=\"na1\" type=\"radio\" name=\"setssid\" value=\"");
@@ -991,12 +994,8 @@ void web_wlan() {
 #ifdef debug_html
     Serial.println(F("DB web_wlan, send HTML (connect)"));
 #endif
-    website = F("<!DOCTYPE html>WLAN - an attempt is made to establish a connection to SSID ");
-    website += qssid;
-    website += F("<br>If the attempt fails, the old settings are loaded.</html>");
-    HttpServer.send(200, "text/html", website);
-    delay(250);
 
+    delay(250);
     start_WLAN_STATION(qssid, qpass);
     submit = "";
   }
@@ -1009,18 +1008,14 @@ void web_wlan() {
 #ifdef debug_html
     Serial.println(WLAN_AP == 0 ? F("DB web_wlan, wps methode setting (call from station)") : F("DB web_wlan, wps methode setting (call from AP)"));
 #endif
-
-    website = F("<!DOCTYPE html>WLAN - Wi-Fi Protected attempt to SSID ");
-    website += qssid;
-    website += F("<br>If the attempt fails, the old settings are loaded.</html>");
-
-    HttpServer.send(200, "text/html", website);
     delay(250);
 
     if (!start_WLAN_WPS()) {
       if (WLAN_AP == 1) {
-        start_WLAN_AP(ssid_ap, password_ap);
+        appendLogFile(F("WPS failed, start AP"));
+        start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
       } else {
+        appendLogFile(F("WPS failed, use old WiFi settings"));
         start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
       }
     }
@@ -1033,6 +1028,7 @@ void web_wlan() {
 #endif
     HttpServer.send(200, "text/html", website);
   }
+  WiFi.scanDelete(); // Delete the last scan result from memory. // TODO
 }
 
 

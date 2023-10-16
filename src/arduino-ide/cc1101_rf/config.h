@@ -48,7 +48,7 @@
 #define ToggleTimeMax   1800000   // 3600000 milliseconds -> 0.5 hour
 
 /* some backward compatibility */
-//#define ESP32_core_v1     1    // to compatible for ESP32 core v1.0.6 
+//#define ESP32_core_v1     1    // to compatible for ESP32 core v1.0.6
 
 /* Definitions for program code */
 //#define debug             1    // to debug other
@@ -94,9 +94,9 @@
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
 #define TELNET_PORT             23                      // Telnet Port
-#define WLAN_ssid_ap            "cc110x_rf_Gateway"     // AP - SSID
+#define WLAN_ssid_ap            "cc110x-rf-Gateway"     // AP - SSID
 #define WLAN_password_ap        "config-gateway"        // AP - Passwort
-#define WLAN_hostname           "cc110x_rf_Gateway"     // Hostname
+#define WLAN_hostname           "cc110x-rf-Gateway"     // Hostname
 #else
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1
