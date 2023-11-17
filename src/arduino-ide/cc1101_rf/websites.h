@@ -36,6 +36,7 @@ void web_log();
 void web_raw();
 void web_wlan();
 String HTML_mod(String txt);
+void sendHtml(String & str);
 
 /* Display of all websites from the web server
   https://wiki.selfhtml.org/wiki/HTML/Tutorials/Grundger%C3%BCst
@@ -47,10 +48,8 @@ const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to h
                                    "<html lang=\"de\">"
                                    "<head>"
                                    "<meta charset=\"utf-8\">"
-                                   "<meta http-equiv=\"Cache-Control\" content=\"max-age=3600, must-revalidate\"/>"
-                                   "<meta http-equiv=\"Expires\" content=\"0\"/>"
-                                   "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
-                                   "<link rel=\"stylesheet\" href=\"all.css\" type=\"text/css\">"
+                                   "<meta name=\"viewport\" content=\"width=device-width\">"
+                                   "<link rel=\"stylesheet\" href=\"css/all.css\" type=\"text/css\">"
                                    "<title>cc110x_rf_Gateway</title>"
                                  };
 
@@ -60,7 +59,7 @@ const char html_head_table[] PROGMEM = { "<table>"          /* added table on he
                                          "<tr>"
                                          "<td class=\"htd\"><a href=\"/\" class=\"HOME\">HOME</a></td>"
                                          "<td class=\"htd\"><a href=\"cc110x\" class=\"CC110x\">CC110x</a></td>"
-                                         "<td class=\"htd\"><a href=\"help\" class=\"Help\">Help</a></td>"
+                                         "<td class=\"htd\"><a href=\"html/help.html\" class=\"Help\">Help</a></td>"
                                          "<td class=\"htd\"><a href=\"log\" class=\"Logfile\">Logfile</a></td>"
                                          "<td class=\"htd\">"
                                          "<a href=\"raw\" class=\"RAW\">RAW data</a>"
@@ -82,13 +81,15 @@ void web_index() {
     ESP.restart();
   }
 
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"index.css\">"
-               "<script src=\"index.js\" type=\"text/javascript\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/index.css\">"
+               "<script src=\"js/index.js\"></script>" // The type attribute is unnecessary for JavaScript resources.
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
-  website += F("<body><table><thead><tr><th colspan=2>Device - Information</th></tr></thead>"
-               "<tbody><tr><td class=\"tdf\">Firmware compiled</td><td>");
+  website += F("<body>"
+               "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
+               "<table><tr><th colspan=2>Device - Information</th></tr>"
+               "<tr><td class=\"tdf\">Firmware compiled</td><td>");
   website += compile_date;
   website += F("</td></tr><tr><td>Firmware mode</td><td>"
 #ifdef SIGNALduino_comp
@@ -97,7 +98,6 @@ void web_index() {
                "standalone"
 #endif
                "</td></tr><tr>"
-               "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<td>Message count</td><td><span id=\"MSGcnt\">");
   website += msgCount;
   website += F("</span>"
@@ -118,10 +118,10 @@ void web_index() {
   website += uptime;
   website += F("</span>"
                "<button class=\"btn\" type=\"submit\" name=\"submit\" value=\"SWRESET\" onClick=\"refresh()\">RESTART ESP</button>"
-               "</td></form></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
+               "</td></tr><tr><td>Uptime (Text)</td><td><span id=\"UptimeTxT\"></span></td></tr><tr><td>Version</td><td>");
   website += FPSTR(TXT_VERSION);
-  website += F("</td></tr></tbody></table></body></html>");
-  HttpServer.send(200, "text/html", website);
+  website += F("</td></tr></table></form></body></html>");
+  sendHtml(website);
 }
 
 
@@ -129,13 +129,13 @@ void web_cc110x() {
   String website;
   website.reserve(2000);
   website += FPSTR(html_meta);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x.css\">"
-               "<script src=\"cc110x.js\" type=\"text/javascript\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/cc110x.css\">"
+               "<script src=\"js/cc110x.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
   website += F("<body>"
-               "<table><thead>"
+               "<table>"
                "<tr>");
 
   if (CC1101_found) {
@@ -146,7 +146,7 @@ void web_cc110x() {
     website += F("<th colspan=\"3\">general information</th>");
   }
 
-  website += F("</tr></thead><tbody><tr><td>chip detected</td><td td colspan=\"2\">");
+  website += F("</tr><tr><td>chip detected</td><td colspan=\"2\">");
   CC1101_found ? website += F("yes") : website += F("no");
   website += F("</td></tr>");
 
@@ -174,8 +174,8 @@ void web_cc110x() {
     website += F("</span></td></tr>");
   }
 
-  website += F("</tbody></table></body></html>");
-  HttpServer.send(200, "text/html", website);
+  website += F("</table></body></html>");
+  sendHtml(website);
 }
 
 
@@ -275,18 +275,17 @@ void web_cc110x_modes() {
 
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_modes.css\">"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/cc110x_modes.css\">"
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<body>"
-               "<script src=\"cc110x_modes.js\" type=\"text/javascript\"></script>"
+               "<script src=\"js/cc110x_modes.js\"></script>"
                "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<table id=\"rec_mod\">"
-               "<thead><tr>"
+               "<tr>"
                "<th class=\"thf1\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"thf1\"><a href=\"cc110x_detail\">detail information</a></th>"
-               "<th class=\"thf1\">receive modes</th></tr></thead>"
-               "<tbody>");
+               "<th class=\"thf1\">receive modes</th></tr>");
 
   for (byte i = 0; i < RegistersCntMax; i++) {
     website += F("<tr><td>");
@@ -335,9 +334,8 @@ void web_cc110x_modes() {
   website += (ToggleTime != 0 ? String(ToggleTime) : F("(ms)"));
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
                "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
-               "</td></tr></tbody></table></body></html>");
-
-  HttpServer.send(200, "text/html", website);
+               "</td></tr></table></body></html>");
+  sendHtml(website);
 }
 
 
@@ -348,7 +346,7 @@ void web_cc110x_detail_export() {
 
   String website = FPSTR(html_meta);
   website.reserve(1500);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_exp.css\"></head>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/cc110x_detail_exp.css\"></head>"
                "Export all current register values (without the registers 0x29 ... 0x2E)<br>Just copy and paste string into your application<br>"
                "<br>FHEM - SIGNALduino Format | set &lsaquo;name&rsaquo; cc1101_reg<br>");
   String website_p2 = F("<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register => <br>");
@@ -374,8 +372,7 @@ void web_cc110x_detail_export() {
   website += website_p2;
   website += F("]<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>"
                "</body></html>");
-
-  HttpServer.send(200, "text/html", website);
+  sendHtml(website);
 }
 
 
@@ -392,7 +389,7 @@ void web_cc110x_detail_import() {
 
   String website = FPSTR(html_meta);
   website.reserve(1000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail_imp.css\"></head>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/cc110x_detail_imp.css\"></head>"
                "<body><form method=\"post\">"); /* form method wichtig für Daten von Button´s !!! */
 
   if (countargs != 0) {
@@ -448,7 +445,7 @@ void web_cc110x_detail_import() {
   }
   website += F("<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>"
                "</form></body></html>");
-  HttpServer.send(200, "text/html", website);
+  sendHtml(website);
 }
 
 
@@ -604,50 +601,49 @@ void web_cc110x_detail() {
 
   String website = FPSTR(html_meta);
   website.reserve(13000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"cc110x_detail.css\">"
-               "<script src=\"cc110x_detail.js\" type=\"text/javascript\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/cc110x_detail.css\">"
+               "<script src=\"js/cc110x_detail.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
-               "<table><thead><tr>"
+               "<table><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x\">general information</a></th>"
                "<th class=\"f1\" colspan=\"2\">detail information</th>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"cc110x_modes\">receive modes</a></th></tr>"
-               "</thead><tbody>"
                // Frequency (should | is)
-               "<tr><td colspan=\"2\">Frequency (should | is)</td><td id=\"di\" colspan=\"2\"><span id=\"FREQis\"></span> | <span id=\"FREQ\"></span>"
+               "<tr><td colspan=\"2\">Frequency (should | is)</td><td class=\"ce\" colspan=\"2\"><span id=\"FREQis\"></span> | <span id=\"FREQ\"></span>"
                " MHz</td><td class=\"ce\"><input aria-label=\"Fre\" size=\"6\" id=\"p1\" name=\"freq\" value=\""
                "\"><div class=\"txt\">&ensp;MHz</div></td><td class=\"ce\" rowspan=\"2\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bfreq\">set</button></td></tr>"
                // Frequency Offset
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? F(" checked") : F(""));
-  website += F("></td><td id=\"di\">");
+  website += F("></td><td class=\"ce\">");
   website += String(Freq_offset, 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
   website += String(Freq_offset, 3);
   website += F("\"><div class=\"txt\">&ensp;MHz</div></td></tr>"
                // Bandwidth
-               "<tr><td colspan=\"2\">Bandwidth</td><td id=\"di\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
+               "<tr><td colspan=\"2\">Bandwidth</td><td class=\"ce\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"Bw\" size=\"6\" id=\"p3\" name=\"bandw\" value=\"\">"
                "<div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
                // DataRate
-               "<tr><td colspan=\"2\">DataRate</td><td id=\"di\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
+               "<tr><td colspan=\"2\">DataRate</td><td class=\"ce\" colspan=\"2\"><span id=\"DRATE\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"datra\" size=\"6\" id=\"p4\" name=\"datarate\" value=\"\">"
                "<div class=\"txt\">&ensp;kBaud</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
                // Deviation
-               "<tr><td colspan=\"2\">Deviation</td><td id=\"di\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
+               "<tr><td colspan=\"2\">Deviation</td><td class=\"ce\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"devi\" size=\"6\" id=\"p5\" name=\"deviation\" value=\"\">"
                "<div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
                // Modulation
-               "<tr><td colspan=\"2\">Modulation</td><td id=\"di\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>"
+               "<tr><td colspan=\"2\">Modulation</td><td class=\"ce\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>"
                "<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"></select></td>"
                "<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"
                // NUM_PREAMBLE
-               "<tr><td colspan=\"2\">Number of preamble</td><td id=\"ce\" colspan=\"4\"><span id=\"MDMCFG1\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Number of preamble</td><td class=\"ce\" colspan=\"4\"><span id=\"MDMCFG1\"></span></td></tr>"
                // Packet length config
-               "<tr><td colspan=\"2\">Packet length config</td><td id=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
                // Sync-word qualifier mode
-               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td id=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
+               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
                // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='cc110x_detail_export'\">export all registers</button>&emsp;"
@@ -660,7 +656,7 @@ void web_cc110x_detail() {
   for (byte i = 0; i <= 46; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
-    website += F("\"></span></td><td id=\"ce\"><input name=\"r"); /* registername for GET / POST */
+    website += F("\"></span></td><td class=\"ce\"><input name=\"r"); /* registername for GET / POST */
     website += i;
     website += F("\" value=\"");
     website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));                 /* value */
@@ -671,16 +667,16 @@ void web_cc110x_detail() {
     website += F("\">i</td></tr>");
   }
 
-  website += F("</tbody></table></form></body></html>");
-  HttpServer.send(200, "text/html", website);
+  website += F("</table></form></body></html>");
+  sendHtml(website);
 }
 
 
 void web_log() {
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"log.css\">"
-               "<script src=\"log.js\" type=\"text/javascript\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/log.css\">"
+               "<script src=\"js/log.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
@@ -708,7 +704,7 @@ void web_log() {
     website += uptime;
     website += F("</p></html>");
   }
-  HttpServer.send(200, "text/html", website);
+  sendHtml(website);
 }
 
 
@@ -720,18 +716,18 @@ void web_raw() {
   String website = FPSTR(html_meta);
   website.reserve(2000);
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
-               "<link rel=\"stylesheet\" type=\"text/css\" href=\"raw.css\">"
-               "<script src=\"raw.js\" type=\"text/javascript\"></script>"
+               "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/raw.css\">"
+               "<script src=\"js/raw.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<table>"
-               "<thead><tr><th colspan=\"5\">send data (with the current register settings)</th></tr></thead>"
+               "<tr><th colspan=\"4\">send data (with the current register settings)</th></tr>"
                "<tr>"
-               "<td class=\"td1\" colspan=\"2\"><input class=\"inp\" name=\"sd\" type=\"text\"></td>"
+               "<td class=\"td1\"><input class=\"inp\" name=\"sd\" type=\"text\"></td>"
                "<td class=\"td1\">repeats <input aria-label=\"n1\" name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
                "<td class=\"td1\">pause (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==6) return false;\"></td>"
                "<td class=\"td1\"><input class=\"btn\" type=\"button\" value=\"send\" onclick=\"msgSend()\"></td>"
-               "</tr><tr><td class=\"td1\" colspan=\"5\"><span id=\"val\">");
+               "</tr><tr><td class=\"td1\" colspan=\"4\"><span id=\"val\">");
   if (msgRepeats != 0) {
     website += F("sending process active (");
     website += msgRepeats;
@@ -750,13 +746,13 @@ void web_raw() {
   }
 
   website += F("</span></td></tr></table><br>"
-               "<div><table id=\"dataTable\"><thead>"
+               "<div><table id=\"dataTable\">"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += activated_mode_name;
   website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
-               "</thead></table></div>"
+               "</table></div>"
                "</body></html>");
-  HttpServer.send(200, "text/html", website);
+  sendHtml(website);
 }
 
 
@@ -797,18 +793,15 @@ void web_wlan() {
 
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"wlan.css\">"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/wlan.css\">"
+               "<script src=\"js/wlan.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                     /* START Tabelle gesamt */
-               "<thead>"
                "<tr><th colspan=\"6\">WLAN - Device status</th></tr>"
                "<tr><th colspan=\"4\" class=\"fw\">Mode</td><th colspan=\"2\">MAC</th></tr>"
-               "<script src=\"wlan.js\" type=\"text/javascript\"></script>"
-               "</thead>"
-               "<tbody>"
                "<tr><td class=\"alig_c\" colspan=\"4\">");
 
   if (!WLAN_AP) {
@@ -821,8 +814,8 @@ void web_wlan() {
   website += WiFi.macAddress();
   website += F("</td></tr>"
                "<tr><td class=\"b1\" colspan=\"6\"></td></tr>"
-               "<thead><tr><th colspan=\"6\">WLAN - available networks</th></tr>"
-               "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr></thead>");
+               "<tr><th colspan=\"6\">WLAN - available networks</th></tr>"
+               "<tr><th></th><th>SSID</th><th>MAC</th><th>CH</th><th>RSSI</th><th>encryptionType</th></tr>");
   int WifiNetworks = WiFi.scanNetworks();  // Anzahl Netzwerke
 
   for (int i = 0; i < WifiNetworks; ++i) {
@@ -845,7 +838,7 @@ void web_wlan() {
       website += F("\">");
     }
 
-#ifdef debug_html
+#if defined(debug_html) || defined(debug_wifi)
     Serial.print(' '); Serial.print(i + 1); Serial.print(' '); Serial.print(WiFi.SSID(i));
     Serial.print(' '); Serial.print(WifiMAC); Serial.print(' '); Serial.print(WiFi.channel(i));
     Serial.print(' '); Serial.print(WiFi.RSSI(i)); Serial.print(' '); Serial.println(WifiEncryptionType);
@@ -883,7 +876,7 @@ void web_wlan() {
                "</tr>"
                "<tr><td colspan=\"6\" class=\"b1\"><span id=\"StatCon\"></span></td></tr>"
                /* Tabelle Setting IP - network */
-               "<thead><tr><th colspan=\"6\">Setting IP - network</th></tr></thead>");
+               "<tr><th colspan=\"6\">Setting IP - network</th></tr>");
 
   if (WLAN_AP) {
     ipadr = WiFi.softAPIP();  // IP
@@ -1001,7 +994,7 @@ void web_wlan() {
   }
   /* Button connect - END  */
 
-  website += F("</tbody></table></form></body></html>");
+  website += F("</table></form></body></html>");
 
   /* Button wps | wps methode for connection */
   if (submit == "wps") {
@@ -1026,11 +1019,25 @@ void web_wlan() {
 #ifdef debug_html
     Serial.println(F("DB web_wlan, send HTML (args == 0)"));
 #endif
-    HttpServer.send(200, "text/html", website);
+    sendHtml(website);
   }
   WiFi.scanDelete(); // Delete the last scan result from memory. // TODO
 }
 
+void sendHtml(String & str) {
+  HttpServer.sendHeader(F("cache-control"), F("private, no-cache"));       // A 'cache-control' header is missing or empty.
+  HttpServer.sendHeader(F("x-content-type-options"), F("nosniff"));        // Response should include 'x-content-type-options' header.
+  HttpServer.sendHeader(F("content-type"), F("text/html; charset=utf-8")); // Response should include 'content-type' header.
+  HttpServer.send ( 200, "text/html; charset=utf-8", str );                // 'content-type' header charset value should be 'utf-8'.
+#ifdef debug_wifi
+  Serial.print(F("Website "));
+  Serial.print(HttpServer.uri());
+  Serial.print(F(" HTTP TX Bytes: "));
+  Serial.print(str.length());
+  Serial.print(F(", Free Heap: "));
+  Serial.println(freeRam());
+#endif
+}
 
 void WebSocket_cc110x() {
 #ifdef debug_websocket
@@ -1186,6 +1193,71 @@ void WebSocket_raw(const String & html_raw) {
   }
 }
 
+String getContentType(String filename) {
+  if (HttpServer.hasArg("download")) return "application/octet-stream";
+  //else if (filename.endsWith(".htm")) return "text/html; charset=utf-8";
+  else if (filename.endsWith(".html")) return "text/html; charset=utf-8";
+  else if (filename.endsWith(".css")) return "text/css; charset=utf-8";
+  else if (filename.endsWith(".js")) return "application/javascript; charset=utf-8";
+  //else if (filename.endsWith(".png")) return "image/png";
+  //else if (filename.endsWith(".gif")) return "image/gif";
+  //else if (filename.endsWith(".jpg")) return "image/jpeg";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
+  //else if (filename.endsWith(".svg")) return "image/svg+xml; charset=utf-8";
+  //else if (filename.endsWith(".xml")) return "text/xml";
+  //else if (filename.endsWith(".pdf")) return "application/x-pdf";
+  //else if (filename.endsWith(".zip")) return "application/x-zip";
+  //else if (filename.endsWith(".gz")) return "application/x-gzip";
+  //else if (filename.endsWith(".log")) return "application/octet-stream";
+  //else if (filename.endsWith(".pdf")) return "application/octet-stream";
+  return "text/plain";
+}
+
+// Es wird versucht, die angegebene Datei aus dem LittleFS hochzuladen
+void handleUnknown() {
+  digitalWriteFast(LED, HIGH);    /* LED on */
+  String filename = HttpServer.uri();
+#ifdef debug_wifi
+  Serial.print(F("HTTP requested file: "));
+  Serial.println(filename);
+#endif
+  File pageFile = LittleFS.open(filename, "r");
+  if (pageFile) {
+#ifdef debug_wifi
+    uint32_t fsizeDisk = pageFile.size();
+    Serial.print(F("HTTP requested file size: "));
+    Serial.print(fsizeDisk);
+    Serial.println(F(" bytes"));
+#endif
+    String contentTyp = getContentType(filename);
+    if (filename.endsWith("html")) {
+      HttpServer.sendHeader(F("cache-control"), F("private, no-cache")); // A 'cache-control' header is missing or empty.
+    } else {
+      HttpServer.sendHeader(F("cache-control"), F("max-age=31536000, immutable")); // Cache-Control: max-age=31536000, immutable
+    }
+    HttpServer.sendHeader(F("X-Content-Type-Options"), F("nosniff")); // X-Content-Type-Options: nosniff
+    size_t sent = HttpServer.streamFile(pageFile, contentTyp);
+    sent = sent + 0; // !!! only Arduino Warning on this position | unused variable 'sent' [-Werror=unused-variable] !!!
+    pageFile.close();
+#ifdef debug_wifi
+    Serial.print(F("HTTP TX file: "));
+    Serial.print(filename);
+    Serial.print(F(", Bytes: "));
+    Serial.print(sent);
+    Serial.print(F(", Free Heap: "));
+    uint32_t uis = ESP.getFreeHeap();
+    Serial.println(formatBytes(uis).c_str());
+#endif
+  } else {
+    HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
+    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    //    Site404();
+#ifdef debug_wifi
+    Serial.println(F("HTTP requested file not found!"));
+#endif
+  }
+  digitalWriteFast(LED, LOW); /* LED off */
+}
 
 void routing_websites() {
   HttpServer.on("/", web_index);
@@ -1199,35 +1271,8 @@ void routing_websites() {
   HttpServer.on("/log", web_log);
   HttpServer.on("/raw", web_raw);
   HttpServer.on("/wlan", web_wlan);
-  HttpServer.serveStatic("/all.css", LittleFS, "/css/all.css", "max-age=3600");
-  HttpServer.serveStatic("/all.js", LittleFS, "/js/all.js", "max-age=3600");
-  HttpServer.serveStatic("/cc110x.css", LittleFS, "/css/cc110x.css", "max-age=3600");
-  HttpServer.serveStatic("/cc110x.js", LittleFS, "/js/cc110x.js", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_detail.css", LittleFS, "/css/cc110x_detail.css", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_detail.js", LittleFS, "/js/cc110x_detail.js", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_detail_exp.css", LittleFS, "/css/cc110x_detail_exp.css", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_detail_imp.css", LittleFS, "/css/cc110x_detail_imp.css", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_modes.css", LittleFS, "/css/cc110x_modes.css", "max-age=3600");
-  HttpServer.serveStatic("/cc110x_modes.js", LittleFS, "/js/cc110x_modes.js", "max-age=3600");
-  HttpServer.serveStatic("/favicon.ico", LittleFS, "/favicon.ico", "max-age=3600");
-  HttpServer.serveStatic("/help", LittleFS, "/html/help.html", "max-age=3600"); //TODO Fehler weil ohne WEBSOCKET
-  HttpServer.serveStatic("/help.css", LittleFS, "/css/help.css", "max-age=3600");
-  HttpServer.serveStatic("/help.js", LittleFS, "/js/help.js", "max-age=3600");
-  HttpServer.serveStatic("/index.css", LittleFS, "/css/index.css", "max-age=3600");
-  HttpServer.serveStatic("/index.js", LittleFS, "/js/index.js", "max-age=3600");
-  HttpServer.serveStatic("/log.css", LittleFS, "/css/log.css", "max-age=3600");
-  HttpServer.serveStatic("/log.js", LittleFS, "/js/log.js", "max-age=3600");
-  HttpServer.serveStatic("/raw.css", LittleFS, "/css/raw.css", "max-age=3600");
-  HttpServer.serveStatic("/raw.js", LittleFS, "/js/raw.js", "max-age=3600");
-  HttpServer.serveStatic("/wlan.css", LittleFS, "/css/wlan.css", "max-age=3600");
-  HttpServer.serveStatic("/wlan.js", LittleFS, "/js/wlan.js", "max-age=3600");
-
-  HttpServer.onNotFound([]() {
-    HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
-  });
+  HttpServer.onNotFound(handleUnknown);
 }
-
 
 String HTML_mod(String txt) {
   if (CC1101_found != true) {

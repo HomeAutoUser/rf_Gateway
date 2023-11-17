@@ -4,7 +4,7 @@ var color1 = value.getPropertyValue('--rssi_good');
 var color2 = value.getPropertyValue('--rssi_bad');
 
 var js = document.createElement("script");
-js.src = '/all.js';
+js.src = '/js/all.js';
 document.head.appendChild(js);
 
 function onMessage(event) {

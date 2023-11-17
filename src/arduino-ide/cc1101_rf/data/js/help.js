@@ -1,5 +1,5 @@
 ﻿var js = document.createElement("script");
-js.src = '/all.js';
+js.src = '/js/all.js';
 document.head.appendChild(js);
 
 function onMessage(event) {

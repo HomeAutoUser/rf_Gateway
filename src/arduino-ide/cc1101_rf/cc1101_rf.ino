@@ -14,22 +14,22 @@
   Der Sketch verwendet 24734 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
   Globale Variablen verwenden 669 Bytes des dynamischen Speichers.
 
-  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 33480
-  . Variables and constants in RAM (global, static), used 39336 / 80192 bytes (49%)
+  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 35496
+  . Variables and constants in RAM (global, static), used 39064 / 80192 bytes (48%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1812     initialized variables
-  ╠══ RODATA   4788     constants
-  ╚══ BSS      32736    zeroed variables
+  ╠══ RODATA   4524     constants
+  ╚══ BSS      32728    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 424476 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 421700 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     424476   code in flash
+  ╚══ IROM     421700   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 953121 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Der Sketch verwendet 951745 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51620 Bytes (15%) des dynamischen Speichers, 276060 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (2023-10-16) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (2023-11-02) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (2023-10-16) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (2023-11-02) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -504,6 +504,18 @@ void loop() {
         ToggleOnOff();
       }
     }
+
+    /* ### to DEBUG ###
+       print RAM-Info, see https://arduino-esp8266.readthedocs.io/en/latest/libraries.html#esp-specific-apis
+    */
+    //    if (uptime % 5 == 0) {
+    //      Serial.print(F("ESP8266 FreeHeap:          "));
+    //      Serial.println(ESP.getFreeHeap());         // free heap size.
+    //      Serial.print(F("ESP8266 MaxFreeBlockSize:  "));
+    //      Serial.println(ESP.getMaxFreeBlockSize()); // largest contiguous free RAM block in the heap, useful for checking heap fragmentation. NOTE: Maximum malloc() -able block will be smaller due to memory manager overheads.
+    //      Serial.print(F("ESP8266 HeapFragmentation: "));
+    //      Serial.println(ESP.getHeapFragmentation()); // fragmentation metric (0% is clean, more than ~50% is not harmless)
+    //    }
   }
 
   if (Serial.available() > 0) { /* Serial Input´s */

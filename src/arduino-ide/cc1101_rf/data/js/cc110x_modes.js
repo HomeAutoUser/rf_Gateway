@@ -4,7 +4,7 @@ var color1 = value.getPropertyValue('--bt_reception_active');
 var color2 = value.getPropertyValue('--bt_reception_enable');
 
 var js = document.createElement("script");
-js.src = '/all.js';
+js.src = '/js/all.js';
 document.head.appendChild(js);
 
 function onMessage(event) {

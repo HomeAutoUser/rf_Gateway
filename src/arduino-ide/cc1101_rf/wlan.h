@@ -212,6 +212,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
   WiFi.mode(WIFI_STA);               /* WIFI set mode */
 
   wpsSuccess = WiFi.beginWPSConfig();
+  //WiFi.waitForConnectResult();
   if (wpsSuccess) {
     String qssid = WiFi.SSID();
     if (qssid.length() > 0 && WiFi.psk().length() > 0) {
