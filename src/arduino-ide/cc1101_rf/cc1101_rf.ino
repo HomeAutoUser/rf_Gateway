@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (2023-11-02) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre SIGNALduino compatible cc1101_rf_Gateway (2023-12-20) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (2023-11-02) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.17pre cc1101_rf_Gateway (2023-12-20) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -310,7 +310,6 @@ void setup() {
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
   Serial.println();
-
   while (!Serial) {
     ; /* wait for serial port to connect. Needed for native USB */
   }
@@ -824,7 +823,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
         MSG_OUTPUTLN(
 #endif
-          F("? Use one of e, fafc, foff, ft, m, t, tob, tos, x, C, C3E, CG, E, I, M, P, R, SN, V, W, WS"));
+          F("e, foff, ft, m, t, tob, tos, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS"));
       }
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':                                                                                         /* command f */
@@ -841,7 +840,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
               MSG_OUTPUTLN(
 #endif
-                F("CC110x_Freq.Offset resets (value is not range -10 to 10 MHz)"));
+                F("CC110x_Freq.Offset resets (The value is not in the range of -10 to 10 MHz)"));
             }
             EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -863,31 +862,6 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CODE_ESP
           MSG_OUTPUTLN(tmp);
 #endif
-        }
-
-        if (buf_input[1] == 'a' && buf_input[2] == 'f' && buf_input[3] == 'c' && !buf_input[5]) { /* command fafc<n> */
-          CC1101_writeReg(CC1101_FSCTRL0, 0);                                                     // 0x0C: FSCTRL0 – Frequency Synthesizer Control
-
-          if (buf_input[4] == '0') { /* command fafc0 */
-#ifdef CODE_AVR
-            Serial.println(F("CC110x_Frequency, Afc off"));
-#elif CODE_ESP
-            tmp = F("CC110x_Frequency, Afc off");
-#endif
-            freqAfc = 0;
-          }
-          if (buf_input[4] == '1') { /* command fafc1 */
-#ifdef CODE_AVR
-            Serial.println(F("CC110x_Frequency, Afc on"));
-#elif CODE_ESP
-            tmp = F("CC110x_Frequency, Afc on");
-#endif
-            freqAfc = 1;
-          }
-#ifdef CODE_ESP
-          MSG_OUTPUTLN(tmp);
-#endif
-          EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
         }
 
         if (buf_input[1] == 't' && !buf_input[2]) { /* command ft */
@@ -1180,9 +1154,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp += F(" (only test)");
           MSG_OUTPUTLN(tmp);
 #endif
-        } else if (buf_input[1] && buf_input[2] && !buf_input[3]) { /* command C<n><n> - Read HEX adress values from Register */
+        } else if (buf_input[1] && buf_input[2] && !buf_input[3]) { /* command C<n><n> - Read HEX adress values from Register, set raw CDA/CEA - disable/enable AFC */
           uint16_t Cret = hexToDec(input.substring(1));
-          if (Cret <= 61) {
+          if (Cret <= 0x3D) {
 #ifdef CODE_AVR
 #ifdef SIGNALduino_comp
             Serial.print('C');
@@ -1215,7 +1189,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             tmp += onlyDecToHex2Digit(CC1101_ret);
             MSG_OUTPUTLN(tmp);
 #endif
-          } else if (Cret == 153) { /* command C99 - ccreg */
+          } else if (Cret == 0x99) { /* command C99 - ccreg */
             CC1101_readBurstReg(uiBuffer, 0x00, 47);
 #ifdef CODE_AVR
             for (uint8_t i = 0; i < 0x2f; i++) {
@@ -1248,7 +1222,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
             MSG_OUTPUTLN(tmp);
 #endif
-          } else if (Cret == 62) { /* command C3E - patable  */
+          } else if (Cret == 0x3E) { /* command C3E - patable  */
             CC1101_readBurstReg(uiBuffer, 0x3E, 8);
 #ifdef CODE_AVR
             Serial.print(F("C3E ="));
@@ -1265,15 +1239,42 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
             MSG_OUTPUTLN(tmp);
 #endif
-          }
-        } else if (buf_input[1] == 'G' && !buf_input[2]) { /* command CG */
-#ifdef CODE_AVR
-          Serial.println(
-#elif CODE_ESP
-          MSG_OUTPUTLN(
+          } else if (Cret == 0xDA || Cret == 0xEA) {      // command CDA/CEA - disable/enable AFC
+            freqAfc = buf_input[1] - 'D';                 // CC110x AFC 0 oder 1
+            freqOffAcc = 0;                               // reset cc110x afc offset
+            freqErrAvg = 0;                               // reset cc110x afc average
+            CC1101_writeReg(CC1101_FSCTRL0, 0);           // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+            EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+            EEPROM.commit();
 #endif
-            F("MS=0;MU=0;MC=0;Mred=0;MN=1;"));
-        } else if (buf_input[1] == '0' && buf_input[2] == 'D' && buf_input[3] == 'n' && buf_input[4] == 'F' && !buf_input[5]) { /* command C0DnF - conf */
+          }
+        } else if (buf_input[1] == 'G' && !buf_input[2]) { /* command CG - get config*/
+          uint8_t mu = 1;
+          uint8_t mn = 0;
+          if (MOD_FORMAT != 3) {  // not OOK
+            mu = 0;
+            mn = 1;
+          }
+#ifdef CODE_AVR
+          Serial.print(F("MS=0;MU="));
+          Serial.print(mu);
+          Serial.print(F(";MC=0;MN="));
+          Serial.print(mn);
+          Serial.print(F(";AFC="));
+          Serial.print(freqAfc);         // CC110x AFC an oder aus
+          Serial.println(F(";Mred=0"));
+#elif CODE_ESP
+          tmp = F("MS=0;MU=");
+          tmp += mu;
+          tmp += F(";MC=0;MN=");
+          tmp += mn;
+          tmp += F(";AFC=");
+          tmp += freqAfc;         // CC110x AFC an oder aus
+          tmp += F(";Mred=0");
+          MSG_OUTPUTLN(tmp);
+#endif
+        } else if (input == "C0DnF") { /* command C0DnF - get ccconf */
 #ifdef CODE_AVR
           Serial.print(F("C0Dn11="));
           for (byte i = 0; i <= 17; i++) {

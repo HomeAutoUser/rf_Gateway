@@ -337,7 +337,7 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
     Modulated = true
     Modulation Format = 2-FSK
     PA Ramping = true
-    Packet Length = 22
+    Packet Length = 23
     Packet Length Mode = Fixed packet length mode. Length configured in PKTLEN register
     Preamble Count = 4
     RX Filter BW = 203.125000
@@ -352,7 +352,7 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x45,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
   0x2D,  // SYNC1               Sync Word, High Byte
   0xD4,  // SYNC0               Sync Word, Low Byte
-  0x16,  // PKTLEN              Packet Length
+  0x17,  // PKTLEN              Packet Length
   0xC0,  // PKTCTRL1            Packet Automation Control
   0x00,  // PKTCTRL0            Packet Automation Control
   0x00,  // ADDR                Device Address
@@ -1743,7 +1743,7 @@ struct Data Registers[] = {
   { Config_Bresser_6in1,  sizeof(Config_Bresser_6in1) / sizeof(Config_Bresser_6in1[0]), "Bresser_6in1", 18  },
 #endif
 #ifdef Bresser_7in1
-  { Config_Bresser_7in1,  sizeof(Config_Bresser_7in1) / sizeof(Config_Bresser_7in1[0]), "Bresser_7in1", 22  },
+  { Config_Bresser_7in1,  sizeof(Config_Bresser_7in1) / sizeof(Config_Bresser_7in1[0]), "Bresser_7in1", 23  },
 #endif
 #ifdef Fine_Offset_WH51_434
   { Config_Fine_Offset_WH51_434,  sizeof(Config_Fine_Offset_WH51_434) / sizeof(Config_Fine_Offset_WH51_434[0]), "Fine_Offset_WH51_434", 14  },

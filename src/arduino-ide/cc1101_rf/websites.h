@@ -454,7 +454,7 @@ void web_cc110x_detail() {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
 
-  byte afc = HttpServer.arg("afc").toInt();
+  String afc = HttpServer.arg("afc");
   String mod = HttpServer.arg("modulation");
   String submit = HttpServer.arg("submit");  // welcher Button wurde betätigt
   String temp;
@@ -493,27 +493,29 @@ void web_cc110x_detail() {
 
     if (submit == "bfreq") {
 #ifdef debug_html
-      Serial.println(F("DB web_cc1101_detail, submit set frequency & offset pushed"));
+      Serial.println(F("DB web_cc1101_detail, submit set frequency, offset, AFC pushed"));
 #endif
-
-      freqAfc = afc;
-      EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
-      freqOffAcc = 0;                      // reset cc110x afc offset
-      freqErrAvg = 0;                      // reset cc110x afc average
-      CC1101_writeReg(CC1101_FSCTRL0, 0);  // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+      // AFC
+      if (afc == "1") {
+        InputCommand(F("CEA")); // enable AFC
+      } else {
+        InputCommand(F("CDA")); // disable AFC
+      }
+      // Frequency Offset
       Freq_offset = freqOff;
+      CC1101_writeReg(CC1101_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
       EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
 #endif
+      // Frequency
       byte value[3];
       web_Freq_Set(freq, value);
-      web_stat = F("Frequency & Frequency Offset set &#10004;");
-
       for (byte i = 0; i < 3; i++) {    /* write value to register 0D,0E,0F */
         CC1101_writeReg(i + 13, value[i]); // write in cc1101
         EEPROMwrite(i + 13, value[i]);     // write in flash
       }
+      web_stat = F("Frequency, frequency offset and AFC set &#10004;");
     } else if (submit == "bbandw") {
 #ifdef debug_html
       Serial.print(F("DB web_cc1101_detail, button set bandwidth pushed with ")); Serial.println(bandw);
@@ -1246,7 +1248,7 @@ void handleUnknown() {
     Serial.print(sent);
     Serial.print(F(", Free Heap: "));
     uint32_t uis = ESP.getFreeHeap();
-    Serial.println(formatBytes(uis).c_str());
+    Serial.println(uis);
 #endif
   } else {
     HttpServer.sendHeader("Location", "/", true);  // Redirect to our html
