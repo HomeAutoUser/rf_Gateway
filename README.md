@@ -17,6 +17,7 @@ System to receive digital signals and provide them to other systems for demodula
   - KOPP_FC
   - Lacrosse_mode1
   - Lacrosse_mode2
+  - OOK - Modulation on 433MHz
   - PCA301
   - Rojaflex
   - X_Sense
