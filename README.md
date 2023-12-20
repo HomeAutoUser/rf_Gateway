@@ -19,6 +19,7 @@ System to receive digital signals and provide them to other systems for demodula
   - Lacrosse_mode2
   - PCA301
   - Rojaflex
+  - X_Sense
   - ... some development´s
 
 
