@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2023-12-20) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.18pre SIGNALduino compatible cc1101_rf_Gateway (2023-12-20) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2023-12-20) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.0.18pre cc1101_rf_Gateway (2023-12-20) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
