@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.0.18pre SIGNALduino compatible cc1101_rf_Gateway (2023-12-20) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-04) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.18pre cc1101_rf_Gateway (2023-12-20) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-04) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -518,7 +518,15 @@ void loop() {
   }
 
   if (Serial.available() > 0) { /* Serial Input´s */
-    msg = Serial.readString();
+
+    while (Serial.available()) {
+#if defined(ARDUINO_ARCH_ESP32)
+      msg += String(char(Serial.read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
+#else
+      msg = Serial.readString();           /* other all | String, strip off any leading/trailing space and \r \n */
+#endif
+    }
+    Serial.flush();
     msg.trim();                 /* String, strip off any leading/trailing space and \r \n */
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
@@ -531,6 +539,7 @@ void loop() {
 #endif
       client_now = 255;         /* current client is set where data is received */
       InputCommand(msg);
+      msg = "";     /* reset variable as it continues to be used elsewhere */
     }
   }
 
@@ -1651,18 +1660,27 @@ void Telnet() {
     if (TelnetClient[i] && TelnetClient[i].connected()) {
       TelnetClient[i].setTimeout(Timeout_Telnet); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
 
-      while (TelnetClient[i].available()) { /* get data from the telnet client */
+      if (TelnetClient[i].available() > 0) {
 #ifdef debug
         Serial.print(F("DB Telnet, Data from session "));
-        Serial.println(i);
+        Serial.print(i);
+        Serial.print(F(" with length "));
+        Serial.println(TelnetClient[i].available());
 #endif
         client_now = i; /* current telnet client is set where data is received */
-        msg = TelnetClient[i].readString();
-        msg.trim();   /* String, strip off any leading/trailing space and \r \n */
+      }
+      while (TelnetClient[i].available()) { /* get data from the telnet client */
+#if defined(ARDUINO_ARCH_ESP8266)
+        msg = TelnetClient[i].readString();           /* only ESP8266 */
+#elif defined(ARDUINO_ARCH_ESP32)
+        msg += String(char(TelnetClient[i].read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
+#endif
+      }
 
-        if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
-          InputCommand(msg);
-        }
+      if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
+        msg.trim();   /* String, strip off any leading/trailing space and \r \n */
+        InputCommand(msg);
+        msg = "";     /* reset variable as it continues to be used elsewhere */
       }
     }
   }
