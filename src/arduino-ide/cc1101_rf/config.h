@@ -94,9 +94,8 @@
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
 #define TELNET_PORT             23                      // Telnet Port
-#define WLAN_ssid_ap            "cc110x-rf-Gateway"     // AP - SSID
 #define WLAN_password_ap        "config-gateway"        // AP - Passwort
-#define WLAN_hostname           "cc110x-rf-Gateway"     // Hostname
+#define WLAN_hostname           "cc110x-rf-Gateway"     // Hostname !!! maximum-length of 25 !!!
 #else
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1

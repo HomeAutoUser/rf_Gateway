@@ -117,10 +117,10 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-04) "; // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-05) "; // PROGMEM used 40004
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-04) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-05) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
@@ -409,9 +409,22 @@ void setup() {
   Serial.print(F("DB setup, read EEPROM - WIFI Adr NetMask  ")); Serial.println(esnm);
 #endif
 
+#ifdef ESP8266
+  uint32_t chipID = ESP.getChipId();
+#endif
+
+#ifdef ESP32
+  uint64_t macAddress = ESP.getEfuseMac();
+  uint64_t macAddressTrunc = macAddress << 40;
+  uint32_t chipID = macAddressTrunc >> 40;
+#endif
+
   OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
+  OwnStationHostname += '-';
+  OwnStationHostname += String(chipID, HEX);
+
   if (EEPROMread(EEPROM_ADDR_AP) == 255 || EEPROMread(EEPROM_ADDR_AP) == 1) {
-    start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
+    start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
   }
   if (EEPROMread(EEPROM_ADDR_AP) == 0) {
     start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));

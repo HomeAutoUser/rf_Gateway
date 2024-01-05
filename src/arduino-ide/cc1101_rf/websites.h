@@ -1008,7 +1008,7 @@ void web_wlan() {
     if (!start_WLAN_WPS()) {
       if (WLAN_AP == 1) {
         appendLogFile(F("WPS failed, start AP"));
-        start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
+        start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
       } else {
         appendLogFile(F("WPS failed, use old WiFi settings"));
         start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));

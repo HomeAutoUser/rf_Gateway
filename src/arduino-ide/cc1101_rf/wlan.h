@@ -12,7 +12,6 @@ extern void appendLogFile(String logText);
 #ifdef ARDUINO_ARCH_ESP32
 static esp_wps_config_t config;
 #define ESP_WPS_MODE WPS_TYPE_PBC
-#define ESP_DEVICE_NAME WLAN_hostname
 #endif
 
 
@@ -118,9 +117,9 @@ void start_WLAN_STATION(String qssid, String qpass) {
       start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
     } else {
 #ifdef debug_wifi
-      Serial.print(F("WIFI connection failed, start AP ")); Serial.println(WLAN_ssid_ap);
+      Serial.print(F("WIFI connection failed, start AP ")); Serial.println(OwnStationHostname);
 #endif
-      start_WLAN_AP(WLAN_ssid_ap, WLAN_password_ap);
+      start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
       WLAN_reco_cnt = 0;
     }
   }
@@ -133,7 +132,9 @@ void start_WLAN_STATION(String qssid, String qpass) {
 void ESP32_wpsInitConfig() {
   //config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;   /* not absolutely necessary for function with core v1 | no longer works on core v2 */
   config.wps_type = ESP_WPS_MODE;
-  strcpy(config.factory_info.device_name, ESP_DEVICE_NAME);
+  char buf[33];
+  OwnStationHostname.toCharArray(buf, OwnStationHostname.length());
+  strcpy(config.factory_info.device_name, buf);
 }
 
 
