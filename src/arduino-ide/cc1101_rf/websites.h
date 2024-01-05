@@ -10,7 +10,7 @@
 
 extern void InputCommand(String input);
 extern String onlyDecToHex2Digit(byte Dec);
-extern boolean freqAfc;
+extern uint8_t freqAfc;
 extern void appendLogFile(String logText);
 /* predefinitions of the functions */
 void WebSocket_cc110x();

@@ -63,6 +63,10 @@
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1   // for compatibility in FHEM
 
+/* !!! Recipient selection !!! */
+#define CC110x  1
+//#define RFM69    1
+
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
 */
@@ -95,7 +99,15 @@
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
 #define TELNET_PORT             23                      // Telnet Port
 #define WLAN_password_ap        "config-gateway"        // AP - Passwort
+
+#if defined(CC110x)
 #define WLAN_hostname           "cc110x-rf-Gateway"     // Hostname !!! maximum-length of 25 !!!
+#elif defined(RFM69)
+#define WLAN_hostname           "rfm69-rf-Gateway"      // Hostname !!! maximum-length of 25 !!!
+#else
+#define WLAN_hostname           "rf-Gateway"            // Hostname !!! maximum-length of 25 !!!
+#endif
+
 #else
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1

@@ -117,7 +117,13 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-05) "; // PROGMEM used 40004
+#if defined(CC110x)
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-05) ";  // PROGMEM used 40004
+#elif defined(RFM69)
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rfm69_rf_Gateway (2024-01-05) ";   // PROGMEM used 40004
+#else
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rf_Gateway (2024-01-05) ";         // PROGMEM used 40004
+#endif
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
 static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-05) ";
@@ -165,7 +171,7 @@ void ToggleOnOff();
 int8_t freqErr = 0;                           // CC110x automatic Frequency Synthesizer Control
 int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synthesizer Control
 float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
-boolean freqAfc = 0;                          // CC110x AFC an oder aus
+uint8_t freqAfc = 0;                          // CC110x AFC an oder aus
 uint32_t msgCount = 0;                        // Nachrichtenzähler über alle empfangenen Nachrichten
 byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
 unsigned long secTick = 0;                    // Zeit, zu der die Uhr zuletzt „tickte“

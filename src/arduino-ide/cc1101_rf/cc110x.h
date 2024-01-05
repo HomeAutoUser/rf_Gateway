@@ -27,7 +27,7 @@ extern int RSSI_dez;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern boolean CC1101_found;
-extern boolean freqAfc;
+extern uint8_t freqAfc;
 extern byte ToggleValues;
 extern byte activated_mode_nr;              // activated protocol in flash
 extern byte activated_mode_packet_length;

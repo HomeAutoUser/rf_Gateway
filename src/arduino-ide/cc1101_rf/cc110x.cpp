@@ -107,6 +107,13 @@ void CC1101_init() { /* CC1101 - Set default´s */
         CC1101_writeBurstReg(uiBuffer, CC1101_PATABLE, 8);
       }
       EEPROM.get(EEPROM_ADDR_AFC, freqAfc);         /* cc110x - afc from EEPROM */
+      if (freqAfc > 1) {
+        freqAfc = 0;
+        EEPROM.put(EEPROM_ADDR_AFC, freqAfc);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+        EEPROM.commit();
+#endif
+      }
       EEPROM.get(EEPROM_ADDR_FOFFSET, Freq_offset); /* cc110x - freq offset from EEPROM */
       if (Freq_offset > 10.0 || Freq_offset < -10.0 || EEPROM.read(EEPROM_ADDR_FOFFSET) == 0xff) {
         Freq_offset = 0;
