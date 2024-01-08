@@ -62,8 +62,8 @@ void web_Freq_Set(long frequency, byte * arr) {   /* frequency set & calculation
   arr[2] = f % 256;
 
 #ifdef debug
-  Serial.print(F("DB web_Freq_Set, input ")); Serial.print(frequency); Serial.println(F(" MHz"));
-  Serial.print(F("DB web_Freq_Set, FREQ2..0 (0D,0E,0F) to ")); Serial.print(onlyDecToHex2Digit(arr[0]));
+  Serial.print(F("[DB] web_Freq_Set, input ")); Serial.print(frequency); Serial.println(F(" MHz"));
+  Serial.print(F("[DB] web_Freq_Set, FREQ2..0 (0D,0E,0F) to ")); Serial.print(onlyDecToHex2Digit(arr[0]));
   Serial.print(' '); Serial.print(onlyDecToHex2Digit(arr[1]));
   Serial.print(' '); Serial.println(onlyDecToHex2Digit(arr[2]));
 #endif
@@ -85,7 +85,7 @@ byte web_Bandw_cal(float input, byte reg_split) {   /* bandwidth calculation fro
   }
 END:
 #ifdef debug
-  Serial.print(F("DB web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(reg_split + bits));
+  Serial.print(F("[DB] web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(reg_split + bits));
 #endif
   return (reg_split + bits);
 }
@@ -125,7 +125,7 @@ void web_Datarate_Set(long datarate, byte * arr) {    /* datarate set & calculat
   arr[0] = ret + DRATE_E;
   arr[1] = DRATE_M;
 #ifdef debug
-  Serial.print(F("DB web_Datarate_Set, MDMCFG4..MDMCFG3 to ")); Serial.print(onlyDecToHex2Digit(arr[0])); Serial.print(onlyDecToHex2Digit(arr[1]));
+  Serial.print(F("[DB] web_Datarate_Set, MDMCFG4..MDMCFG3 to ")); Serial.print(onlyDecToHex2Digit(arr[0])); Serial.print(onlyDecToHex2Digit(arr[1]));
   Serial.print(' '); Serial.print(F(" = ")); Serial.print(datarate); Serial.println(F(" Hz"));
 #endif
 }
@@ -161,7 +161,7 @@ byte web_Devi_Set(float deviation) {    /* Deviation set & calculation */
   }
 
 #ifdef debug
-  Serial.print(F("DB web_Devi_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
+  Serial.print(F("[DB] web_Devi_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
 #endif
   return bitlast;
 }
@@ -169,8 +169,8 @@ byte web_Devi_Set(float deviation) {    /* Deviation set & calculation */
 
 byte web_Mod_set(byte input) {
 #ifdef debug
-  Serial.print(F("DB web_Mod_set, set new value to ")); Serial.println(input);
-  Serial.print(F("DB web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC1101_readReg(0x12, READ_BURST)));
+  Serial.print(F("[DB] web_Mod_set, set new value to ")); Serial.println(input);
+  Serial.print(F("[DB] web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC1101_readReg(0x12, READ_BURST)));
 #endif
 
   /* read all split values | example F1 -> 11110001 */
@@ -232,12 +232,9 @@ uint8_t EEPROMread(int adr) {
 #else
   EEPROM.get(adr, ret);
 #endif
-#ifdef debug_eeprom
-  Serial.print(F("DB EEPROMread, address "));
-  Serial.print(adr);
-  Serial.print(F(" - "));
-  Serial.println(ret);
-#endif
+  //#ifdef debug_eeprom
+  //  Serial.print(F("[DB] EEPROMread, address ")); Serial.print(adr); Serial.print(F(" - ")); Serial.println(ret);
+  //#endif
   return ret;
 }
 
@@ -246,7 +243,7 @@ uint8_t EEPROMread(int adr) {
 // https://blog.hirnschall.net/esp8266-eeprom/ //
 void EEPROMwrite(int adr, byte val) {
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMwrite, at address ")); Serial.print(adr); Serial.print(F(" - ")); Serial.println(val);
+  Serial.print(F("[DB] EEPROMwrite, at address ")); Serial.print(adr); Serial.print(F(" - ")); Serial.println(val);
 #endif
 
 #if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
@@ -273,7 +270,7 @@ String EEPROMread_string(int address) {   /* read String from EEPROM (Address) *
     str += char(value);
   }
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMread_string, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.print(str);
+  Serial.print(F("[DB] EEPROMread_string, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.print(str);
 #endif
   return str;
 }
@@ -281,7 +278,7 @@ String EEPROMread_string(int address) {   /* read String from EEPROM (Address) *
 
 void EEPROMwrite_string(int address, String str) {    /* write String to EEPROM */
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMwrite_string, at address ")); Serial.print(address); Serial.print(F(" - "));
+  Serial.print(F("[DB] EEPROMwrite_string, at address ")); Serial.print(address); Serial.print(F(" - "));
 #endif
 
   for (unsigned int i = 0; i < str.length(); ++i) {
@@ -320,10 +317,10 @@ void EEPROMwrite_long(int address, long value) {
   byte byte1 = ((value >> 24) & 0xFF);
   /* Write the 4 bytes into the eeprom memory. */
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMwrite_long, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.println(byte4);
-  Serial.print(F("DB EEPROMwrite_long, at address ")); Serial.print(address + 1); Serial.print(F(" - ")); Serial.println(byte3);
-  Serial.print(F("DB EEPROMwrite_long, at address ")); Serial.print(address + 2); Serial.print(F(" - ")); Serial.println(byte2);
-  Serial.print(F("DB EEPROMwrite_long, at address ")); Serial.print(address + 3); Serial.print(F(" - ")); Serial.println(byte1);
+  Serial.print(F("[DB] EEPROMwrite_long, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.println(byte4);
+  Serial.print(F("[DB] EEPROMwrite_long, at address ")); Serial.print(address + 1); Serial.print(F(" - ")); Serial.println(byte3);
+  Serial.print(F("[DB] EEPROMwrite_long, at address ")); Serial.print(address + 2); Serial.print(F(" - ")); Serial.println(byte2);
+  Serial.print(F("[DB] EEPROMwrite_long, at address ")); Serial.print(address + 3); Serial.print(F(" - ")); Serial.println(byte1);
 #endif
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
@@ -360,11 +357,11 @@ uint32_t EEPROMread_long(int address) {
 #endif
 
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMread_long, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.println(byte4);
-  Serial.print(F("DB EEPROMread_long, at address ")); Serial.print(address + 1); Serial.print(F(" - ")); Serial.println(byte3);
-  Serial.print(F("DB EEPROMread_long, at address ")); Serial.print(address + 2); Serial.print(F(" - ")); Serial.println(byte2);
-  Serial.print(F("DB EEPROMread_long, at address ")); Serial.print(address + 3); Serial.print(F(" - ")); Serial.println(byte1);
-  Serial.print(F("DB EEPROMread_long, result is "));
+  Serial.print(F("[DB] EEPROMread_long, at address ")); Serial.print(address); Serial.print(F(" - ")); Serial.println(byte4);
+  Serial.print(F("[DB] EEPROMread_long, at address ")); Serial.print(address + 1); Serial.print(F(" - ")); Serial.println(byte3);
+  Serial.print(F("[DB] EEPROMread_long, at address ")); Serial.print(address + 2); Serial.print(F(" - ")); Serial.println(byte2);
+  Serial.print(F("[DB] EEPROMread_long, at address ")); Serial.print(address + 3); Serial.print(F(" - ")); Serial.println(byte1);
+  Serial.print(F("[DB] EEPROMread_long, result is "));
   Serial.println((byte4 & 0xFF) + ((byte3 << 8) & 0xFFFF) + ((byte2 << 16) & 0xFFFFFF) + ((byte1 << 24) & 0xFFFFFFFF));
 #endif
   /* Return the recomposed long by using bitshift. */
@@ -413,7 +410,7 @@ void EEPROMwrite_ipaddress(int address, String ip) {
   str2ip((char*)ip.c_str(), ipa);
 
 #ifdef debug_eeprom
-  Serial.print(F("DB EEPROMwrite_ipaddress, at address ")); Serial.print(address); Serial.print(F(" - "));
+  Serial.print(F("[DB] EEPROMwrite_ipaddress, at address ")); Serial.print(address); Serial.print(F(" - "));
   Serial.print(ipa[0]); Serial.print('.'); Serial.print(ipa[1]); Serial.print('.'); Serial.print(ipa[2]); Serial.print('.'); Serial.println(ipa[3]);
 #endif
 

@@ -36,7 +36,7 @@ String ESP32_wpspin2string(uint8_t a[]) {
 void ESP32_wpsStop() {
   if (esp_wifi_wps_disable()) {
 #ifdef debug_wifi
-    Serial.println("WPS Disable Failed");
+    Serial.println("[DB] WPS Disable Failed");
 #endif
   }
 }
@@ -47,7 +47,7 @@ void ESP32_WiFiEvent(WiFiEvent_t event) {
      https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFiGeneric.h
      https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/esp_event.html */
 #ifdef debug_wifi
-  Serial.printf("WIFI event: %d - ", event);
+  Serial.printf("[DB] WIFI event: %d - ", event);
 #endif
 
   wifiEventId = event;
@@ -76,8 +76,7 @@ void ESP32_WiFiEvent(WiFiEvent_t event) {
       Serial.println("Authentication mode of access point has changed");
       break;
     case ARDUINO_EVENT_WIFI_STA_GOT_IP:                                       // Id: 7
-      Serial.print("Obtained IP address: ");
-      Serial.println(WiFi.localIP());
+      Serial.print("Obtained IP address: "); Serial.println(WiFi.localIP());
       break;
     case ARDUINO_EVENT_WIFI_STA_LOST_IP:
       Serial.println("Lost IP address and IP address is reset to 0");
@@ -168,16 +167,16 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
 
   if (WiFi.softAP(ssid_ap.c_str(), password_ap.c_str(), 1, false, 3) == true) {
 #ifdef debug_wifi
-    Serial.println(F("WIFI AP Ready"));
-    Serial.print(F("WIFI SSID        ")); Serial.println(ssid_ap);
-    Serial.print(F("WIFI IP address  ")); Serial.println(WiFi.softAPIP());
-    Serial.print(F("WIFI HOSTNAME    ")); Serial.println(OwnStationHostname);
+    Serial.println(F("[DB] WIFI AP Ready"));
+    Serial.print(F("[DB] WIFI SSID        ")); Serial.println(ssid_ap);
+    Serial.print(F("[DB] WIFI IP address  ")); Serial.println(WiFi.softAPIP());
+    Serial.print(F("[DB] WIFI HOSTNAME    ")); Serial.println(OwnStationHostname);
 #endif
     WLAN_AP = true;
     appendLogFile(F("WIFI Access point active"));
   } else {
 #ifdef debug_wifi
-    Serial.println(F("WIFI AP Failed!"));
+    Serial.println(F("[DB] WIFI AP Failed!"));
 #endif
     used_dhcp = 1;
     WLAN_AP = false;
@@ -187,11 +186,11 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
 
 void start_WLAN_STATION(String qssid, String qpass) {
 #ifdef debug_html
-  Serial.print(F("DB start_WLAN_STATION, EEPROM DHCP       ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP) == 1 ? F("1 (on)") : F("0 (off)"));
-  Serial.print(F("DB start_WLAN_STATION, EEPROM IP         ")); Serial.println(eip);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM Gateway    ")); Serial.println(esgw);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM DNS        ")); Serial.println(edns);
-  Serial.print(F("DB start_WLAN_STATION, EEPROM SUBNETMASK ")); Serial.println(esnm);
+  Serial.print(F("[DB] start_WLAN_STATION, EEPROM DHCP       ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP) == 1 ? F("1 (on)") : F("0 (off)"));
+  Serial.print(F("[DB] start_WLAN_STATION, EEPROM IP         ")); Serial.println(eip);
+  Serial.print(F("[DB] start_WLAN_STATION, EEPROM Gateway    ")); Serial.println(esgw);
+  Serial.print(F("[DB] start_WLAN_STATION, EEPROM DNS        ")); Serial.println(edns);
+  Serial.print(F("[DB] start_WLAN_STATION, EEPROM SUBNETMASK ")); Serial.println(esnm);
 #endif
 
   WiFi.disconnect();
@@ -204,12 +203,12 @@ void start_WLAN_STATION(String qssid, String qpass) {
 #ifdef debug_wifi
   if (EEPROMread(EEPROM_ADDR_DHCP) == 0) { /* WIFI config static IP */
     if (!WiFi.config(eip, esnm, esgw, edns)) {
-      Serial.println("WIFI Stationsmode WIFI_STA Failed to configure");
+      Serial.println("[DB] WIFI Stationsmode WIFI_STA Failed to configure");
     } else {
-      Serial.println(F("WIFI Stationsmode WIFI_STA configured with static IP"));
+      Serial.println(F("[DB] WIFI Stationsmode WIFI_STA configured with static IP"));
     }
   } else {
-    Serial.println(F("WIFI Stationsmode WIFI_STA configured DHCP"));
+    Serial.println(F("[DB] WIFI Stationsmode WIFI_STA configured DHCP"));
   }
 #endif
 
@@ -228,16 +227,11 @@ void start_WLAN_STATION(String qssid, String qpass) {
     if (wifiSSID == qssid) {
       rssi = WiFi.RSSI(i);
 #ifdef debug_wifi
-      MAC = WiFi.BSSID(i);            // Gets the MAC address of the router
-      foundChannel = WiFi.channel(i); // Gets the Wifi channel
-      Serial.print(wifiSSID);
-      Serial.print(F(", "));
+      MAC = WiFi.BSSID(i);                    // Gets the MAC address of the router
+      foundChannel = WiFi.channel(i);         // Gets the Wifi channel
+      Serial.print(F("[DB] ")); Serial.print(wifiSSID); Serial.print(F(", "));
       sprintf(str, "%02X:%02X:%02X:%02X:%02X:%02X", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
-      Serial.print(str);
-      Serial.print(F(", "));
-      Serial.print(foundChannel);
-      Serial.print(F(", "));
-      Serial.println(rssi);
+      Serial.print(str); Serial.print(F(", ")); Serial.print(foundChannel); Serial.print(F(", ")); Serial.println(rssi);
 #endif
       if (rssi > bestRssi) {
         bestRssi = rssi;
@@ -250,7 +244,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
   WiFi.begin(qssid.c_str(), qpass.c_str(), usedChannel, usedMAC);
 
 #ifdef debug_wifi
-  Serial.print(F("WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
+  Serial.print(F("[DB] WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
 #endif
   delay(50);
 
@@ -259,26 +253,23 @@ void start_WLAN_STATION(String qssid, String qpass) {
     digitalWriteFast(LED, !digitalRead(LED));  // LED toggle
     delay(500);
 #ifdef debug_wifi
-    Serial.print('.');
+    Serial.println('.');
 #endif
   }
-#ifdef debug_wifi
-  Serial.println("");
-#endif
 
   if (WiFi.status() == WL_CONNECTED) {
     digitalWriteFast(LED, LOW);  // LED off
 #ifdef debug_wifi
-    Serial.print(F("WIFI IP address ")); Serial.println(WiFi.localIP());
+    Serial.print(F("[DB] WIFI IP address ")); Serial.println(WiFi.localIP());
 #endif
     if (qssid != EEPROMread_string(EEPROM_ADDR_SSID) || qpass != EEPROMread_string(EEPROM_ADDR_PASS)) {
       EEPROMwrite_string(EEPROM_ADDR_SSID, qssid);
       EEPROMwrite_string(EEPROM_ADDR_PASS, qpass);
       EEPROMwrite(EEPROM_ADDR_AP, 0);
 #ifdef debug_wifi
-      Serial.println(F("WIFI Settings to EEPROM"));
+      Serial.println(F("[DB] WIFI Settings to EEPROM"));
     } else {
-      Serial.println(F("WIFI Settings from EEPROM"));
+      Serial.println(F("[DB] WIFI Settings from EEPROM"));
 #endif
     }
     String logText = F("WIFI connected to ");
@@ -291,17 +282,17 @@ void start_WLAN_STATION(String qssid, String qpass) {
     WLAN_reco_cnt++;
     if (WLAN_reco_cnt <= 1) {
 #ifdef debug_wifi
-      Serial.print(F("WIFI connection failed, use WEB settings, attempt ")); Serial.println(WLAN_reco_cnt);
+      Serial.print(F("[DB] WIFI connection failed, use WEB settings, attempt ")); Serial.println(WLAN_reco_cnt);
 #endif
       start_WLAN_STATION(qssid, qpass);
     } else if (WLAN_reco_cnt <= 3) {
 #ifdef debug_wifi
-      Serial.print(F("WIFI connection failed, use EEPROM settings, attempt ")); Serial.println(WLAN_reco_cnt);
+      Serial.print(F("[DB] WIFI connection failed, use EEPROM settings, attempt ")); Serial.println(WLAN_reco_cnt);
 #endif
       start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
     } else {
 #ifdef debug_wifi
-      Serial.print(F("WIFI connection failed, start AP ")); Serial.println(OwnStationHostname);
+      Serial.print(F("[DB] WIFI connection failed, start AP ")); Serial.println(OwnStationHostname);
 #endif
       start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
       WLAN_reco_cnt = 0;
@@ -312,7 +303,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
 
 bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
 #ifdef debug_wifi
-  Serial.println(F("WIFI WPS started"));
+  Serial.println(F("[DB] WIFI WPS started"));
 #endif
   bool wpsSuccess;
 #ifndef ARDUINO_ARCH_ESP32           /* ESP32 andere WPS Einbindung !!! */
@@ -329,7 +320,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
       wifi_station_set_hostname(chrOwnHostname);
 
 #ifdef debug_wifi
-      Serial.print(F("WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
+      Serial.print(F("[DB] WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
 #endif
       used_dhcp = 1;
       WLAN_AP = false;
@@ -345,7 +336,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
     } else {
       wpsSuccess = false;
 #ifdef debug_wifi
-      Serial.println(F("WIFI WPS connection failed!"));
+      Serial.println(F("[DB] WIFI WPS connection failed!"));
 #endif
     }
   }
@@ -362,13 +353,13 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
   ESP32_wpsInitConfig();
   if (esp_wifi_wps_enable(&config)) {
 #ifdef debug_wifi
-    Serial.println(F("WIFI WPS ERROR: enable failed"));
+    Serial.println(F("[DB] WIFI WPS ERROR: enable failed"));
 #endif
     WLAN_AP = 1;
     return false;
   } else if (esp_wifi_wps_start(0)) {
 #ifdef debug_wifi
-    Serial.println(F("WIFI WPS ERROR: start failed"));
+    Serial.println(F("[DB] WIFI WPS ERROR: start failed"));
 #endif
     WLAN_AP = 1;
     return false;
@@ -379,7 +370,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
     timeOut++;
     if (wifiEventId == 25 || wifiEventId == 26 || timeOut > 1800) { // ARDUINO_EVENT_WPS_ER_FAILED || ARDUINO_EVENT_WPS_ER_TIMEOUT || timeOut > 3 Minuten
 #ifdef debug_wifi
-      Serial.println(F("WIFI WPS ERROR: failed or timeout"));
+      Serial.println(F("[DB] WIFI WPS ERROR: failed or timeout"));
 #endif
       WLAN_AP = 1;
       return false;

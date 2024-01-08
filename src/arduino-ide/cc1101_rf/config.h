@@ -53,12 +53,13 @@
 /* Definitions for program code */
 //#define debug             1    // to debug other
 //#define debug_cc110x      1    // to debug CC1101 routines
-//#define debug_cc110x_ms   1    // to debug CC1101 Marcstate
 //#define debug_cc110x_MU   1    // to debug CC1101 decoder OOK
+//#define debug_cc110x_ms   1    // to debug CC1101 Marcstate
 //#define debug_eeprom      1    // to debug all EEPROM
-//#define debug_html        1    // to all HTML handling
-//#define debug_websocket   1    // to all websocket handling
-//#define debug_wifi        1    // to debug all wifi
+//#define debug_html        1    // to debug HTML handling
+//#define debug_telnet      1    // to debug telnet
+//#define debug_websocket   1    // to debug websocket handling
+//#define debug_wifi        1    // to debug wifi
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1   // for compatibility in FHEM
@@ -100,9 +101,9 @@
 #define TELNET_PORT             23                      // Telnet Port
 #define WLAN_password_ap        "config-gateway"        // AP - Passwort
 
-#if defined(CC110x)
+#ifdef CC110x
 #define WLAN_hostname           "cc110x-rf-Gateway"     // Hostname !!! maximum-length of 25 !!!
-#elif defined(RFM69)
+#elif RFM69
 #define WLAN_hostname           "rfm69-rf-Gateway"      // Hostname !!! maximum-length of 25 !!!
 #else
 #define WLAN_hostname           "rf-Gateway"            // Hostname !!! maximum-length of 25 !!!

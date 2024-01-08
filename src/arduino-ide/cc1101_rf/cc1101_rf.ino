@@ -3,33 +3,33 @@
   All rights reserved.
 
   - Arduino Nano OHNE debug´s | FreeRam -> 993
-  Der Sketch verwendet 22358 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 22482 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
-  Der Sketch verwendet 22446 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino radino CC1101 OHNE debug´s | FreeRam -> ?
-  Der Sketch verwendet 24734 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
-  Globale Variablen verwenden 669 Bytes des dynamischen Speichers.
+  Der Sketch verwendet 24890 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
+  Globale Variablen verwenden 675 Bytes des dynamischen Speichers.
 
   - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 35496
-  . Variables and constants in RAM (global, static), used 39064 / 80192 bytes (48%)
+  . Variables and constants in RAM (global, static), used 39068 / 80192 bytes (48%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1812     initialized variables
-  ╠══ RODATA   4524     constants
+  ╠══ RODATA   4528     constants
   ╚══ BSS      32728    zeroed variables
   . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
   ╚══ IRAM     28787    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 421700 / 1048576 bytes (40%)
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 421992 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     421700   code in flash
+  ╚══ IROM     421992   code in flash
 
-  - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 198524
-  Der Sketch verwendet 951745 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 235052
+  Der Sketch verwendet 951885 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51620 Bytes (15%) des dynamischen Speichers, 276060 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
@@ -53,6 +53,7 @@
   C99               - get ccreg99
   C3E               - get ccpatable
   C0DnF             - get ccconf
+  CEA, CDA          - enable / disable automatic frequency control for FSK modulation
   E                 - reads complete EEPROM
   I                 - current status
   M                 - all available registers (mode´s)
@@ -117,9 +118,9 @@ const char compile_date[] = __DATE__ " " __TIME__;
     3) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-#if defined(CC110x)
+#ifdef CC110x
 static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-08) ";  // PROGMEM used 40004
-#elif defined(RFM69)
+#elif RFM69
 static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-08) ";   // PROGMEM used 40004
 #else
 static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rf_Gateway (2024-01-08) ";         // PROGMEM used 40004
@@ -330,26 +331,26 @@ void setup() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
   /* interner Flash-Speicher */
   if (!LittleFS.begin()) {
-#if defined debug
-    Serial.println(F("LittleFS mount failed, formatting filesystem"));
+#ifdef debug
+    Serial.println(F("[DB] LittleFS mount failed, formatting filesystem"));
 #endif
     LittleFS.format();
   } else {
-#if defined debug
-    Serial.println(F("Starting LittleFS"));
+#ifdef debug
+    Serial.println(F("[DB] Starting LittleFS"));
 #endif
   }
   File logFile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
   if (!logFile) {
-#if defined debug
-    Serial.println(F("LittleFS file creation failed"));
+#ifdef debug
+    Serial.println(F("[DB] LittleFS file creation failed"));
 #endif
   } else {
     String logText = F("Systemstart (");
-#if defined(ARDUINO_ARCH_ESP8266)
+#ifdef ARDUINO_ARCH_ESP8266
     logText += ESP.getResetReason();
 #endif
-#if defined(ARDUINO_ARCH_ESP32)
+#ifdef ARDUINO_ARCH_ESP32
     esp_reset_reason_t reset_reason = esp_reset_reason();
     logText += reset_reason;
     logText += F(" - ");
@@ -406,14 +407,14 @@ void setup() {
   }
 
 #ifdef debug_wifi
-  Serial.print(F("WIFI SSID         ")); Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
-  Serial.print(F("WIFI Passwort     ")); Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
-  Serial.print(F("WIFI DHCP         ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
-  Serial.print(F("WIFI AP           ")); Serial.println(EEPROMread(EEPROM_ADDR_AP));
-  Serial.print(F("WIFI Adr IP       ")); Serial.println(eip);
-  Serial.print(F("WIFI Adr Gateway  ")); Serial.println(esgw);
-  Serial.print(F("WIFI Adr DNS      ")); Serial.println(edns);
-  Serial.print(F("WIFI Adr NetMask  ")); Serial.println(esnm);
+  Serial.print(F("[DB] WIFI SSID         ")); Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
+  Serial.print(F("[DB] WIFI Passwort     ")); Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
+  Serial.print(F("[DB] WIFI DHCP         ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
+  Serial.print(F("[DB] WIFI AP           ")); Serial.println(EEPROMread(EEPROM_ADDR_AP));
+  Serial.print(F("[DB] WIFI Adr IP       ")); Serial.println(eip);
+  Serial.print(F("[DB] WIFI Adr Gateway  ")); Serial.println(esgw);
+  Serial.print(F("[DB] WIFI Adr DNS      ")); Serial.println(edns);
+  Serial.print(F("[DB] WIFI Adr NetMask  ")); Serial.println(esnm);
 #endif
 
 #ifdef ESP8266
@@ -445,40 +446,40 @@ void setup() {
   /* Arduino OTA Update – Update über WLAN */
 #ifdef debug_wifi
   ArduinoOTA.onStart([]() {
-    Serial.println(F("OTA - Start"));
+    Serial.println(F("[DB] OTA - Start"));
   });
   ArduinoOTA.onEnd([]() {
     Serial.println("\nEnd");
   });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    Serial.printf("[DB] Progress: %u%%\r", (progress / (total / 100)));
   });
   ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("OTA - Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) Serial.println(F("OTA - Auth Failed"));
-    else if (error == OTA_BEGIN_ERROR) Serial.println(F("OTA - Begin Failed"));
-    else if (error == OTA_CONNECT_ERROR) Serial.println(F("OTA - Connect Failed"));
-    else if (error == OTA_RECEIVE_ERROR) Serial.println(F("OTA - Receive Failed"));
-    else if (error == OTA_END_ERROR) Serial.println(F("OTA - End Failed"));
+    Serial.printf("[DB] OTA - Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println(F("[DB] OTA - Auth Failed"));
+    else if (error == OTA_BEGIN_ERROR) Serial.println(F("[DB] OTA - Begin Failed"));
+    else if (error == OTA_CONNECT_ERROR) Serial.println(F("[DB] OTA - Connect Failed"));
+    else if (error == OTA_RECEIVE_ERROR) Serial.println(F("[DB] OTA - Receive Failed"));
+    else if (error == OTA_END_ERROR) Serial.println(F("[DB] OTA - End Failed"));
   });
-  Serial.println(F("Starting OTA"));
+  Serial.println(F("[DB] Starting OTA"));
 #endif
   ArduinoOTA.begin();
 
-#ifdef debug_wifi
-  Serial.println(F("Starting TelnetServer"));
+#ifdef debug_telnet
+  Serial.println(F("[DB] Starting TelnetServer"));
 #endif
   TelnetServer.begin();
   TelnetServer.setNoDelay(true);
 
 #ifdef debug_wifi
-  Serial.println(F("Starting HttpServer"));
+  Serial.println(F("[DB] Starting HttpServer"));
 #endif
   routing_websites(); /* load all routes to site´s */
   HttpServer.begin();
 
 #ifdef debug_wifi
-  Serial.println(F("Starting WebSocket"));
+  Serial.println(F("[DB] Starting WebSocket"));
 #endif
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
@@ -486,11 +487,11 @@ void setup() {
 
 #ifdef debug
 #if defined(ARDUINO_AVR_NANO) || defined(ARDUINO_RADINOCC1101) || defined(ARDUINO_AVR_PRO)
-  Serial.println(F("-> found board without WLAN"));
+  Serial.println(F("[DB] -> found board without WLAN"));
 #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
-  Serial.println(F("-> found board with WLAN"));
+  Serial.println(F("[DB] -> found board with WLAN"));
 #else
-  Serial.println(F("-> found unknown board"));
+  Serial.println(F("[DB] -> found unknown board"));
 #endif    // END ARDUINO_AVR_NANO || ARDUINO_RADINOCC1101 || ARDUINO_AVR_PRO
 #endif    // END debug
 
@@ -545,7 +546,7 @@ void loop() {
   if (Serial.available() > 0) { /* Serial Input´s */
 
     while (Serial.available()) {
-#if defined(ARDUINO_ARCH_ESP32)
+#ifdef ARDUINO_ARCH_ESP32
       msg += String(char(Serial.read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
 #else
       msg = Serial.readString();           /* other all | String, strip off any leading/trailing space and \r \n */
@@ -557,9 +558,9 @@ void loop() {
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
 #ifdef CODE_AVR
-      Serial.print(F("DB loop, Serial.available > 0 ")); Serial.println(msg);
+      Serial.print(F("[DB] Serial.available > 0 ")); Serial.println(msg);
 #elif CODE_ESP
-      MSG_OUTPUT(F("DB loop, Serial.available > 0 ")); MSG_OUTPUTLN(msg);
+      MSG_OUTPUT(F("[DB] Serial.available > 0 ")); MSG_OUTPUTLN(msg);
 #endif
 #endif
       client_now = 255;         /* current client is set where data is received */
@@ -592,9 +593,9 @@ void loop() {
 #endif
 #ifdef debug_cc110x_ms      /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-    Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+    Serial.print(F("[DB] CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+    MSG_OUTPUTALL(F("[DB] CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
     uint8_t uiBuffer[activated_mode_packet_length];                             // Array anlegen
@@ -646,9 +647,9 @@ void loop() {
 
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
-    Serial.print(F(";A="));     // ";A=" | "; FREQAFC="
+    Serial.print(F(";A="));         // ";A=" | "; FREQAFC="
 #elif CODE_ESP
-    msg += F(";A=");            // ";A=" | "; FREQAFC="
+    msg += F(";A=");                // ";A=" | "; FREQAFC="
 #endif
 #else
 #ifdef CODE_AVR
@@ -688,9 +689,9 @@ void loop() {
     //Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-    Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+    Serial.print(F("[DB] CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-    MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+    MSG_OUTPUTALL(F("[DB] CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -771,9 +772,9 @@ void ToggleOnOff() {
   detachInterrupt(digitalPinToInterrupt(GDO2));
 #ifdef debug
 #ifdef CODE_AVR
-  Serial.print(F("DB Toggle | ToggleCnt=")); Serial.print((ToggleCnt + 1)); Serial.print(F(" ToggleValues=")); Serial.println(ToggleValues);
+  Serial.print(F("[DB] ToggleCnt=")); Serial.print((ToggleCnt + 1)); Serial.print(F(" ToggleValues=")); Serial.println(ToggleValues);
 #elif CODE_ESP
-  String tmp = F("DB Toggle | ToggleCnt="); tmp += (ToggleCnt + 1); tmp += F(" ToggleValues="); tmp += ToggleValues;
+  String tmp = F("[DB] ToggleCnt="); tmp += (ToggleCnt + 1); tmp += F(" ToggleValues="); tmp += ToggleValues;
   MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -783,9 +784,9 @@ void ToggleOnOff() {
     ToggleValues = RegistersCntMax - 1;
 #ifdef debug
 #ifdef CODE_AVR
-    Serial.print(F("DB Toggle | ToggleAll activated_mode_nr ")); Serial.print(activated_mode_nr); Serial.print(F(", ToggleValues ")); Serial.println(ToggleValues);
+    Serial.print(F("[DB] ToggleAll activated_mode_nr ")); Serial.print(activated_mode_nr); Serial.print(F(", ToggleValues ")); Serial.println(ToggleValues);
 #elif CODE_ESP
-    tmp = F("DB Toggle | ToggleAll activated_mode_nr "); tmp += activated_mode_nr; tmp += F(", ToggleValues "); tmp += ToggleValues;
+    tmp = F("[DB] ToggleAll activated_mode_nr "); tmp += activated_mode_nr; tmp += F(", ToggleValues "); tmp += ToggleValues;
     MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -798,7 +799,7 @@ void ToggleOnOff() {
 #elif CODE_ESP
       MSG_OUTPUTLN(
 #endif
-        F("Toggle STOPPED, no toggle values in togglebank!"));
+        F("[DB] Toggle STOPPED, no toggle values in togglebank!"));
 #endif
       return;
     }
@@ -807,9 +808,9 @@ void ToggleOnOff() {
 
 #ifdef debug
 #ifdef CODE_AVR
-  Serial.print(F("Toggle (output all)    | switched to ")); Serial.println(Registers[activated_mode_nr].name);
+  Serial.print(F("[DB] Toggle (output all)    | switched to ")); Serial.println(Registers[activated_mode_nr].name);
 #elif CODE_ESP
-  tmp = F("Toggle (output all)    | switched to "); tmp += Registers[activated_mode_nr].name;
+  tmp = F("[DB] Toggle (output all)    | switched to "); tmp += Registers[activated_mode_nr].name;
   MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -832,21 +833,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
   char buf_input[input.length() + 1];
   input.toCharArray(buf_input, input.length() + 1); /* String to char in buf */
 #ifdef debug
+  for (byte i = 0; i < input.length(); i++) {
 #ifdef CODE_AVR
-  Serial.print(F("DB InputCommand, String = ")); Serial.println(input);
-
-  for (byte i = 0; i < input.length(); i++) {
     Serial.print(F("DB InputCommand [")); Serial.print(i); Serial.print(F("] = ")); Serial.println(buf_input[i]);
-  }
 #elif CODE_ESP
-  tmp += F("DB InputCommand, String "); tmp += input;
-  MSG_OUTPUTLN(tmp);
-
-  for (byte i = 0; i < input.length(); i++) {
-    tmp = F("DB InputCommand ["); tmp += i; tmp += F("] = "); tmp += buf_input[i];
+    tmp = F("[DB] InputCommand ["); tmp += i; tmp += F("] = "); tmp += buf_input[i];
     MSG_OUTPUTLN(tmp);
-  }
 #endif
+  }
 #endif
 
   switch (buf_input[0]) { /* integrated ? m t tob tos x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
@@ -954,9 +948,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-                Serial.print(F("DB CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+                Serial.print(F("[DB] CC1101_MARCSTATE ")); Serial.println(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-                MSG_OUTPUTALL(F("DB CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
+                MSG_OUTPUTALL(F("[DB] CC1101_MARCSTATE ")); MSG_OUTPUTALLLN(CC1101_readReg(CC1101_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
 
@@ -966,7 +960,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 MSG_OUTPUTLN(
 #endif
-                  F("DB Input, writes all current values to EEPROM"));
+                  F("[DB] Input, writes all current values to EEPROM"));
 #endif
                 for (byte i = 0; i < Registers[int_substr1_serial].length; i++) { /* write register values ​​to flash */
                   EEPROMwrite(i, pgm_read_byte_near(Registers[int_substr1_serial].reg_val + i));
@@ -1044,9 +1038,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               if (input.substring(3, 4).toInt() <= 3) { /* command tob<0-3> */
 #ifdef debug
 #ifdef CODE_AVR
-                Serial.print(F("DB Input | cmd tob ")); Serial.print(input.substring(3)); Serial.println(F(" accepted"));
+                Serial.print(F("[DB] Input | cmd tob ")); Serial.print(input.substring(3)); Serial.println(F(" accepted"));
 #elif CODE_ESP
-                tmp = F("DB Input | cmd tob "); tmp += input.substring(3); tmp += F(" accepted");
+                tmp = F("[DB] Input | cmd tob "); tmp += input.substring(3); tmp += F(" accepted");
                 MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -1091,9 +1085,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               } else if (buf_input[3] == '9' && buf_input[4] == '9' && !buf_input[5]) { /* command tob99 -> reset togglebank */
 #ifdef debug
 #ifdef CODE_AVR
-                Serial.println(F("DB Input, togglebank reset { - | - | - | - }"));
+                Serial.println(F("[DB] Input, togglebank reset { - | - | - | - }"));
 #elif CODE_ESP
-                tmp = F("DB Input, togglebank reset { - | - | - | - }\n");
+                tmp = F("[DB] Input, togglebank reset { - | - | - | - }\n");
 #endif
 #endif
                 for (byte i = 0; i < 4; i++) {
@@ -1460,7 +1454,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
           MSG_OUTPUTLN(
 #endif
-            F("DB Input | SN; raw message"));
+            F("[DB] Input | SN; raw message"));
 #endif
           // SN;R=5;D=9A46036AC8D3923EAEB470AB; //
 
@@ -1478,18 +1472,18 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               if (strstr(ptr, "R=")) {
 #ifdef debug
 #ifdef CODE_AVR
-                Serial.print(F("DB Input | SN; found ")); Serial.println(ptr);
+                Serial.print(F("[DB] Input | SN; found ")); Serial.println(ptr);
 #elif CODE_ESP
-                tmp = F("DB Input | SN; found "); tmp += ptr; tmp += '\n';
+                tmp = F("[DB] Input | SN; found "); tmp += ptr; tmp += '\n';
 #endif
 #endif
                 if ((String(ptr).substring(2)).toInt() != 0) { /* repeats */
                   rep = (String(ptr).substring(2)).toInt();
 #ifdef debug
 #ifdef CODE_AVR
-                  Serial.println(F("DB Input | SN; takeover repeats"));
+                  Serial.println(F("[DB] Input | SN; takeover repeats"));
 #elif CODE_ESP
-                  tmp += F("DB Input | SN; takeover repeats");
+                  tmp += F("[DB] Input | SN; takeover repeats");
                   MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -1497,10 +1491,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               } else if (strstr(ptr, "D=")) { /* datapart */
 #ifdef debug
 #ifdef CODE_AVR
-                Serial.print(F("DB Input | SN; found ")); Serial.print(ptr);
+                Serial.print(F("[DB] Input | SN; found ")); Serial.print(ptr);
                 Serial.print(F(" with length ")); Serial.println(String(ptr + 2).length());
 #elif CODE_ESP
-                tmp = F("DB Input | SN; found "); tmp += ptr; tmp += F(" with length "); tmp += String(ptr + 2).length();
+                tmp = F("[DB] Input | SN; found "); tmp += ptr; tmp += F(" with length "); tmp += String(ptr + 2).length();
                 MSG_OUTPUTLN(tmp);
 #endif
 #endif
@@ -1533,10 +1527,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               digitalWriteFast(LED, HIGH);  // LED on
 #ifdef debug
 #ifdef CODE_AVR
-              Serial.print(F("DB Input | SN; valid and ready to send with repeats=")); Serial.println(rep);
+              Serial.print(F("[DB] Input | SN; valid and ready to send with repeats=")); Serial.println(rep);
               Serial.println(senddata);
 #elif CODE_ESP
-              tmp = F("DB Input | SN; valid and ready to send with repeats="); tmp += rep;
+              tmp = F("[DB] Input | SN; valid and ready to send with repeats="); tmp += rep;
               MSG_OUTPUTLN(tmp);
               MSG_OUTPUTLN(senddata);
 #endif
@@ -1586,10 +1580,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2]) && isHexadecimalDigit(buf_input[3]) && isHexadecimalDigit(buf_input[4])) {
 #ifdef debug
 #ifdef CODE_AVR
-            Serial.print(F("DB Serial Input | cmd W with adr=")); MSG_OUTPUT_DecToHEX_lz(adr_dec);
+            Serial.print(F("[DB] Serial Input | cmd W with adr=")); MSG_OUTPUT_DecToHEX_lz(adr_dec);
             Serial.print(F(" and value=")); MSG_OUTPUT_DecToHEX_lz(val_dec); Serial.println("");
 #elif CODE_ESP
-            tmp = F("DB Serial Input | cmd W with adr="); tmp += onlyDecToHex2Digit(adr_dec);
+            tmp = F("[DB] Serial Input | cmd W with adr="); tmp += onlyDecToHex2Digit(adr_dec);
             tmp += F(" and value="); tmp += onlyDecToHex2Digit(val_dec);
             MSG_OUTPUTLN(tmp);
 #endif
@@ -1651,15 +1645,14 @@ void Telnet() {
         String logText = F("Telnet client ");
         logText += TelnetClient[i].remoteIP().toString();
         logText += F(" connected");
-#ifdef debug_wifi
+#ifdef debug_telnet
+        Serial.print(F("[DB] "));
         Serial.println(logText);
 #endif
         appendLogFile(logText); // append to logfile
         TelnetClient[i].flush(); /* clear input buffer, else you get strange characters */
-        TelnetClient[i].print(F("Telnet session ("));
-        TelnetClient[i].print(i);
-        TelnetClient[i].print(F(") started to "));
-        TelnetClient[i].println(TelnetClient[i].localIP());
+        TelnetClient[i].print(F("Telnet session (")); TelnetClient[i].print(i);
+        TelnetClient[i].print(F(") started to ")); TelnetClient[i].println(TelnetClient[i].localIP());
 
         TELNET_CLIENTS_ARRAY[i] = 1;
         TELNET_ConnectionEstablished = true;
@@ -1687,18 +1680,16 @@ void Telnet() {
       TelnetClient[i].setTimeout(Timeout_Telnet); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
 
       if (TelnetClient[i].available() > 0) {
-#ifdef debug
-        Serial.print(F("DB Telnet, Data from session "));
-        Serial.print(i);
-        Serial.print(F(" with length "));
+#ifdef debug_telnet
+        Serial.print(F("[DB] Telnet, Data from session ")); Serial.print(i); Serial.print(F(" with length "));
         Serial.println(TelnetClient[i].available());
 #endif
         client_now = i; /* current telnet client is set where data is received */
       }
       while (TelnetClient[i].available()) { /* get data from the telnet client */
-#if defined(ARDUINO_ARCH_ESP8266)
+#ifdef ARDUINO_ARCH_ESP8266
         msgTelnet = TelnetClient[i].readString();           /* only ESP8266 */
-#elif defined(ARDUINO_ARCH_ESP32)
+#elif ARDUINO_ARCH_ESP32
         msgTelnet += String(char(TelnetClient[i].read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
 #endif
       }
@@ -1717,26 +1708,26 @@ void Telnet() {
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
   switch (type) {
     case WStype_PING: /* pong will be send automatically */
-#if defined debug_websocket
-      Serial.printf("WebSocket [%u] connected - Ping!\n", num);
+#ifdef debug_websocket
+      Serial.printf("[DB] WebSocket [%u] connected - Ping!\n", num);
 #endif
       break;
     case WStype_PONG: /* // answer to a ping we send */
-#if defined debug_websocket
-      Serial.printf("WebSocket [%u] connected - Pong!\n", num);
+#ifdef debug_websocket
+      Serial.printf("[DB] WebSocket [%u] connected - Pong!\n", num);
 #endif
       break;
     case WStype_DISCONNECTED:
-#if defined debug_websocket
-      Serial.printf("WebSocket [%u] disconnected!\n", num);
+#ifdef debug_websocket
+      Serial.printf("[DB] WebSocket [%u] disconnected!\n", num);
 #endif
       webSocketSite[num] = "";
       break;
     case WStype_CONNECTED:
       {
-#if defined debug_websocket
+#ifdef debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("WebSocket [%u] connected - from %d.%d.%d.%d%s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        Serial.printf("[DB] WebSocket [%u] connected - from %d.%d.%d.%d%s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         webSocketSite[num] = (char * )payload;
         webSocket.sendTXT(num, "Connected"); /* send message to client */
@@ -1747,13 +1738,9 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       // webSocket.broadcastTXT("message here"); /* send data to all connected clients */
       {
 
-        // ohne:        . Variables and constants in RAM (global, static), used 39348 / 80192 bytes (49%)
-        // mit:         . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
-        // umstellung:  . Variables and constants in RAM (global, static), used 39400 / 80192 bytes (49%)
-
-#if defined debug_websocket
+#ifdef debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        Serial.printf("[DB] WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         String payloadString = (const char *)payload;
         if (payloadString == "cc110x_detail") {
@@ -1807,14 +1794,14 @@ inline void doDetect() {        /* Pulsprüfung und Weitergabe an Patternprüfun
   valid &= (MsgLen == MsgLenMax) ? false : true;
   valid &= ( (first > -t_maxP) && (first < t_maxP) );         // if low maxPulse detected, start processMessage()
 #ifdef debug_cc110x_MU
-  Serial.print(F("PC:")); Serial.print(PatNmb); Serial.print(F(" ML:")); Serial.print(MsgLen); Serial.print(F(" v:")); Serial.print(valid);
+  Serial.print(F("[DB] PC:")); Serial.print(PatNmb); Serial.print(F(" ML:")); Serial.print(MsgLen); Serial.print(F(" v:")); Serial.print(valid);
   Serial.print(F(" | ")); Serial.print(first); Serial.print(F("    ")); Serial.println(last);
 #endif
   if (valid) {
     findpatt(first);
   } else {
 #ifdef debug_cc110x_MU
-    Serial.println(F("-- RESET --"));
+    Serial.println(F("[DB] -- RESET --"));
 #endif
     MSGBuild();
   }
@@ -1881,6 +1868,7 @@ void findpatt(int val) {      /* Patterneinsortierung */
       ArPaSu[i] = val;
       MsgLen++;
 #ifdef debug_cc110x_MU
+      Serial.print(F("[DB] "));
       Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" msgL0: ")); Serial.print(val);
       Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
 #endif
@@ -1893,6 +1881,7 @@ void findpatt(int val) {      /* Patterneinsortierung */
       ArPaSu[i] += val;
       MsgLen++;
 #ifdef debug_cc110x_MU
+      Serial.print(F("[DB] "));
       Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa T: ")); Serial.print(val);
       Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
 #endif
@@ -1905,13 +1894,15 @@ void findpatt(int val) {      /* Patterneinsortierung */
       ArPaSu[i + 1] += val;
       MsgLen++;
 #ifdef debug_cc110x_MU
+      Serial.print(F("[DB] "));
       Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa f: ")); Serial.print(val);
       Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
 #endif
       break;
     } else if (i == (PatMaxCnt - 1)) {  /* ### Anzahl vor definierter Pattern ist erreicht ### */
 #ifdef debug_cc110x_MU
-      Serial.print(F("PC max! | MsgLen: ")); Serial.print(MsgLen); Serial.print(F(" | MsgLenMin: ")); Serial.println(MsgLenMin);
+      Serial.print(F("[DB] ")); Serial.print(F("PC max! | MsgLen: "));
+      Serial.print(MsgLen); Serial.print(F(" | MsgLenMin: ")); Serial.println(MsgLenMin);
 #endif
       PatMAX = 1;
       MSGBuild();
