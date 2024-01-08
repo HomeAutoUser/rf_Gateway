@@ -8,5 +8,6 @@ String WLAN_encryptionType(uint8_t i);
 #ifdef ARDUINO_ARCH_ESP32
 void ESP32_WiFiEvent();
 void ESP32_wpsInitConfig();
+void ESP32_wpsStop();
 String ESP32_wpspin2string(uint8_t a[]);
 #endif

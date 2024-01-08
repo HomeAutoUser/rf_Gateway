@@ -1021,13 +1021,24 @@ void web_wlan() {
     delay(250);
 
     if (!start_WLAN_WPS()) {
-      if (WLAN_AP == 1) {
+      if (WLAN_AP == 1 && EEPROMread(EEPROM_ADDR_SSID) == 255) {
+#ifdef debug_wifi
+        Serial.println(F("WIFI WPS failed, start AP"));
+#endif
         appendLogFile(F("WPS failed, start AP"));
         start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
       } else {
+#ifdef debug_wifi
+        Serial.println(F("WIFI WPS failed, use old WiFi settings"));
+#endif
         appendLogFile(F("WPS failed, use old WiFi settings"));
         start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
       }
+    } else {
+#ifdef debug_wifi
+        Serial.println(F("WIFI WPS worked, new WiFi settings"));
+#endif      
+      start_WLAN_STATION(EEPROMread_string(EEPROM_ADDR_SSID), EEPROMread_string(EEPROM_ADDR_PASS));
     }
   }
   /* Button wps - END */

@@ -12,13 +12,159 @@ extern void appendLogFile(String logText);
 #ifdef ARDUINO_ARCH_ESP32
 static esp_wps_config_t config;
 #define ESP_WPS_MODE WPS_TYPE_PBC
+/* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WPS/WPS.ino */
+
+void ESP32_wpsInitConfig() {
+  //config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;   /* not absolutely necessary for function with core v1 | no longer works on core v2 */
+  config.wps_type = ESP_WPS_MODE;
+  char buf[33];
+  OwnStationHostname.toCharArray(buf, OwnStationHostname.length());
+  strcpy(config.factory_info.device_name, buf);
+}
+
+
+String ESP32_wpspin2string(uint8_t a[]) {
+  char wps_pin[9];
+  for (int i = 0; i < 8; i++) {
+    wps_pin[i] = a[i];
+  }
+  wps_pin[8] = '\0';
+  return (String)wps_pin;
+}
+
+
+void ESP32_wpsStop() {
+  if (esp_wifi_wps_disable()) {
+#ifdef debug_wifi
+    Serial.println("WPS Disable Failed");
 #endif
+  }
+}
+
+
+void ESP32_WiFiEvent(WiFiEvent_t event) {
+  /* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFi.cpp
+     https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFiGeneric.h
+     https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/esp_event.html */
+#ifdef debug_wifi
+  Serial.printf("WIFI event: %d - ", event);
+#endif
+
+  wifiEventId = event;
+  switch (event) {
+#ifdef debug_wifi
+    case ARDUINO_EVENT_WIFI_READY:                                            // Id: 0
+      Serial.println("WiFi interface ready");
+      break;
+    case ARDUINO_EVENT_WIFI_SCAN_DONE:                                        // Id: 1
+      Serial.println("Completed scan for access points");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_START:                                        // Id: 2
+      Serial.println("WiFi client started");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_STOP:
+      Serial.println("WiFi clients stopped");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_CONNECTED:                                    // Id: 4
+      Serial.print("Connected to access point "); Serial.print(WiFi.SSID());
+      Serial.print(", MAC: "); Serial.println(WiFi.BSSIDstr());
+      break;
+    case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:                                 // Id: 5
+      Serial.println("Disconnected from WiFi access point");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
+      Serial.println("Authentication mode of access point has changed");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP:                                       // Id: 7
+      Serial.print("Obtained IP address: ");
+      Serial.println(WiFi.localIP());
+      break;
+    case ARDUINO_EVENT_WIFI_STA_LOST_IP:
+      Serial.println("Lost IP address and IP address is reset to 0");
+      break;
+#endif
+    case ARDUINO_EVENT_WPS_ER_SUCCESS:                                        // Id: 24
+#ifdef debug_wifi
+      Serial.println("WiFi Protected Setup (WPS): succeeded in enrollee mode");
+#endif
+      ESP32_wpsStop();
+      delay(10);
+      WiFi.begin();
+      break;
+    case ARDUINO_EVENT_WPS_ER_FAILED:
+#ifdef debug_wifi
+      Serial.println("WiFi Protected Setup (WPS): failed in enrollee mode");
+#endif
+      ESP32_wpsStop();
+      break;
+    case ARDUINO_EVENT_WPS_ER_TIMEOUT:                                        // Id: 26
+#ifdef debug_wifi
+      Serial.println("WiFi Protected Setup (WPS): timeout in enrollee mode");
+#endif
+      ESP32_wpsStop();
+      break;
+#ifdef debug_wifi
+    case ARDUINO_EVENT_WPS_ER_PIN:
+      Serial.println("WiFi Protected Setup (WPS): pin code in enrollee mode");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_START:
+      Serial.println("WiFi access point started");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_STOP:
+      Serial.println("WiFi access point stopped");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_STACONNECTED:                                  // Id: 12
+      Serial.println("Client connected");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_STADISCONNECTED:
+      Serial.println("Client disconnected");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_STAIPASSIGNED:                                 // Id: 14
+      Serial.println("Assigned IP address to client");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_PROBEREQRECVED:
+      Serial.println("Received probe request");
+      break;
+    case ARDUINO_EVENT_WIFI_AP_GOT_IP6:
+      Serial.println("AP IPv6 is preferred");
+      break;
+    case ARDUINO_EVENT_WIFI_STA_GOT_IP6:
+      Serial.println("STA IPv6 is preferred");
+      break;
+    case ARDUINO_EVENT_ETH_GOT_IP6:
+      Serial.println("Ethernet IPv6 is preferred");
+      break;
+    case ARDUINO_EVENT_ETH_START:
+      Serial.println("Ethernet started");
+      break;
+    case ARDUINO_EVENT_ETH_STOP:
+      Serial.println("Ethernet stopped");
+      break;
+    case ARDUINO_EVENT_ETH_CONNECTED:
+      Serial.println("Ethernet connected");
+      break;
+    case ARDUINO_EVENT_ETH_DISCONNECTED:
+      Serial.println("Ethernet disconnected");
+      break;
+    case ARDUINO_EVENT_ETH_GOT_IP:
+      Serial.println("Obtained IP address");
+      break;
+#endif
+    default: break;
+  }
+}
+#endif // Ende #ifdef ARDUINO_ARCH_ESP32
 
 
 void start_WLAN_AP(String ssid_ap, String password_ap) {
   WiFi.disconnect();
   WiFi.mode(WIFI_AP);                /* WIFI set mode */
+
+#ifdef ARDUINO_ARCH_ESP8266
   WiFi.hostname(OwnStationHostname); /* WIFI set hostname */
+#elif ARDUINO_ARCH_ESP32
+  WiFi.setHostname(OwnStationHostname.c_str()); /* WIFI set hostname */
+#endif
 
   if (WiFi.softAP(ssid_ap.c_str(), password_ap.c_str(), 1, false, 3) == true) {
 #ifdef debug_wifi
@@ -49,8 +195,11 @@ void start_WLAN_STATION(String qssid, String qpass) {
 #endif
 
   WiFi.disconnect();
+#ifdef ARDUINO_ARCH_ESP8266
   WiFi.mode(WIFI_STA);               /* WIFI set mode */
-  WiFi.hostname(OwnStationHostname); /* WIFI set hostname */
+#elif ARDUINO_ARCH_ESP32
+  WiFi.mode(WIFI_MODE_STA);
+#endif
 
 #ifdef debug_wifi
   if (EEPROMread(EEPROM_ADDR_DHCP) == 0) { /* WIFI config static IP */
@@ -63,7 +212,42 @@ void start_WLAN_STATION(String qssid, String qpass) {
     Serial.println(F("WIFI Stationsmode WIFI_STA configured DHCP"));
   }
 #endif
-  WiFi.begin(qssid.c_str(), qpass.c_str()); /* WIFI connect to ssid with password */
+
+  int16_t WifiNetworks = WiFi.scanNetworks(); // scan network
+  uint8_t* usedMAC = {};                      // Gets the MAC address of the router
+  uint8_t usedChannel = 0;
+  int16_t rssi = -999;
+  int16_t bestRssi = -999;
+#ifdef debug_wifi
+  uint8_t* MAC;                               // Gets the MAC address of the router
+  char str[18];                               // for sprintf IP-Address and MAC
+  uint8_t foundChannel = 0;
+#endif
+  for (int8_t i = 0; i < WifiNetworks; ++i) {
+    String wifiSSID = WiFi.SSID(i);
+    if (wifiSSID == qssid) {
+      rssi = WiFi.RSSI(i);
+#ifdef debug_wifi
+      MAC = WiFi.BSSID(i);            // Gets the MAC address of the router
+      foundChannel = WiFi.channel(i); // Gets the Wifi channel
+      Serial.print(wifiSSID);
+      Serial.print(F(", "));
+      sprintf(str, "%02X:%02X:%02X:%02X:%02X:%02X", MAC[0], MAC[1], MAC[2], MAC[3], MAC[4], MAC[5]);
+      Serial.print(str);
+      Serial.print(F(", "));
+      Serial.print(foundChannel);
+      Serial.print(F(", "));
+      Serial.println(rssi);
+#endif
+      if (rssi > bestRssi) {
+        bestRssi = rssi;
+        usedMAC = WiFi.BSSID(i);        // Gets the MAC address of the router
+        usedChannel = WiFi.channel(i);  // Gets the Wifi channel
+      }
+    }
+  }
+
+  WiFi.begin(qssid.c_str(), qpass.c_str(), usedChannel, usedMAC);
 
 #ifdef debug_wifi
   Serial.print(F("WIFI try connect to ")); Serial.print(qssid); Serial.print(F(" with ")); Serial.println(qpass);
@@ -126,83 +310,6 @@ void start_WLAN_STATION(String qssid, String qpass) {
 }
 
 
-#ifdef ARDUINO_ARCH_ESP32
-/* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/examples/WPS/WPS.ino */
-
-void ESP32_wpsInitConfig() {
-  //config.crypto_funcs = &g_wifi_default_wps_crypto_funcs;   /* not absolutely necessary for function with core v1 | no longer works on core v2 */
-  config.wps_type = ESP_WPS_MODE;
-  char buf[33];
-  OwnStationHostname.toCharArray(buf, OwnStationHostname.length());
-  strcpy(config.factory_info.device_name, buf);
-}
-
-
-String ESP32_wpspin2string(uint8_t a[]) {
-  char wps_pin[9];
-  for (int i = 0; i < 8; i++) {
-    wps_pin[i] = a[i];
-  }
-  wps_pin[8] = '\0';
-  return (String)wps_pin;
-}
-
-
-#ifdef ESP32_core_v1
-void ESP32_WiFiEvent(WiFiEvent_t event, system_event_info_t info) {
-#else
-void ESP32_WiFiEvent(WiFiEvent_t event, arduino_event_info_t info) {
-#endif
-  /* https://github.com/espressif/arduino-esp32/blob/master/libraries/WiFi/src/WiFi.cpp
-     https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/esp_event.html
-     https://github.com/pycom/pycom-esp-idf/blob/master/components/esp32/include/esp_event.h */
-  switch (event) {
-    case SYSTEM_EVENT_STA_START:
-      Serial.println(F("Station Mode Started"));
-      break;
-    case SYSTEM_EVENT_STA_GOT_IP:
-      Serial.println("Connected to :" + String(WiFi.SSID()));
-      Serial.print(F("Got IP: ")); Serial.println(WiFi.localIP());
-      break;
-    case SYSTEM_EVENT_STA_DISCONNECTED:
-      Serial.println(F("Disconnected from station, attempting reconnection"));
-      WiFi.reconnect();
-      break;
-    case SYSTEM_EVENT_STA_WPS_ER_SUCCESS:
-      Serial.println("WPS Successful, stopping WPS and connecting to: " + String(WiFi.SSID()));
-      EEPROMwrite_string(EEPROM_ADDR_SSID, WiFi.SSID());       // write String to EEPROM
-      EEPROMwrite_string(EEPROM_ADDR_PASS, WiFi.psk());        // write String to EEPROM
-      EEPROMwrite(EEPROM_ADDR_AP, 0);
-      esp_wifi_wps_disable();
-      delay(10);
-      WiFi.begin();
-      break;
-    case SYSTEM_EVENT_STA_WPS_ER_FAILED:
-      Serial.println(F("WPS Failed, retrying"));
-      esp_wifi_wps_disable();
-      esp_wifi_wps_enable(&config);
-      esp_wifi_wps_start(0);
-      break;
-    case SYSTEM_EVENT_STA_WPS_ER_TIMEOUT:
-      Serial.println(F("WPS Timeout, retrying"));
-      esp_wifi_wps_disable();
-      esp_wifi_wps_enable(&config);
-      esp_wifi_wps_start(0);
-      break;
-    case SYSTEM_EVENT_STA_WPS_ER_PIN:
-#ifdef ESP32_core_v1
-      Serial.println("WPS_PIN = " + ESP32_wpspin2string(info.sta_er_pin.pin_code));
-#else
-      Serial.println("WPS_PIN = " + ESP32_wpspin2string(info.wps_er_pin.pin_code));
-#endif
-      break;
-    default:
-      break;
-  }
-}
-#endif // Ende #ifdef ARDUINO_ARCH_ESP32
-
-
 bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
 #ifdef debug_wifi
   Serial.println(F("WIFI WPS started"));
@@ -222,7 +329,7 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
       wifi_station_set_hostname(chrOwnHostname);
 
 #ifdef debug_wifi
-      Serial.print(F("DB WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
+      Serial.print(F("WIFI WPS connected to: ")); Serial.print(qssid); Serial.print(F(" with secret key ")); Serial.println(WiFi.psk());
 #endif
       used_dhcp = 1;
       WLAN_AP = false;
@@ -253,8 +360,38 @@ bool start_WLAN_WPS() { /* WPS works in STA (Station mode) only. */
   WiFi.onEvent(ESP32_WiFiEvent);
   WiFi.mode(WIFI_MODE_STA);
   ESP32_wpsInitConfig();
-  esp_wifi_wps_enable(&config);
-  esp_wifi_wps_start(0);
+  if (esp_wifi_wps_enable(&config)) {
+#ifdef debug_wifi
+    Serial.println(F("WIFI WPS ERROR: enable failed"));
+#endif
+    WLAN_AP = 1;
+    return false;
+  } else if (esp_wifi_wps_start(0)) {
+#ifdef debug_wifi
+    Serial.println(F("WIFI WPS ERROR: start failed"));
+#endif
+    WLAN_AP = 1;
+    return false;
+  }
+
+  uint16_t timeOut = 0;
+  while (wifiEventId != 7) { // wait for event ARDUINO_EVENT_WIFI_STA_GOT_IP
+    timeOut++;
+    if (wifiEventId == 25 || wifiEventId == 26 || timeOut > 1800) { // ARDUINO_EVENT_WPS_ER_FAILED || ARDUINO_EVENT_WPS_ER_TIMEOUT || timeOut > 3 Minuten
+#ifdef debug_wifi
+      Serial.println(F("WIFI WPS ERROR: failed or timeout"));
+#endif
+      WLAN_AP = 1;
+      return false;
+    }
+    delay(100);
+  }
+
+  Serial.println("WPS Successful, stopping WPS and connecting to: " + String(WiFi.SSID()));
+  EEPROMwrite_string(EEPROM_ADDR_SSID, WiFi.SSID());       // write String to EEPROM
+  EEPROMwrite_string(EEPROM_ADDR_PASS, WiFi.psk());        // write String to EEPROM
+  EEPROMwrite(EEPROM_ADDR_AP, 0);
+
   wpsSuccess = true;
 #endif // #ifndef ARDUINO_ARCH_ESP32           /* ESP32 andere WPS Einbindung !!! */
   return wpsSuccess;

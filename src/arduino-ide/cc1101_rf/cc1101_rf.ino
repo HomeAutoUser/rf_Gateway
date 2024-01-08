@@ -118,11 +118,11 @@ const char compile_date[] = __DATE__ " " __TIME__;
 */
 
 #if defined(CC110x)
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-08) ";  // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-08) ";  // PROGMEM used 40004
 #elif defined(RFM69)
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rfm69_rf_Gateway (2024-01-08) ";   // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-08) ";   // PROGMEM used 40004
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rf_Gateway (2024-01-08) ";         // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rf_Gateway (2024-01-08) ";         // PROGMEM used 40004
 #endif
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
@@ -193,6 +193,7 @@ ADC_MODE(ADC_VCC);                  // vcc read
 #include <WiFi.h>
 #include <esp_wps.h>
 WebServer HttpServer(80);
+int wifiEventId;
 #endif
 /* --- END - all SETTINGS for the ESP32-- ----------------------------------------------------------------------------------------------------- */
 
@@ -404,15 +405,15 @@ void setup() {
     EEPROMwrite(EEPROM_ADDR_DHCP, 1);
   }
 
-#ifdef debug
-  Serial.print(F("DB setup, read EEPROM - WIFI SSID         ")); Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
-  Serial.print(F("DB setup, read EEPROM - WIFI Passwort     ")); Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
-  Serial.print(F("DB setup, read EEPROM - WIFI DHCP         ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
-  Serial.print(F("DB setup, read EEPROM - WIFI AP           ")); Serial.println(EEPROMread(EEPROM_ADDR_AP));
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr IP       ")); Serial.println(eip);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr Gateway  ")); Serial.println(esgw);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr DNS      ")); Serial.println(edns);
-  Serial.print(F("DB setup, read EEPROM - WIFI Adr NetMask  ")); Serial.println(esnm);
+#ifdef debug_wifi
+  Serial.print(F("WIFI SSID         ")); Serial.println(EEPROMread_string(EEPROM_ADDR_SSID));
+  Serial.print(F("WIFI Passwort     ")); Serial.println(EEPROMread_string(EEPROM_ADDR_PASS));
+  Serial.print(F("WIFI DHCP         ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP));
+  Serial.print(F("WIFI AP           ")); Serial.println(EEPROMread(EEPROM_ADDR_AP));
+  Serial.print(F("WIFI Adr IP       ")); Serial.println(eip);
+  Serial.print(F("WIFI Adr Gateway  ")); Serial.println(esgw);
+  Serial.print(F("WIFI Adr DNS      ")); Serial.println(edns);
+  Serial.print(F("WIFI Adr NetMask  ")); Serial.println(esnm);
 #endif
 
 #ifdef ESP8266
@@ -425,9 +426,14 @@ void setup() {
   uint32_t chipID = macAddressTrunc >> 40;
 #endif
 
+  WiFi.disconnect();
   OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
   OwnStationHostname += '-';
   OwnStationHostname += String(chipID, HEX);
+  WiFi.setHostname(OwnStationHostname.c_str()); /* WIFI set hostname */
+#ifdef ARDUINO_ARCH_ESP32
+  WiFi.onEvent(ESP32_WiFiEvent);                /* all WiFi-Events */
+#endif
 
   if (EEPROMread(EEPROM_ADDR_AP) == 255 || EEPROMread(EEPROM_ADDR_AP) == 1) {
     start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
