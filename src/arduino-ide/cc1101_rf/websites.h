@@ -50,13 +50,28 @@ const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to h
                                    "<meta charset=\"utf-8\">"
                                    "<meta name=\"viewport\" content=\"width=device-width\">"
                                    "<link rel=\"stylesheet\" href=\"css/all.css\" type=\"text/css\">"
-                                   "<title>cc110x_rf_Gateway</title>"
+                                   "<title>"
+#ifdef CC110x
+                                   "cc110x_rf_Gateway"
+#elif RFM69
+                                   "rfm69_rf_Gateway"
+#else
+                                   "rf_Gateway"
+#endif
+                                   "</title>"
                                  };
 
 
 const char html_head_table[] PROGMEM = { "<table>"          /* added table on head with all links */
-                                         "<tr><th class=\"hth\" colspan=\"6\">cc110x_rf_Gateway</th></tr>"
-                                         "<tr>"
+                                         "<tr><th class=\"hth\" colspan=\"6\">"
+#ifdef CC110x
+                                         "cc110x_rf_Gateway"
+#elif RFM69
+                                         "rfm69_rf_Gateway"
+#else
+                                         "rf_Gateway"
+#endif
+                                         "</th></tr><tr>"
                                          "<td class=\"htd\"><a href=\"/\" class=\"HOME\">HOME</a></td>"
                                          "<td class=\"htd\"><a href=\"cc110x\" class=\"CC110x\">CC110x</a></td>"
                                          "<td class=\"htd\"><a href=\"html/help.html\" class=\"Help\">Help</a></td>"

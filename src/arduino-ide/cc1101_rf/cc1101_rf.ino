@@ -118,11 +118,11 @@ const char compile_date[] = __DATE__ " " __TIME__;
 */
 
 #if defined(CC110x)
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-05) ";  // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-08) ";  // PROGMEM used 40004
 #elif defined(RFM69)
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rfm69_rf_Gateway (2024-01-05) ";   // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rfm69_rf_Gateway (2024-01-08) ";   // PROGMEM used 40004
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rf_Gateway (2024-01-05) ";         // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rf_Gateway (2024-01-08) ";         // PROGMEM used 40004
 #endif
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
@@ -1675,6 +1675,7 @@ void Telnet() {
     }
   }
 
+  String msgTelnet = "";
   for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
     if (TelnetClient[i] && TelnetClient[i].connected()) {
       TelnetClient[i].setTimeout(Timeout_Telnet); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
@@ -1690,16 +1691,16 @@ void Telnet() {
       }
       while (TelnetClient[i].available()) { /* get data from the telnet client */
 #if defined(ARDUINO_ARCH_ESP8266)
-        msg = TelnetClient[i].readString();           /* only ESP8266 */
+        msgTelnet = TelnetClient[i].readString();           /* only ESP8266 */
 #elif defined(ARDUINO_ARCH_ESP32)
-        msg += String(char(TelnetClient[i].read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
+        msgTelnet += String(char(TelnetClient[i].read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
 #endif
       }
 
-      if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
-        msg.trim();   /* String, strip off any leading/trailing space and \r \n */
-        InputCommand(msg);
-        msg = "";     /* reset variable as it continues to be used elsewhere */
+      if (msgTelnet.length() > 0 && msgTelnet.length() <= BUFFER_MAX) {
+        msgTelnet.trim();   /* String, strip off any leading/trailing space and \r \n */
+        InputCommand(msgTelnet);
+        msgTelnet = "";
       }
     }
   }
