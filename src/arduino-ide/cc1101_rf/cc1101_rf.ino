@@ -119,15 +119,15 @@ const char compile_date[] = __DATE__ " " __TIME__;
 */
 
 #ifdef CC110x
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-08) ";  // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible cc1101_rf_Gateway (2024-01-09) ";
 #elif RFM69
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-08) ";   // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rfm69_rf_Gateway (2024-01-09) ";
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rf_Gateway (2024-01-08) ";         // PROGMEM used 40004
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 SIGNALduino compatible rf_Gateway (2024-01-09) ";
 #endif
 byte CC1101_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-05) ";
+static const char PROGMEM TXT_VERSION[] = "V 1.0.17 cc1101_rf_Gateway (2024-01-09) ";
 byte CC1101_writeReg_offset = 0;
 #endif
 
