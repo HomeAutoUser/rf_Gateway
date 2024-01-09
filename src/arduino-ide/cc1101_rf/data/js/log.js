@@ -18,7 +18,7 @@ function onMessage(event) {
 
    if (found) {
     var timeNew = now - (uptime * 1000) + (found[1]*1000);
-    let res = line.replace(/\d+ - /g, getDateTime(timeNew) + " - ");
+    let res = line.replace(/^\d+ - /g, getDateTime(timeNew) + " - ");
     elms[i].innerText = res;
     elms[i].hidden = false;
    }
