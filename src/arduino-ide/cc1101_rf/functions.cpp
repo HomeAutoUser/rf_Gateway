@@ -54,7 +54,7 @@ float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculati
 }
 
 
-void web_Freq_Set(long frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC1101_writeRegFor */
+void web_Freq_Set(long frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC110x_writeRegFor */
   int32_t f;
   f = (frequency + Freq_offset * 1000) / 26000 * 65536;
   arr[0] = f / 65536;
@@ -98,7 +98,7 @@ void web_Datarate_Set(long datarate, byte * arr) {    /* datarate set & calculat
     datarate = 1621830;
   }
 
-  int ret = CC1101_readReg(0x10, READ_BURST);
+  int ret = CC110x_readReg(0x10, READ_BURST);
   ret = ret & 0xf0;
 
   float DRATE_E = datarate * ( pow(2, 20) ) / 26000000.0;
@@ -170,11 +170,11 @@ byte web_Devi_Set(float deviation) {    /* Deviation set & calculation */
 byte web_Mod_set(byte input) {
 #ifdef debug
   Serial.print(F("[DB] web_Mod_set, set new value to ")); Serial.println(input);
-  Serial.print(F("[DB] web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC1101_readReg(0x12, READ_BURST)));
+  Serial.print(F("[DB] web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC110x_readReg(0x12, READ_BURST)));
 #endif
 
   /* read all split values | example F1 -> 11110001 */
-  byte reg12_6_4 = CC1101_readReg(0x12, READ_BURST) & 0x8f ;
+  byte reg12_6_4 = CC110x_readReg(0x12, READ_BURST) & 0x8f ;
   byte output = input << 4;
   output = output | reg12_6_4;
   return output;

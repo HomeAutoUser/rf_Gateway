@@ -1,7 +1,7 @@
 #include "config.h"
 #include "register.h"
 
-/* all available CC1101 registers to set */
+/* all available CC110x registers to set */
 const uint8_t Config_Default[] PROGMEM = {
   /*
     Address Config = No address check
@@ -1722,12 +1722,12 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   access to reg value´s                     -> Registers[x].reg_val[x]
   access to reg length                      -> Registers[x].length
   access to reg name TXT                    -> Registers[x].name
-  access to packet_length from protocol     -> Registers[x].packet_length
+  access to PKTLEN from protocol            -> Registers[x].PKTLEN
 
   Registername        Registerlength,   Name from           Packet
   to access values                      register to View    length
 
-  reg_val             length            name                packet_length
+  reg_val             length            name                PKTLEN
 
 */
 
@@ -1801,7 +1801,7 @@ struct Data Registers[] = {
   /* under development END */
 };
 
-String activated_mode_name;                                           // name of active mode from array
+String ReceiveModeName;                                               // name of active mode from array
 float Freq_offset = 0;                                                /* cc110x - Frequency offset */
-uint8_t RegistersCntMax = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
+uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
 uint8_t ToggleArray[4] = {255, 255, 255, 255};

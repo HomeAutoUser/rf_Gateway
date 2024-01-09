@@ -9,7 +9,7 @@ function onMessage(event) {
     websocket.send('help');
   }
 
-  if (event.data.includes('CC1101,no') ) {
-    document.getElementById("StatCC1101").innerHTML = "";
+  if (event.data.includes('CC110x,no') ) {
+    document.getElementById("StatCC110x").innerHTML = "";
   }
 }

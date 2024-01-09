@@ -5,7 +5,7 @@ document.head.appendChild(js);
 function onMessage(event) {
  console.log('received message: ' + event.data);
 
- if(event.data.includes('CC1101') ) {
+ if(event.data.includes('CC110x') ) {
   const obj=event.data.split(',');
   document.getElementById("RAM").innerHTML = obj[1];
   document.getElementById("Uptime").innerHTML = obj[2];

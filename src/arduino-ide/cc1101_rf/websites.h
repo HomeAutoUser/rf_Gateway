@@ -20,9 +20,9 @@ void WebSocket_cc110x_detail();
 void WebSocket_cc110x_modes();
 /* {"MODE":"Lacrosse_mode2", "MODE_id":"12"} */
 void WebSocket_help();
-/* {"CC1101":"no"} */
+/* {"CC110x":"no"} */
 void WebSocket_index();
-/* {"CC1101":"yes","RAM":"29496","Uptime":"305","MSGcnt":"37","WLANdB":"-60"} */
+/* {"CC110x":"yes","RAM":"29496","Uptime":"305","MSGcnt":"37","WLANdB":"-60"} */
 void WebSocket_raw(const String & html_raw);
 /* {"MODE":"Lacrosse_mode2", "RAW":"9706636AE6", "RSSI":"-52", "AFC":"-15"} */
 void routing_websites();
@@ -153,7 +153,7 @@ void web_cc110x() {
                "<table>"
                "<tr>");
 
-  if (CC1101_found) {
+  if (ChipFound) {
     website += F("<th class=\"thf\">general information</th>"
                  "<th class=\"thf\"><a href=\"cc110x_detail\">detail information</a></th>"
                  "<th class=\"thf\"><a href=\"cc110x_modes\">receive modes</a></th>");
@@ -162,18 +162,18 @@ void web_cc110x() {
   }
 
   website += F("</tr><tr><td>chip detected</td><td colspan=\"2\">");
-  CC1101_found ? website += F("yes") : website += F("no");
+  ChipFound ? website += F("yes") : website += F("no");
   website += F("</td></tr>");
 
-  if (CC1101_found) {
+  if (ChipFound) {
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
-    website += onlyDecToHex2Digit(CC1101_readReg(CC1101_PARTNUM, READ_BURST));
+    website += onlyDecToHex2Digit(CC110x_readReg(CC110x_PARTNUM, READ_BURST));
     website += F("</td></tr><tr><td>chip VERSION</td><td colspan=\"2\">");
-    website += onlyDecToHex2Digit(CC1101_readReg(CC1101_VERSION, READ_BURST));
+    website += onlyDecToHex2Digit(CC110x_readReg(CC110x_VERSION, READ_BURST));
     website += F("</td></tr><tr><td>chip MARCSTATE</td><td colspan=\"2\"><span id=\"MS\">");
-    website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
+    website += CC110x_readReg(CC110x_MARCSTATE, READ_BURST);
     website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
-    website += activated_mode_name;
+    website += ReceiveModeName;
     website += F("</span></td></tr><tr><td>ToggleBank 0-3</td><td colspan=\"2\"><span id=\"ToggleBank\">{&emsp;");
 
     for (byte i = 0; i < 4; i++) {
@@ -195,7 +195,7 @@ void web_cc110x() {
 
 
 void web_cc110x_modes() {
-  if (!CC1101_found) {
+  if (!ChipFound) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
   String InputCmd;                                        // preparation for processing | control html InputCommand
@@ -209,10 +209,10 @@ void web_cc110x_modes() {
 
 #ifdef debug_html
   Serial.println(F("###########################"));
-  Serial.print(F("[DB] web_cc1101_modes, submit ")); Serial.println(submit);
-  Serial.print(F("[DB] web_cc1101_modes, tb ")); Serial.println(tb);
-  Serial.print(F("[DB] web_cc1101_modes, tgtime ")); Serial.println(tgtime);
-  Serial.print(F("[DB] web_cc1101_modes, count ")); Serial.println(countargs);
+  Serial.print(F("[DB] web_cc110x_modes, submit ")); Serial.println(submit);
+  Serial.print(F("[DB] web_cc110x_modes, tb ")); Serial.println(tb);
+  Serial.print(F("[DB] web_cc110x_modes, tgtime ")); Serial.println(tgtime);
+  Serial.print(F("[DB] web_cc110x_modes, count ")); Serial.println(countargs);
 #endif
 
   if (countargs != 0) {
@@ -221,7 +221,7 @@ void web_cc110x_modes() {
       InputCmd += submit;
 
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_modes, set reception ")); Serial.println(submit);
+      Serial.print(F("[DB] web_cc110x_modes, set reception ")); Serial.println(submit);
 #endif
       web_status = F("<td class=\"in grn\">");
       web_status += Registers[submit.toInt()].name;
@@ -235,7 +235,7 @@ void web_cc110x_modes() {
       InputCmd = F("tos");
       InputCmd += tgtime;
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_modes, set toggletime to ")); Serial.println(tgtime);
+      Serial.print(F("[DB] web_cc110x_modes, set toggletime to ")); Serial.println(tgtime);
 #endif
       if (tgtime >= ToggleTimeMin && tgtime <= ToggleTimeMax) {
         web_status = F("<tr><td class=\"in grn\"><span id=\"stat\">toggle started &#10004;</span></td>");
@@ -257,14 +257,14 @@ void web_cc110x_modes() {
       tb_val = tb.substring(2).toInt();   /* 0 and 1 */
 
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_modes, set togglebank ")); Serial.print(tb_nr);
+      Serial.print(F("[DB] web_cc110x_modes, set togglebank ")); Serial.print(tb_nr);
       Serial.print(F(" to ")); Serial.println(tb_val);
 #endif
 
       web_status = F("<tr><td class=\"in grn\">");
       if (tb_nr <= 3) {
 #ifdef debug_html
-        Serial.print(F("[DB] web_cc1101_modes, togglebank value "));
+        Serial.print(F("[DB] web_cc110x_modes, togglebank value "));
         Serial.println(tb_val == ToggleArray[tb_nr] ? F("same") : F("differing"));
 #endif
         InputCmd = F("tob");  // preparation for processing
@@ -302,7 +302,7 @@ void web_cc110x_modes() {
                "<th class=\"thf1\"><a href=\"cc110x_detail\">detail information</a></th>"
                "<th class=\"thf1\">receive modes</th></tr>");
 
-  for (byte i = 0; i < RegistersCntMax; i++) {
+  for (byte i = 0; i < RegistersMaxCnt; i++) {
     website += F("<tr><td>");
     if (i <= 9) {
       website += F("&nbsp;");
@@ -330,7 +330,7 @@ void web_cc110x_modes() {
 
     website += F("</td><td class=\"ac\"><button class=");
 
-    if (activated_mode_name == Registers[i].name) {
+    if (ReceiveModeName == Registers[i].name) {
       website += F("\"btn2\"");
     } else {
       website += F("\"btn\"");
@@ -355,7 +355,7 @@ void web_cc110x_modes() {
 
 
 void web_cc110x_detail_export() {
-  if (!CC1101_found) {
+  if (!ChipFound) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
 
@@ -372,11 +372,11 @@ void web_cc110x_detail_export() {
     }
     if (i < 41) {
       website += onlyDecToHex2Digit(i);
-      website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+      website += onlyDecToHex2Digit(CC110x_readReg(i, READ_BURST));
       website += ' ';
       website_p2 += '\'';
       website_p2 += onlyDecToHex2Digit(i);
-      website_p2 += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+      website_p2 += onlyDecToHex2Digit(CC110x_readReg(i, READ_BURST));
       website_p2 += '\'';
       if (i != 40) {
         website_p2 += ',';
@@ -392,7 +392,7 @@ void web_cc110x_detail_export() {
 
 
 void web_cc110x_detail_import() {
-  if (!CC1101_found) {
+  if (!ChipFound) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
@@ -434,7 +434,7 @@ void web_cc110x_detail_import() {
           if (Adr > 0x2E) {
             break;
           } else {
-            CC1101_writeReg(Adr, Val);    // write in cc1101
+            CC110x_writeReg(Adr, Val);    // write in cc110x
             EEPROMwrite(Adr, Val);        // write in flash
           }
           Part = "";                      // reset String
@@ -465,7 +465,7 @@ void web_cc110x_detail_import() {
 
 
 void web_cc110x_detail() {
-  if (!CC1101_found) {
+  if (!ChipFound) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
 
@@ -485,14 +485,14 @@ void web_cc110x_detail() {
   if (countargs != 0) {
 #ifdef debug_html
     Serial.println(F("###########################"));
-    Serial.print(F("[DB] web_cc1101_detail, submit     ")); Serial.println(submit);
-    Serial.print(F("[DB] web_cc1101_detail, countargs  ")); Serial.println(countargs);
-    Serial.print(F("[DB] web_cc1101_detail, freq       ")); Serial.println(freq);
-    Serial.print(F("[DB] web_cc1101_detail, freqOff    ")); Serial.println(freqOff);
-    Serial.print(F("[DB] web_cc1101_detail, bandw      ")); Serial.println(bandw);
-    Serial.print(F("[DB] web_cc1101_detail, datarate   ")); Serial.println(datarate);
-    Serial.print(F("[DB] web_cc1101_detail, deviation  ")); Serial.println(deviation);
-    Serial.print(F("[DB] web_cc1101_detail, modulation ")); Serial.println(mod);
+    Serial.print(F("[DB] web_cc110x_detail, submit     ")); Serial.println(submit);
+    Serial.print(F("[DB] web_cc110x_detail, countargs  ")); Serial.println(countargs);
+    Serial.print(F("[DB] web_cc110x_detail, freq       ")); Serial.println(freq);
+    Serial.print(F("[DB] web_cc110x_detail, freqOff    ")); Serial.println(freqOff);
+    Serial.print(F("[DB] web_cc110x_detail, bandw      ")); Serial.println(bandw);
+    Serial.print(F("[DB] web_cc110x_detail, datarate   ")); Serial.println(datarate);
+    Serial.print(F("[DB] web_cc110x_detail, deviation  ")); Serial.println(deviation);
+    Serial.print(F("[DB] web_cc110x_detail, modulation ")); Serial.println(mod);
 #endif
 
     if (countargs > 0) { /* register values from browser | set registers button -> into array */
@@ -501,14 +501,14 @@ void web_cc110x_detail() {
         temp += i;
         web_regData[i] = hexToDec(HttpServer.arg(temp));
 #ifdef debug_html
-        Serial.print(F("[DB] web_cc1101_detail, web_regData[")); Serial.print(i); Serial.print(F("] = ")); Serial.println(web_regData[i]);
+        Serial.print(F("[DB] web_cc110x_detail, web_regData[")); Serial.print(i); Serial.print(F("] = ")); Serial.println(web_regData[i]);
 #endif
       }
     }
 
     if (submit == "bfreq") {
 #ifdef debug_html
-      Serial.println(F("[DB] web_cc1101_detail, submit set frequency, offset, AFC pushed"));
+      Serial.println(F("[DB] web_cc110x_detail, submit set frequency, offset, AFC pushed"));
 #endif
       // AFC
       if (afc == "1") {
@@ -518,7 +518,7 @@ void web_cc110x_detail() {
       }
       // Frequency Offset
       Freq_offset = freqOff;
-      CC1101_writeReg(CC1101_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+      CC110x_writeReg(CC110x_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
       EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
@@ -527,22 +527,22 @@ void web_cc110x_detail() {
       byte value[3];
       web_Freq_Set(freq, value);
       for (byte i = 0; i < 3; i++) {    /* write value to register 0D,0E,0F */
-        CC1101_writeReg(i + 13, value[i]); // write in cc1101
+        CC110x_writeReg(i + 13, value[i]); // write in cc110x
         EEPROMwrite(i + 13, value[i]);     // write in flash
       }
       web_stat = F("Frequency, frequency offset and AFC set &#10004;");
     } else if (submit == "bbandw") {
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_detail, button set bandwidth pushed with ")); Serial.println(bandw);
-      Serial.print(F("[DB] web_cc1101_detail, register 0x10 value is ")); Serial.println(web_regData[16]);
+      Serial.print(F("[DB] web_cc110x_detail, button set bandwidth pushed with ")); Serial.println(bandw);
+      Serial.print(F("[DB] web_cc110x_detail, register 0x10 value is ")); Serial.println(web_regData[16]);
 #endif
       web_stat = F("Bandwidth set &#10004;");
       byte value = web_Bandw_cal(bandw, (web_regData[16] & 0x0f)); /* input complete | input split */
-      CC1101_writeReg(16, value);                                                   // write in cc1101
-      EEPROMwrite(16, value);                                                       // write in flash
+      CC110x_writeReg(16, value);                                   // write in cc110x
+      EEPROMwrite(16, value);                                       // write in flash
     } else if (submit == "bdatarate") {
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_detail, button set datarate pushed with ")); Serial.println(datarate);
+      Serial.print(F("[DB] web_cc110x_detail, button set datarate pushed with ")); Serial.println(datarate);
 #endif
       web_stat = F("DataRate set &#10004;");
 
@@ -550,21 +550,21 @@ void web_cc110x_detail() {
       web_Datarate_Set(datarate, value);
 
       for (byte i = 0; i < 2; i++) {    /* write value to register 0D,0E,0F */
-        CC1101_writeReg(i + 16, value[i]); // write in cc1101
+        CC110x_writeReg(i + 16, value[i]); // write in cc110x
         EEPROMwrite(i + 16, value[i]);     // write in flash
       }
     } else if (submit == "bdev") {
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_detail, button set deviation pushed with ")); Serial.println(deviation);
+      Serial.print(F("[DB] web_cc110x_detail, button set deviation pushed with ")); Serial.println(deviation);
 #endif
       web_stat = F("Deviation set &#10004;");
 
       byte value = web_Devi_Set(deviation);
-      CC1101_writeReg(21, value);  // write in cc1101
+      CC110x_writeReg(21, value);  // write in cc110x
       EEPROMwrite(21, value);      // write in flash
     } else if (submit == "bmod") {
 #ifdef debug_html
-      Serial.print(F("[DB] web_cc1101_detail, set modulation to ")); Serial.println(mod);
+      Serial.print(F("[DB] web_cc110x_detail, set modulation to ")); Serial.println(mod);
 #endif
       web_stat = F("Modulation set &#10004;");
 
@@ -581,39 +581,39 @@ void web_cc110x_detail() {
         value = 7;
       }
 
-      CC1101_writeReg(18, web_Mod_set(value));      // write in cc1101
+      CC110x_writeReg(18, web_Mod_set(value));      // write in cc110x
       EEPROMwrite(18, web_Mod_set(value));          // write in flash
     } else if (submit == "breg") {
 #ifdef debug_html
-      Serial.println(F("[DB] web_cc1101_detail, button set registers pushed"));
+      Serial.println(F("[DB] web_cc110x_detail, button set registers pushed"));
 #endif
       web_stat = F("all registers set &#10004;");
 
       for (byte i = 0; i <= 46; i++) { /* all registers */
 #ifdef debug_html
-        Serial.print(F("[DB] web_cc1101_detail, regData["));
+        Serial.print(F("[DB] web_cc110x_detail, regData["));
         Serial.print(i); Serial.print(F("] = ")); Serial.println(web_regData[i]);
 #endif
         /* compare value with value to be written */
-        byte temp = CC1101_readReg(i, READ_BURST);
+        byte temp = CC110x_readReg(i, READ_BURST);
         if (web_regData[i] != temp) {
 #ifdef debug_html
           /* i > 34 && <= 40    | automatic control register */
           /* i > 40             | test register */
-          Serial.print(F("[DB] web_cc1101_detail, regData[")); Serial.print(i);
+          Serial.print(F("[DB] web_cc110x_detail, regData[")); Serial.print(i);
           Serial.print(F("] value has changed ")); Serial.print(temp);
           Serial.print(F(" -> ")); Serial.println(web_regData[i]);
 #endif
           if (i == 6) { /* ToDo - probably not optimal -> if register 6 is changed (dependencies) ??? */
-            activated_mode_packet_length = web_regData[i];
+            ReceiveModePKTLEN = web_regData[i];
           }
           /* write value to registe */
-          CC1101_writeReg(i, web_regData[i]);   // write in cc1101
+          CC110x_writeReg(i, web_regData[i]);   // write in cc110x
           EEPROMwrite(i, web_regData[i]);       // write in flash
         }
       }
     }
-    activated_mode_name = F("CC110x user configuration");
+    ReceiveModeName = F("CC110x user configuration");
   }
 
   String website = FPSTR(html_meta);
@@ -676,7 +676,7 @@ void web_cc110x_detail() {
     website += F("\"></span></td><td class=\"ce\"><input name=\"r"); /* registername for GET / POST */
     website += i;
     website += F("\" value=\"");
-    website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));                 /* value */
+    website += onlyDecToHex2Digit(CC110x_readReg(i, READ_BURST));                 /* value */
     website += F("\" type=\"text\"></td><td colspan=\"3\"><span id=\"n");
     website += i;
     website += F("\"></span></td><td id=\"t");
@@ -726,7 +726,7 @@ void web_log() {
 
 
 void web_raw() {
-  if (!CC1101_found) {
+  if (!ChipFound) {
     HttpServer.send(404, "text/plain", F("Website not found !!!"));
   }
 
@@ -765,7 +765,7 @@ void web_raw() {
   website += F("</span></td></tr></table><br>"
                "<div><table id=\"dataTable\">"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
-  website += activated_mode_name;
+  website += ReceiveModeName;
   website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
                "</table></div>"
                "</body></html>");
@@ -1067,12 +1067,12 @@ void WebSocket_cc110x() {
 #ifdef debug_websocket
   Serial.println(F("[DB] WebSocket_cc110x running"));
 #endif
-  if (CC1101_found) {
+  if (ChipFound) {
     if (webSocket.connectedClients() > 0) {
-      String website = activated_mode_name;
+      String website = ReceiveModeName;
       website.reserve(55);
       website += ',';
-      website += CC1101_readReg(CC1101_MARCSTATE, READ_BURST);
+      website += CC110x_readReg(CC110x_MARCSTATE, READ_BURST);
       website += F(",{ ");
 
       for (byte i = 0; i < 4; i++) {
@@ -1108,9 +1108,9 @@ void WebSocket_cc110x_detail() {
     website.reserve(200);
     for (byte i = 0; i <= 46; i++) { /* all registers | fastest variant */
       if (ToggleTime != 0) {
-        website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[activated_mode_nr].reg_val + i));
+        website += onlyDecToHex2Digit(pgm_read_byte_near(Registers[ReceiveModeNr].reg_val + i));
       } else {
-        website += onlyDecToHex2Digit(CC1101_readReg(i, READ_BURST));
+        website += onlyDecToHex2Digit(CC110x_readReg(i, READ_BURST));
       }
       if (i == 46) {
         website += F(",detail,");
@@ -1119,7 +1119,7 @@ void WebSocket_cc110x_detail() {
       }
     }
 
-    website += activated_mode_name;
+    website += ReceiveModeName;
     website += ',';
     website += String(Freq_offset, 3);
 
@@ -1139,9 +1139,9 @@ void WebSocket_cc110x_modes() {
   if (webSocket.connectedClients() > 0) {
     String website = F("MODE,");
     website.reserve(35);
-    website += activated_mode_name;
+    website += ReceiveModeName;
     website += ',';
-    website += activated_mode_nr;
+    website += ReceiveModeNr;
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/cc110x_modes" || webSocketSite[num] == F("/raw")) {
@@ -1157,8 +1157,8 @@ void WebSocket_help() {
   Serial.println(F("[DB] WebSocket_help running"));
 #endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("CC1101,");
-    website += CC1101_found == true ? F("yes") : F("no");
+    String website = F("CC110x,");
+    website += ChipFound == true ? F("yes") : F("no");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/help") {
         webSocket.sendTXT(num, website);
@@ -1173,7 +1173,7 @@ void WebSocket_index() {
   //  Serial.println(F("[DB] WebSocket_index running"));
   //#endif
   if (webSocket.connectedClients() > 0) {
-    String website = F("CC1101,");
+    String website = F("CC110x,");
     website.reserve(48);
     website += freeRam();
     website += ',';
@@ -1201,7 +1201,7 @@ void WebSocket_raw(const String & html_raw) {
   if (webSocket.connectedClients() > 0) {
     String website = F("RAW,");
     website.reserve(460);
-    website += activated_mode_name;
+    website += ReceiveModeName;
     website += ',';
     website += html_raw;
     website += ',';
@@ -1293,7 +1293,7 @@ void routing_websites() {
 }
 
 String HTML_mod(String txt) {
-  if (CC1101_found != true) {
+  if (ChipFound != true) {
     txt.replace(F("<a href=\"raw\" class=\"RAW\">RAW data</a>"), F(""));
   }
   return txt;

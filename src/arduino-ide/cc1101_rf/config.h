@@ -2,24 +2,53 @@
 #include <Arduino.h>
 
 /*
-   This file is part of the cc1101_Test project.
+   This file is part of the cc1101_rf_Gateway project.
    all define pins
 */
 
+/* **********************************************************
+ * Receiving hardware and some Definitions for program code */
+
+#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
+//#define debug_cc110x      1     // to debug CC110x routines
+//#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
+//#define debug_cc110x_ms   1     // to debug CC110x Marcstate
+
+//#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
+//#define debug_RFM69       1     // to debug RFM69 routines
+
+//#define debug             1     // to debug other
+//#define debug_eeprom      1     // to debug all EEPROM
+//#define debug_html        1     // to debug HTML handling
+//#define debug_telnet      1     // to debug telnet
+//#define debug_websocket   1     // to debug websocket handling
+//#define debug_wifi        1     // to debug wifi
+
+/* SIGNALduino compatibility (please comment out for no compatibility) */
+#define SIGNALduino_comp  1     // for compatibility in FHEM
+
+/* some backward compatibility */
+//#define ESP32_core_v1     1     // to compatible for ESP32 core v1.0.6
+
+
 /* Pins and other specific controller settings */
-#if defined(ARDUINO_ARCH_ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          4           // GDO0     => ESP8266 (Pin TX out - PIN_SEND)
 #define GDO2          5           // GDO2     => ESP8266 (Pin RX in  - PIN_RECEIVE)
 #define LED           16          // LED      => ESP8266 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
-#elif defined(ARDUINO_ARCH_ESP32)
+#elif defined(ARDUINO_ARCH_ESP8266) && defined(RFM69)
+#define EEPROM_SIZE   512
+#define LED           16          // LED      => ESP8266 (OK msg & WIFI)
+#define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
+#elif defined(ARDUINO_ARCH_ESP32) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          4           // GDO0     => ESP32 (Pin TX out - PIN_SEND)
 #define GDO2          13          // GDO2     => ESP32 (Pin RX in  - PIN_RECEIVE)
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
-#elif defined(ARDUINO_RADINOCC1101)
+#elif defined(ARDUINO_RADINOCC1101) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          9           // GDO0     => Radino (Pin TX out - PIN_SEND)
 #define GDO2          7           // GDO2     => Radino (Pin RX in  - PIN_RECEIVE)
@@ -28,13 +57,13 @@
 #define PIN_MARK433   4
 #define SS            8
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
-#elif defined(ARDUINO_AVR_PRO)
+#elif defined(ARDUINO_AVR_PRO) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Pro Mini (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
-#else
+#elif CC110x
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
@@ -46,27 +75,6 @@
 /* Definitions for flexible cc1101 configuration */
 #define ToggleTimeMin   15000     //   15000 milliseconds ->  15 seconds
 #define ToggleTimeMax   1800000   // 3600000 milliseconds -> 0.5 hour
-
-/* some backward compatibility */
-//#define ESP32_core_v1     1    // to compatible for ESP32 core v1.0.6
-
-/* Definitions for program code */
-//#define debug             1    // to debug other
-//#define debug_cc110x      1    // to debug CC1101 routines
-//#define debug_cc110x_MU   1    // to debug CC1101 decoder OOK
-//#define debug_cc110x_ms   1    // to debug CC1101 Marcstate
-//#define debug_eeprom      1    // to debug all EEPROM
-//#define debug_html        1    // to debug HTML handling
-//#define debug_telnet      1    // to debug telnet
-//#define debug_websocket   1    // to debug websocket handling
-//#define debug_wifi        1    // to debug wifi
-
-/* SIGNALduino compatibility (please comment out for no compatibility) */
-#define SIGNALduino_comp  1   // for compatibility in FHEM
-
-/* !!! Recipient selection !!! */
-#define CC110x  1
-//#define RFM69    1
 
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
@@ -153,6 +161,6 @@
 #define EEPROM_ADDR_DHCP        172     /* Flag´s */
 #define EEPROM_ADDR_AP          173
 #define EEPROM_ADDR_PATABLE     174
-#define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über packet_length 183–184 */
+#define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über PKTLEN 183–184 */
 #define EEPROM_ADDR_FOFFSET     185     /* cc110x freq offset | 185 - 188 */
 #define EEPROM_ADDR_AFC         189     /* cc110x afc */

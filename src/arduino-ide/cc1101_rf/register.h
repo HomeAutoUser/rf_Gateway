@@ -10,11 +10,11 @@ struct Data {
   const uint8_t* reg_val;
   byte length;
   const char* name;
-  byte packet_length;
+  byte PKTLEN;
 };
 
-extern String activated_mode_name;
+extern String ReceiveModeName;
 extern float Freq_offset;
 extern struct Data Registers[];
-extern uint8_t RegistersCntMax;
+extern uint8_t RegistersMaxCnt;
 extern uint8_t ToggleArray[];

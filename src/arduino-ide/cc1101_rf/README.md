@@ -1,4 +1,4 @@
-# cc1101_rf_Gateway uC v1.0.17 with cc110x support 
+# cc1101_rf_Gateway uC v1.0.17pre with cc110x support 
 
 ### Getting started
 
@@ -17,8 +17,10 @@ System to receive digital signals and provide them to other systems for demodula
   - KOPP_FC
   - Lacrosse_mode1
   - Lacrosse_mode2
+  - OOK - Modulation on 433MHz
   - PCA301
   - Rojaflex
+  - X_Sense
   - ... some development´s
 
 
@@ -65,7 +67,7 @@ First, sorry. This software is not perfect.
 
   
 ### some pictures with WEB interface on a ESP8266 (WEB interface only on uC with WLAN)
-  (pictures from version 1.0.15 | reception can be compiled differently)
+  (some pictures | reception can be compiled differently)
   ![HOME](./screenshots/picture1.png)
   -
   ![CC110x](./screenshots/picture2.png)
