@@ -455,7 +455,7 @@ void web_cc110x_detail_import() {
     }
   } else {
     website += F("Import of the register values ​​(minimum 2 pieces)<br>(Please paste the string in SIGNALduino format)<br><br>"
-                 "<input size=\"100\" maxlength=\"288\" value=\"example ['01AB','11FB']\" name=\"imp\" pattern=\"^\\['[[0-9a-fA-F]{4}'(,'[[0-9a-fA-F]{4}')+\\]$\">"
+                 "<input size=\"100\" maxlength=\"288\" value=\"example ['01AB','11FB']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
                  "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button>");
   }
   website += F("<br><br><a class=\"back\" href=\"/cc110x_detail\">&crarr; back to detail information</a>"
