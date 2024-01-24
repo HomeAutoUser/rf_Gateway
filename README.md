@@ -1,4 +1,4 @@
-# cc1101_rf_Gateway uC v1.0.17pre with cc110x support 
+# cc1101_rf_Gateway uC v2.0.0pre with CC110x/ SX1231 support
 
 ### Getting started
 
@@ -30,12 +30,17 @@ Compile it and have fun.
 If you are using the Arduino IDE, you have to copy all the libs into your sketch folder and modify some includes.<br>
 required libraries: [digitalWriteFast](https://www.arduino.cc/reference/en/libraries/digitalwritefast/), [WebSockets](https://www.arduino.cc/reference/en/libraries/websockets/)
 
-### Using cc1101_rf_Gateway in FHEM
+### Using cc1101_rf_Gateway in FHEM (with a CC110x chip)
 
 1. check if you have the current SIGNALduino source in the update list <br> ( source: https://raw.githubusercontent.com/RFD-FHEM/RFFHEM/master/controls_signalduino.txt )
 2. update your FHEM
 3. define one SIGNALduino device <br> ( define \<name\> SIGNALduino \<device\> )
 4. check the reading 'state' and if communication is successful it says 'opened'
+
+### Using cc1101_rf_Gateway in FHEM (with a SX1231 chip)
+
+1. ... text is being adapted
+2. ... a bit patience
 
 ### Tested microcontrollers
 

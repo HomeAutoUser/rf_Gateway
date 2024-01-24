@@ -1,6 +1,12 @@
 #include "config.h"
+
+#ifdef CC110x
 #include "cc110x.h"
-#include "register.h"
+#include "cc110x_register.h"
+#elif RFM69
+#include "rfm69.h"
+#include "rfm69_register.h"
+#endif
 #include "macros.h"
 
 #ifdef ARDUINO_ARCH_ESP8266
@@ -42,144 +48,6 @@ String onlyDecToHex2Digit(byte Dec) {
   ret[2] = '\0';
   return ret;
 }
-
-
-float web_Freq_read(byte adr1, byte adr2, byte adr3) {    /* frequency calculation - 0x0D 0x0E 0x0F | 26*(($r{"0D"}*256+$r{"0E"})*256+$r{"0F"})/65536 */
-  float Freq;
-  Freq = adr1 * 256;
-  Freq = (Freq + adr2) * 256;
-  Freq = Freq + adr3 ;
-  Freq = ( (26 * Freq) / 65536 ) * 1000;
-  return Freq;
-}
-
-
-void web_Freq_Set(long frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in CC110x_writeRegFor */
-  int32_t f;
-  f = (frequency + Freq_offset * 1000) / 26000 * 65536;
-  arr[0] = f / 65536;
-  arr[1] = (f % 65536) / 256;
-  arr[2] = f % 256;
-
-#ifdef debug
-  Serial.print(F("[DB] web_Freq_Set, input ")); Serial.print(frequency); Serial.println(F(" MHz"));
-  Serial.print(F("[DB] web_Freq_Set, FREQ2..0 (0D,0E,0F) to ")); Serial.print(onlyDecToHex2Digit(arr[0]));
-  Serial.print(' '); Serial.print(onlyDecToHex2Digit(arr[1]));
-  Serial.print(' '); Serial.println(onlyDecToHex2Digit(arr[2]));
-#endif
-}
-
-
-#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-byte web_Bandw_cal(float input, byte reg_split) {   /* bandwidth calculation from web */
-  int bits = 0;
-  int bw = 0;
-  for (int e = 0; e < 4; e++) {
-    for (int m = 0; m < 4; m++) {
-      bits = (e << 6) + (m << 4);
-      bw = int(26000 / (8 * (4 + m) * (1 << e)));
-      if (input >= bw) {
-        goto END;
-      }
-    }
-  }
-END:
-#ifdef debug
-  Serial.print(F("[DB] web_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit(reg_split + bits));
-#endif
-  return (reg_split + bits);
-}
-
-
-void web_Datarate_Set(long datarate, byte * arr) {    /* datarate set & calculation - 0x10 0x11 */
-  if (datarate < 24.7955) {
-    datarate = 24.7955;
-  } else if (datarate > 1621830) {
-    datarate = 1621830;
-  }
-
-  int ret = CC110x_readReg(0x10, READ_BURST);
-  ret = ret & 0xf0;
-
-  float DRATE_E = datarate * ( pow(2, 20) ) / 26000000.0;
-  DRATE_E = log(DRATE_E) / log(2);
-  DRATE_E = int(DRATE_E);
-
-  float DRATE_M = (datarate * (pow(2, 28)) / (26000000.0 * (pow(2, DRATE_E)))) - 256;
-  DRATE_M = int(DRATE_M);
-  int DRATE_Mr = round(DRATE_M);
-
-  int DRATE_M1 = int(DRATE_M) + 1;
-  int DRATE_E1 = DRATE_E;
-
-  if (DRATE_M1 == 256) {
-    DRATE_M1 = 0;
-    DRATE_E1++;
-  }
-
-  if (DRATE_Mr != DRATE_M) {
-    DRATE_M = DRATE_M1;
-    DRATE_E = DRATE_E1;
-  }
-
-  arr[0] = ret + DRATE_E;
-  arr[1] = DRATE_M;
-#ifdef debug
-  Serial.print(F("[DB] web_Datarate_Set, MDMCFG4..MDMCFG3 to ")); Serial.print(onlyDecToHex2Digit(arr[0])); Serial.print(onlyDecToHex2Digit(arr[1]));
-  Serial.print(' '); Serial.print(F(" = ")); Serial.print(datarate); Serial.println(F(" Hz"));
-#endif
-}
-
-
-byte web_Devi_Set(float deviation) {    /* Deviation set & calculation */
-  if (deviation > 380.859375) {
-    deviation = 380.859375;
-  }
-  if (deviation < 1.586914) {
-    deviation = 1.586914;
-  }
-
-  float deviatn_val;
-  int bits;
-  int devlast = 0;
-  int bitlast = 0;
-
-  for (int DEVIATION_E = 0; DEVIATION_E < 8; DEVIATION_E++) {
-    for (int DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
-      deviatn_val = (8 + DEVIATION_M) * (pow(2, DEVIATION_E)) * 26000.0 / (pow(2, 17));
-      bits = DEVIATION_M + (DEVIATION_E << 4);
-      if (deviation > deviatn_val) {
-        devlast = deviatn_val;
-        bitlast = bits;
-      } else {
-        if ((deviatn_val - deviation) < (deviation - devlast)) {
-          devlast = deviatn_val;
-          bitlast = bits;
-        }
-      }
-    }
-  }
-
-#ifdef debug
-  Serial.print(F("[DB] web_Devi_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
-#endif
-  return bitlast;
-}
-
-
-byte web_Mod_set(byte input) {
-#ifdef debug
-  Serial.print(F("[DB] web_Mod_set, set new value to ")); Serial.println(input);
-  Serial.print(F("[DB] web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(CC110x_readReg(0x12, READ_BURST)));
-#endif
-
-  /* read all split values | example F1 -> 11110001 */
-  byte reg12_6_4 = CC110x_readReg(0x12, READ_BURST) & 0x8f ;
-  byte output = input << 4;
-  output = output | reg12_6_4;
-  return output;
-}
-#endif // Ende #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */

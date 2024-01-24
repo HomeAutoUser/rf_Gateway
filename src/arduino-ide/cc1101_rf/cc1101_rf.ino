@@ -64,30 +64,15 @@
   W                 - write register
   WS                - write Strobes Command
 
-  EEPROM addresses:
-    0 -  34 (46)    - CC110x - register values ​​for reception (protocol)
-   48               - CC110x - activated protocol - array value -> ReceiveModeNr
-   49 -  52         - ToggleProtocols
-   53               - FW - identifier 1 -> DE
-   54               - FW - identifier 2 -> 22
-   56 -  59         - ToggleTime (value / 100 -> max 255000 milliseconds -> max 4 1/4 minutes)
-   60 -  91         - WIFI SSID
-   92 - 155         - WIFI Passwort
-  156 - 159         - WIFI Adr IP
-  160 - 163         - WIFI Adr Gateway
-  164 - 167         - WIFI Adr DNS
-  168 - 171         - WIFI Adr NetMask
-  172               - WIFI DHCP
-  173               - WIFI AP
-  174 - 182         - CC110x - PATABLE
-  183 - 184         - FW - Checksum over PKTLEN
-  185 - 188         - CC110x - freq Offset
-  189               - CC110x afc on/off
+  EEPROM addresses: ... see config.h ...
 
   notes ToDO:
   - ? wenn dev Protokolle aktiv, diese bei ScanAll überspringen
   - ? MQTT Weiterleitung
-  - ? Logfile Systemstart
+
+  https://www.ti.com/lit/ds/symlink/cc1101.pdf
+  https://www.shotech.de/Datasheet/semtech/sx1231.pdf
+
 */
 
 #include <Arduino.h>
@@ -96,13 +81,15 @@
 int RSSI_dez;                                 // for the output on web server
 #ifdef CC110x
 #include "cc110x.h"
+#include "cc110x_register.h"
 #elif RFM69
 #include "rfm69.h"
+#include "rfm69_register.h"
 #endif
 
 #include "macros.h"
 #include "functions.h"
-#include "register.h"
+
 
 /* Settings for OOK messages without Sync Pulse (MU) */
 #define MsgLenMin               24            // message minimum length
@@ -123,16 +110,16 @@ const char compile_date[] = __DATE__ " " __TIME__;
 */
 
 #ifdef CC110x
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-09) ";
+static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-24) ";
 #elif RFM69
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-09) ";
+static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-24) ";
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre SIGNALduino compatible rf_Gateway (2024-01-09) ";
+static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible rf_Gateway (2024-01-24) ";
 #endif
-byte CC110x_writeReg_offset = 2; // stimmt das noch?
+byte Chip_writeReg_offset = 2; // stimmt das noch?
 #else
-static const char PROGMEM TXT_VERSION[] = "V 1.1.0pre rf_Gateway (2024-01-09) ";
-byte CC110x_writeReg_offset = 0;
+static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre rf_Gateway (2024-01-24) ";
+byte Chip_writeReg_offset = 0;
 #endif
 
 /* varible´s for Toggle */
@@ -162,7 +149,7 @@ bool valid;
 
 /* predefinitions of the functions */
 inline void doDetect();
-void NO_CC110x();
+void NO_Chip();
 void Interupt_Variant(byte nr);
 void MSGBuild();
 void PatReset();
@@ -293,31 +280,41 @@ void Interupt() {
     }                               // sonst => Müll
   }
 }
+#endif
 
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
+#ifdef CC110x
   CC110x_CmdStrobe(CC110x_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-  CC110x_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+#endif
+  Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+#ifdef CC110x
   CC110x_CmdStrobe(CC110x_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+#elif RFM69
+  Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
+#endif
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  WebSocket_cc110x();             /* WebSocket Verarbeitung */
-  WebSocket_cc110x_detail();
-  WebSocket_cc110x_modes();
+  WebSocket_modes();
 #else
   delay(10);
 #endif
 
-  MOD_FORMAT = ( CC110x_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+#ifdef CC110x
+  MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
   if (MOD_FORMAT != 3) {
     attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
   } else {
     attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
   }
-  CC110x_CmdStrobe(CC110x_SRX);   /* Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1 */
-}
 #endif
+  Chip_setReceiveMode(); // start receive mode
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  WebSocket_chip();
+  WebSocket_detail(1);
+#endif
+}
 
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
@@ -507,10 +504,8 @@ void setup() {
   ChipInit();
   toggleTick = ToggleTime;
   if (ToggleTime == 0) {                    // wechseln in den zuletzt aktivierten Empfangsmodus
-#ifdef CC110x
     ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
     Interupt_Variant(ReceiveModeNr);    // Empfangsvariante & Register einstellen
-#endif
   }
 }
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
@@ -582,21 +577,27 @@ void loop() {
 
   /* only for test !!! HangOver ??? */
   //#ifdef debug_cc110x_ms
-  //MSG_OUTPUTALL(F("DB CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
+  //MSG_OUTPUTALL(F("DB CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX); /* MARCSTATE – Main Radio Control State Machine State */
   //#endif
+
+#ifdef RFM69
+  FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+#endif
 
   /* not OOK */
   if ( (FSK_RAW == 1) && (ChipFound == true) ) { /* Received data | RX (not OOK !!!) */
     FSK_RAW = 0;
     digitalWriteFast(LED, HIGH);    /* LED on */
     int rssi = Chip_readRSSI();
-    freqErr = CC110x_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     msgCount++;
+#ifdef CC110x
+    freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
     if (freqAfc == 1) {
       freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung
       freqOffAcc += round(freqErrAvg);
-      CC110x_writeReg(CC110x_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+      Chip_writeReg(CC110x_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
     }
+#endif
     msg = "";
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     String html_raw = "";   // für die Ausgabe auf dem Webserver
@@ -604,13 +605,13 @@ void loop() {
 #endif
 #ifdef debug_cc110x_ms      /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-    Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+    Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-    MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+    MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
     uint8_t uiBuffer[ReceiveModePKTLEN];                             // Array anlegen
-    CC110x_readBurstReg(uiBuffer, CC110x_RXFIFO, ReceiveModePKTLEN); // Daten aus dem FIFO lesen
+    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN); // Daten aus dem FIFO lesen
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
     Serial.print(char(2));    // STX
@@ -697,35 +698,18 @@ void loop() {
     MSG_OUTPUTALL(msg);   /* output msg to all */
 #endif
 
-    //Serial.println(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+    //Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-    Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+    Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-    MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+    MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
-    if (CC110x_readReg(CC110x_MARCSTATE, READ_BURST) == 0x11) {   // RXFIFO_OVERFLOW
-      CC110x_CmdStrobe(CC110x_SFRX);
-    }
-    CC110x_CmdStrobe(CC110x_SRX);
-    for (uint8_t i = 0; i < 255; i++) {
-      if (CC110x_readReg(CC110x_MARCSTATE, READ_BURST) == 0x0D) { // RX
-        break;
-      }
-      delay(1);
-      if (i == 254) {
-#ifdef CODE_AVR
-        Serial.println(
-#elif CODE_ESP
-        MSG_OUTPUTALLLN(
-#endif
-          F("loop, ERROR read CC110x_MARCSTATE, READ_BURST !"));
-      }
-    }
+    Chip_setReceiveMode(); // start receive mode
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
     /* OOK */
@@ -740,29 +724,34 @@ void loop() {
   if (msgRepeats > 0) {
     if (millis() >= msgSendStart) {
       //Serial.print(F("send ")); Serial.println(msgRepeats);
-      uint8_t PKTLENis = CC110x_readReg(CC110x_PKTLEN, READ_BURST);
+      uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST);
 
       for (int i = 0; i < SENDDATA_LENGTH; i++) {
         if (senddata_esp[i] == '\0') {
-          CC110x_writeReg(CC110x_PKTLEN, i / 2);
+          Chip_writeReg(CHIP_PKTLEN, i / 2);
           break;
         }
       }
 
+#ifdef CC110x // TODO SX1231
       CC110x_setTransmitMode();     /* enable TX */
       CC110x_sendFIFO(senddata_esp);
+#endif
 
+#ifdef CC110x
       for (uint8_t i = 0; i < 255; i++) {
-        if (CC110x_readReg(CC110x_MARCSTATE, READ_BURST) == 0x01) {  /* 1 (0x01) IDLE IDLE */
+        if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x01) {  /* 1 (0x01) IDLE IDLE */
           break;
         }
         delay(1);
       }
+#endif
 
       msgSendStart = millis() + msgSendInterval;
       msgRepeats--;
-      CC110x_writeReg(CC110x_PKTLEN, PKTLENis);
-      CC110x_setReceiveMode();    /* enable RX */
+
+      Chip_writeReg(CHIP_PKTLEN, PKTLENis);
+      Chip_setReceiveMode(); // start receive mode
 
       if (msgRepeats == 0) {
         for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
@@ -829,9 +818,8 @@ void ToggleOnOff() {
 #endif
 
   ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-#ifdef CC110x
   Interupt_Variant(ReceiveModeNr);    // set receive variant & register
-#endif
+
   ToggleCnt++;
   if (ToggleCnt >= ToggleValues) {
     ToggleCnt = 0;
@@ -871,7 +859,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':                                                                                         /* command f */
       if (ChipFound == false) {
-        NO_CC110x();
+        NO_Chip();
       } else {
         if (buf_input[1] == 'o' && buf_input[2] == 'f' && buf_input[3] == 'f') { /* command foff<n> */
           if (isNumeric(input.substring(4)) == 1) {
@@ -889,7 +877,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
             EEPROM.commit();
 #endif
-            CC110x_writeReg(CC110x_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#ifdef CC110x
+            Chip_writeReg(CC110x_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#endif
 #ifdef CODE_AVR
             Serial.print(F("CC110x_Freq.Offset saved to ")); Serial.print(Freq_offset); Serial.println(F(" MHz"));
 #elif CODE_ESP
@@ -921,7 +911,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'e': /* command e */
       if (ChipFound == false) {
-        NO_CC110x();
+        NO_Chip();
         break;
       } else {
         for (byte i = 0; i < RegistersMaxCnt; i++) {
@@ -940,7 +930,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         /* command m<n>, check of decimal */
         if (isNumeric(input.substring(1)) == 1) {
           if (ChipFound == false) {
-            NO_CC110x();
+            NO_Chip();
           } else {
 #ifdef CC110x
             detachInterrupt(digitalPinToInterrupt(GDO2));
@@ -963,15 +953,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 ReceiveModeName = Registers[int_substr1_serial].name;
                 ReceiveModeNr = int_substr1_serial;
                 ReceiveModePKTLEN = Registers[int_substr1_serial].PKTLEN;
-#ifdef CC110x
                 Interupt_Variant(int_substr1_serial);
-#endif
 
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
-                Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+                Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
-                MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
+                MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #endif
 #endif
 
@@ -1011,7 +999,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       } else {
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
           if (ChipFound == false) {
-            NO_CC110x();
+            NO_Chip();
           } else {
             if (buf_input[2] == 's') { /* command tos<n> | allowed length 1 - 9 (max 12 completely serial) */
               unsigned long IntTime = input.substring(3).toInt();
@@ -1141,7 +1129,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
-    case 'x': /* command x */
+#ifdef CC110x // TODO SX1231
+    case 'x': /* command x - write patable*/
       if (buf_input[1] && buf_input[2] && !buf_input[3]) {
         if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2])) {
           for (byte i = 0; i < 8; i++) {
@@ -1154,7 +1143,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
           }
           if (ChipFound == false) {
-            NO_CC110x();
+            NO_Chip();
           } else {
             CC110x_writeBurstReg(uiBuffer, CC110x_PATABLE, 8);
 #ifdef CODE_AVR
@@ -1167,9 +1156,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         }
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
+#endif
     case 'C':
       if (ChipFound == false) {
-        NO_CC110x();
+        NO_Chip();
       } else {
         if (!buf_input[1]) { /* command C - Read all values from Register */
 #ifdef CODE_AVR
@@ -1178,7 +1168,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           for (byte i = 0; i <= 46; i++) {
             MSG_OUTPUT_DecToHEX_lz(i);
             Serial.print('=');
-            MSG_OUTPUT_DecToHEX_lz(CC110x_readReg(i, READ_BURST));
+            MSG_OUTPUT_DecToHEX_lz(Chip_readReg(i, READ_BURST));
             if (i < 41) {
               Serial.print(F(" ("));
               MSG_OUTPUT_DecToHEX_lz(EEPROMread(i));
@@ -1191,7 +1181,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp = F("Current register (address - CC110x value - EEPROM value)\n");
 
           for (byte i = 0; i <= 46; i++) {
-            tmp += onlyDecToHex2Digit(i); tmp += '='; tmp += onlyDecToHex2Digit(CC110x_readReg(i, READ_BURST));
+            tmp += onlyDecToHex2Digit(i); tmp += '='; tmp += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
             if (i < 41) {
               tmp += F(" ("); tmp += onlyDecToHex2Digit(EEPROMread(i)); tmp += F(" EEPROM)\n");
             } else {
@@ -1219,7 +1209,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #else
             Serial.print(F(" - 0x"));
 #endif
-            byte CC110x_ret = CC110x_readReg(Cret, READ_BURST);
+            byte CC110x_ret = Chip_readReg(Cret, READ_BURST);
             MSG_OUTPUT_DecToHEX_lz(CC110x_ret);
             Serial.println("");
 #elif CODE_ESP
@@ -1234,12 +1224,12 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #else
             tmp += F(" - 0x");
 #endif
-            byte CC110x_ret = CC110x_readReg(Cret, READ_BURST);
+            byte CC110x_ret = Chip_readReg(Cret, READ_BURST);
             tmp += onlyDecToHex2Digit(CC110x_ret);
             MSG_OUTPUTLN(tmp);
 #endif
           } else if (Cret == 0x99) { /* command C99 - ccreg */
-            CC110x_readBurstReg(uiBuffer, 0x00, 47);
+            Chip_readBurstReg(uiBuffer, 0x00, 47);
 #ifdef CODE_AVR
             for (uint8_t i = 0; i < 0x2f; i++) {
               if (i == 0 || i == 0x10 || i == 0x20) {
@@ -1272,7 +1262,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             MSG_OUTPUTLN(tmp);
 #endif
           } else if (Cret == 0x3E) { /* command C3E - patable  */
-            CC110x_readBurstReg(uiBuffer, 0x3E, 8);
+            Chip_readBurstReg(uiBuffer, 0x3E, 8);
 #ifdef CODE_AVR
             Serial.print(F("C3E ="));
             for (byte i = 0; i < 8; i++) {
@@ -1292,7 +1282,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             freqAfc = buf_input[1] - 'D';                 // CC110x AFC 0 oder 1
             freqOffAcc = 0;                               // reset cc110x afc offset
             freqErrAvg = 0;                               // reset cc110x afc average
-            CC110x_writeReg(CC110x_FSCTRL0, 0);           // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#ifdef CC110x
+            Chip_writeReg(CC110x_FSCTRL0, 0);           // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#elif RFM69
+            SX1231_afc(freqAfc); // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
+#endif
             EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
             EEPROM.commit();
@@ -1327,14 +1321,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CODE_AVR
           Serial.print(F("C0Dn11="));
           for (byte i = 0; i <= 17; i++) {
-            byte x = CC110x_readReg(0x0D + i, READ_BURST);
+            byte x = Chip_readReg(0x0D + i, READ_BURST);
             MSG_OUTPUT_DecToHEX_lz(x);
           }
           Serial.println("");
 #elif CODE_ESP
           tmp = F("C0Dn11=");
           for (byte i = 0; i <= 17; i++) {
-            tmp += onlyDecToHex2Digit(CC110x_readReg(0x0D + i, READ_BURST));
+            tmp += onlyDecToHex2Digit(Chip_readReg(0x0D + i, READ_BURST));
           }
           MSG_OUTPUTLN(tmp);
 #endif
@@ -1363,7 +1357,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 
         if (ChipFound == true) {
 #ifdef CODE_AVR
-          Serial.print(F("CC110x_MARCSTATE    ")); Serial.println(CC110x_readReg(CC110x_MARCSTATE, READ_BURST), HEX);  // MARCSTATE – Main Radio Control State Machine State
+          Serial.print(F("CC110x_MARCSTATE    ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);  // MARCSTATE – Main Radio Control State Machine State
           Serial.print(F("CC110x_Freq.Afc     ")); Serial.println(freqAfc == 1 ? F("on (1)") : F("off (0)"));
           Serial.print(F("CC110x_Freq.Offset  ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
         }
@@ -1390,7 +1384,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           Serial.println(ToggleTime);
         }
 #elif CODE_ESP
-          tmp += F("CC110x_MARCSTATE    "); tmp += onlyDecToHex2Digit(CC110x_readReg(CC110x_MARCSTATE, READ_BURST));  tmp += "\n"; // MARCSTATE – Main Radio Control State Machine State
+#ifdef CC110x
+          tmp += F("CC110x_MARCSTATE    "); tmp += onlyDecToHex2Digit(Chip_readReg(CC110x_MARCSTATE, READ_BURST));  tmp += "\n"; // MARCSTATE – Main Radio Control State Machine State
+#endif
           tmp += F("CC110x_Freq.Afc     "); tmp += (freqAfc == 1 ? F("on (1)") : F("off (0)")); tmp += "\n";
           tmp += F("CC110x_Freq.Offset  "); tmp += String(Freq_offset, 3); tmp += F(" MHz"); tmp += "\n";
         }
@@ -1466,7 +1462,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'S': /* command S */
       if (ChipFound == false) {
-        NO_CC110x();
+        NO_Chip();
       } else {
         if (buf_input[1] && buf_input[1] == 'N' && buf_input[2] == ';') { /* command SN */
 #ifdef debug
@@ -1563,11 +1559,15 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Lacrosse_mode1    SN;D=9006106A62;R=1;
               */
               for (uint8_t repeats = 1; repeats <= rep; repeats++) {
+#ifdef CC110x // TODO SX1231
                 CC110x_setTransmitMode(); /* enable TX */
                 CC110x_sendFIFO(senddata);
+#elif RFM69
+                Serial.println(senddata); // TODO kann bei Anpassung weg
+#endif
                 delay(100);
               }
-              CC110x_setReceiveMode(); /* enable RX */
+              Chip_setReceiveMode(); /* enable RX */
               digitalWriteFast(LED, LOW);  // LED off
             }
           }
@@ -1588,9 +1588,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
-    case 'W': /* command W */
+#ifdef CC110x // TODO SX1231
+    case 'W': /* command W - write register*/
       if (ChipFound == false) {
-        NO_CC110x();
+        NO_Chip();
       } else {
         if (buf_input[1] && buf_input[1] != 'S' && buf_input[1] > 47 && buf_input[1] < 52 && buf_input[2] && buf_input[3] && buf_input[4] && !buf_input[5]) {
           /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... */
@@ -1609,16 +1610,18 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             MSG_OUTPUTLN(tmp);
 #endif
 #endif
-            CC110x_writeReg(adr_dec - CC110x_writeReg_offset, val_dec);  // write in cc110x | adr - 2 because of sduino firmware
-            EEPROMwrite(adr_dec - CC110x_writeReg_offset, val_dec);      // write in flash
-            CC110x_writeReg(CC110x_FSCTRL0, 0);                          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+            Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);  // write in cc110x | adr - 2 because of sduino firmware
+            EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);      // write in flash
+#ifdef CC110x
+            Chip_writeReg(CC110x_FSCTRL0, 0);                          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#endif
 #ifdef CODE_AVR
             Serial.print('W'); MSG_OUTPUT_DecToHEX_lz(adr_dec); MSG_OUTPUT_DecToHEX_lz(val_dec); Serial.println("");
 #elif CODE_ESP
             tmp = 'W'; tmp += onlyDecToHex2Digit(adr_dec); tmp += onlyDecToHex2Digit(val_dec);
             MSG_OUTPUTLN(tmp);
 #endif
-            ReceiveModeName = F("CC110x user configuration");
+            ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
           }
         } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
@@ -1637,6 +1640,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         }
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
+#endif
     default:
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
   }
@@ -1748,10 +1752,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       {
 #ifdef debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("[DB] WebSocket [%u] connected - from %d.%d.%d.%d%s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        Serial.printf("[DB] WebSocket [%u] connected - from %d.%d.%d.%d - site %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         webSocketSite[num] = (char * )payload;
         webSocket.sendTXT(num, "Connected"); /* send message to client */
+        if (webSocketSite[num] == "/detail") {
+          WebSocket_detail(0); // Send values of registers before changes to the /detail web page.
+        }
       }
       break;
     case WStype_TEXT: /*  */
@@ -1761,13 +1768,13 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 #ifdef debug_websocket
         IPAddress ip = webSocket.remoteIP(num);
-        Serial.printf("[DB] WebSocket [%u] receive - from %d.%d.%d.%d %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+        Serial.printf("[DB] WebSocket [%u] receive - from %d.%d.%d.%d - site %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
 #endif
         String payloadString = (const char *)payload;
-        if (payloadString == "cc110x_detail") {
-          WebSocket_cc110x_detail();
-        } else if (payloadString == "cc110x") {
-          WebSocket_cc110x();
+        if (payloadString == "detail") {
+          WebSocket_detail(1); // Send values of the registers at the request of the website /detail.
+        } else if (payloadString == "chip") {
+          WebSocket_chip();
         } else if (payloadString == "help") {
           WebSocket_help();
         } else if (payloadString.substring(0, 5) == "send,") {    /* input: send,1269A5900F41,2,3 */
@@ -1781,10 +1788,16 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           msgSendStart = 0;
           msgSendInterval = payloadString.substring(pos2 + 1).toInt();
           hex.toCharArray(senddata_esp, hex.length() + 1);
+#ifdef debug_chip
+          Serial.print(F("[DB] send, msgRepeats:      ")); Serial.println(msgRepeats);
+          Serial.print(F("[DB] send, msgSendInterval: ")); Serial.println(msgSendInterval);
+          Serial.print(F("[DB] send, senddata:        ")); Serial.println(senddata_esp);
+#endif
         }
       }
       break;
     case WStype_BIN: /* binary files receive */
+      length += 0; // without comes warning: unused parameter 'length'
       // webSocket.sendBIN(num, payload, length); /* send message to client */
       break;
     case WStype_ERROR:
@@ -1831,7 +1844,7 @@ inline void doDetect() {        /* Pulsprüfung und Weitergabe an Patternprüfun
 
 void MSGBuild() {               /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
-    uint8_t rssi = CC110x_readReg(0x34, 0xC0);  // nicht konvertiert
+    uint8_t rssi = Chip_readReg(0x34, 0xC0);  // nicht konvertiert
     digitalWriteFast(LED, HIGH);                // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
@@ -1948,13 +1961,13 @@ void PatReset() {     /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
 }
 
 
-void NO_CC110x() {
+void NO_Chip() {
 #ifdef CODE_AVR
   Serial.println(
 #elif CODE_ESP
   MSG_OUTPUTLN(
 #endif
-    F("Operation not executable (no CC110x found)"));
+    F("Operation not executable (no CHIP found)"));
 }
 
 #if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32

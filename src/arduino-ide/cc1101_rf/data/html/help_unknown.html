@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<title>rf_Gateway</title>
+<link rel="stylesheet" type="text/css" href="/css/all.css">
+<link rel="stylesheet" type="text/css" href="/css/help.css">
+<script src="/js/help.js"></script>
+</head>
+<body>
+<table>
+<tr><th colspan="6" class="f1">rf_Gateway</th></tr>
+<tr>
+<td class="td1"><a href="/" class="HOME">HOME</a></td>
+<td class="td1"><a href="../chip" class="chip">unknown</a></td>
+<td class="td1"><a href="/html/help_unknown.html" class="Help">Help</a></td>
+<td class="td1"><a href="../log" class="Logfile">Logfile</a></td>
+<td class="td1"><span id="StatCC110x"><a href="../raw" class="RAW">RAW data</a></span></td>
+<td class="td1"><a href="../wlan" class="WLAN">WLAN</a></td>
+</tr>
+</table>
+<br>
+<table>
+<tr><th>general information</th></tr>
+<tr><td>Features:</td></tr>
+<tr><td> - a maximum of 4 automatically changeable protocols</td></tr>
+<tr><td> - cc110x register export for FHEM</td></tr>
+<tr><td> - cc110x register settings can change conveniently</td></tr>
+<tr><td>Individually combinable settings are for example:</td></tr>
+<tr><td> - number of clients</td></tr>
+<tr><td> - ToggleMin and ToggleMax time (recipient changes automatically)</td></tr>
+</table>
+<br>
+<table>
+<tr><th colspan="3">all available commands to control rf_Gateway without web</th></tr>
+<tr><th class="td1">command</th><th>description</th><th>dependency</th></tr>
+<tr><td>?</td><td>available commands</td><td></td></tr>
+<tr><td>ft</td><td>testsignal, sends an FF signal with 50 repeats on the set registers</td><td class="td2">unknown</td></tr>
+<tr><td>t</td><td>get uptime</td><td></td></tr>
+<tr><td>C0DnF</td><td>get ccconf (FHEM)</td><td class="td2">unknown</td></tr>
+<tr><td>CG</td><td>get config (FHEM)</td><td class="td2">unknown</td></tr>
+<tr><td>E</td><td>reads complete EEPROM</td><td></td></tr>
+<tr><td>I</td><td>current status</td><td></td></tr>
+<tr><td>M</td><td>list all available registers (mode´s)</td><td></td></tr>
+<tr><td>P</td><td>PING</td><td></td></tr>
+<tr><td>R</td><td>get FreeRam</td><td></td></tr>
+<tr><td>SN</td><td>send RAW msg (FHEM format)</td><td class="td2">unknown</td></tr>
+<tr><td>V</td><td>get Version</td><td></td></tr>
+</table>
+<br>
+<table>
+<tr><th colspan="2">technical documentation</th></tr>
+<tr><td>RF modules</td><td><a href="" target="_blank">unknown</a></td></tr>
+</table>
+</body>
+</html>

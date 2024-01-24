@@ -6,6 +6,7 @@
     provides us with symbolic constants and keeps a list of all available macros.
 */
 
+#ifdef CC110x
 struct Data {
   const uint8_t* reg_val;
   byte length;
@@ -18,3 +19,4 @@ extern float Freq_offset;
 extern struct Data Registers[];
 extern uint8_t RegistersMaxCnt;
 extern uint8_t ToggleArray[];
+#endif

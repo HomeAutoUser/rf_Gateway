@@ -7,15 +7,13 @@
 */
 
 /* **********************************************************
- * Receiving hardware and some Definitions for program code */
+   Receiving hardware and some Definitions for program code */
 
 #define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
-//#define debug_cc110x      1     // to debug CC110x routines
+//#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
+//#define debug_chip        1     // to debug chip routines
 //#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
 //#define debug_cc110x_ms   1     // to debug CC110x Marcstate
-
-//#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
-//#define debug_RFM69       1     // to debug RFM69 routines
 
 //#define debug             1     // to debug other
 //#define debug_eeprom      1     // to debug all EEPROM
@@ -48,6 +46,10 @@
 #define GDO2          13          // GDO2     => ESP32 (Pin RX in  - PIN_RECEIVE)
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
+#elif defined(ARDUINO_ARCH_ESP32) && defined(RFM69)
+#define EEPROM_SIZE   512
+#define LED           2           // LED      => ESP32 (OK msg & WIFI)
+#define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_RADINOCC1101) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          9           // GDO0     => Radino (Pin TX out - PIN_SEND)
@@ -63,12 +65,14 @@
 #define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
-#elif CC110x
+#elif defined(ARDUINO_AVR_NANO) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Nano (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
+#else
+
 #endif
 
 
@@ -145,15 +149,7 @@
 #define EEPROM_ADDR_MAX         512
 
 /* Start - END Register ADDR is fixed !!! */
-#define EEPROM_ADDR_Prot        48
-#define EEPROM_ADDR_ProtTo      49      /* ToggleProtocolls 49 - 52 */
-#define EEPROM_ADDR_FW1         53
-#define EEPROM_ADDR_FW2         54
-#define EEPROM_ADDR_Toggle      56      /* ToggleTime 56 - 59 */
-
-/* EEPROM - WIFI settings */
-#define EEPROM_ADDR_SSID        60      /* Strings */
-#define EEPROM_ADDR_PASS        92
+/* TODO Register Start | END, Toggle max 8 */
 #define EEPROM_ADDR_IP          156     /* IPAddress (4 Bytes) */
 #define EEPROM_ADDR_GATEWAY     160
 #define EEPROM_ADDR_DNS         164
@@ -164,3 +160,10 @@
 #define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über PKTLEN 183–184 */
 #define EEPROM_ADDR_FOFFSET     185     /* cc110x freq offset | 185 - 188 */
 #define EEPROM_ADDR_AFC         189     /* cc110x afc */
+#define EEPROM_ADDR_Prot        200
+#define EEPROM_ADDR_ProtTo      201     /* ToggleProtocolls 49 - 52 */
+#define EEPROM_ADDR_FW1         209
+#define EEPROM_ADDR_FW2         210
+#define EEPROM_ADDR_Toggle      212      /* ToggleTime 56 - 59 */
+#define EEPROM_ADDR_SSID        256     /* Strings (max 32)*/
+#define EEPROM_ADDR_PASS        288     /* Strings (max 32)*/

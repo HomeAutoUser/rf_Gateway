@@ -47,7 +47,7 @@ input {
  text-align: center;
 }
 
-a:link.CC110x, a:visited.CC110x {
+a:link.chip, a:visited.chip {
  color: #CC00CC;
 }
 

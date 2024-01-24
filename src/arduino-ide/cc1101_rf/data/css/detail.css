@@ -1,0 +1,94 @@
+﻿div.txt {
+ display: inline-block;
+ text-align: left;
+ width: 50px;
+}
+
+a:link.chip, a:visited.chip {
+ color: #cc00cc;
+}
+
+.btn {
+ background-color: #3399ff;
+ border-radius: 11px 11px 11px 11px;
+ color: white;
+ cursor: pointer;
+ padding: 2px 6px;
+ text-align: center;
+}
+
+.btn:hover {
+ background-color: #ffff00;
+ color: black;
+}
+
+.ce {
+ text-align: center;
+}
+
+*[id^='t']{
+ text-align: center;
+}
+
+.in {
+ color: green;
+ text-align: center;
+}
+
+.f1 {
+ width: 33.2%;
+}
+
+.f2 {
+ width: 16.6%;
+}
+
+.f4 {
+ width: 24.8%;
+}
+
+select#bandw { text-align-last: right; }
+select#bandw > option { direction: rtl; }
+
+/* all settings for Modal, Modal Content, Close Button ... */
+.mod {
+ background-color: rgb(0,0,0);      /* Fallback color */
+ background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+ display: none;
+ height: 100%;
+ left: 0;
+ overflow: auto;
+ padding-top: 100px;
+ position: fixed;
+ top: 0;
+ width: 100%;
+ z-index: 1;
+}
+
+.mod-cont {
+ background-color: #fefefe;
+ border: 1px solid #888;
+ margin: auto;
+ padding: 20px;
+ table-layout: fixed;
+ text-align: left;
+ width: 80%;
+}
+
+.mod-cont table {
+ width: 100%;
+}
+
+.close {
+ color: #aaaaaa;
+ float: right;
+ font-size: 28px;
+ font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+ color: #000;
+ cursor: pointer;
+ text-decoration: none;
+}

@@ -10,6 +10,8 @@
 #define ChipSelect() digitalWriteFast(SS, LOW)       // Select (SPI)
 #define ChipDeselect() digitalWriteFast(SS, HIGH)    // Deselect (SPI)
 
+void SerialPrintDecToHex(uint8_t dec);
+
 /* --- all SETTINGS for Arduino Nano ---------------------------------------------------------------------------------------------------------- */
 #if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
 /* output DEC to HEX with a leading zero to serial without ln (all dec values < 16 obtain a zero in HEX value) */

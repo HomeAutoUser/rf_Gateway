@@ -9,6 +9,7 @@ var color2 = value.getPropertyValue('--val_diff');
 var status_html = false;
 var status_websocket = false;
 var mod_list = false;
+var bw_list = false;
 
 function onMessage(event) {
  console.log('received message: ' + event.data);
@@ -18,196 +19,197 @@ function onMessage(event) {
   check();
  }
 
- if(event.data.includes(',detail,') ) {
+ if(event.data.includes(',detail,')) {
   const obj=event.data.split(',');
+  var REGISTER_MAX = 46;
+  var name;
+  var hex;
+  var Freq;
 
- var name;
- var hex;
- var Freq;
- var DRATE1;
- var DRATE2;
-
- for (i=0; i<= 46; i++) {
-  name = 'r' + i;
-  if (i <= 15) {
-   hex = '0' + i.toString(16)
-  } else {
-   hex = i.toString(16)
-  }
-  document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + regExplanation_short[i];
-  document.getElementsByName(name)[0].maxLength = "2";
-  document.getElementsByName(name)[0].pattern = "^[\\da-fA-F]{1,2}$";
-  document.getElementsByName(name)[0].placeholder = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, obj[i]);
-  document.getElementsByName(name)[0].setAttribute('size', '2');
-  document.getElementsByName(name)[0].title = "Input: 2 characters in hexadecimal";
-  if (document.getElementsByName(name)[0].value != obj[i]) {
-   document.getElementsByName(name)[0].value = document.getElementsByName(name)[0].value.replace(document.getElementsByName(name)[0].value, obj[i]);
-   document.getElementsByName(name)[0].placeholder = obj[i];
-   document.getElementsByName(name)[0].style.color = color2;
-  } else {
-   document.getElementsByName(name)[0].style.color = color1;
-  }
-  if (i == 8) {
-   var val = ( parseInt(obj[i], 16) & "00000011" ) >> 4;
-   document.getElementById('PKTCTRL0').innerHTML = LENGTH_CONFIG[val];
-   let span = document.getElementById("PKTLEN");
-   if(val == 0) {
-    span.textContent = "current: bytes " + parseInt(obj[i-2], 16) + "  |  nibbles " + parseInt(obj[i-2], 16) * 2 + "  |  bits " + parseInt(obj[i-2], 16) * 8;
+  for (i=0; i<= REGISTER_MAX; i++) {
+   name = 'r' + i;
+   if (i <= 15) {
+    hex = '0' + i.toString(16)
    } else {
-    span.textContent = "current: disabled";
+    hex = i.toString(16)
+   }
+
+   let element = document.getElementsByName(name)[0];
+   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
+
+   element.maxLength = "2";
+   element.pattern = "^[\\da-fA-F]{1,2}$";
+   element.placeholder = element.value.replace(element.value, obj[i]);
+   element.setAttribute('size', '2');
+   element.title = "Input: 2 characters in hexadecimal";
+
+   if (element.value != obj[i]) {
+    element.value = element.value.replace(element.value, obj[i]);
+    element.placeholder = obj[i];
+    element.style.color = color2;
+   } else {
+    element.style.color = color1;
    }
   }
-  if (i == 12) {
-   if(document.getElementsByName('afc')[0].checked) {
-   var off = ( parseInt(obj[i], 16) );
+
+  // 0x06: PKTLEN 0x08: PKTCTRL0
+  var val = ( parseInt(obj[8], 16) & 0b00000011 ) >> 4;
+  document.getElementById('PKTCTRL0').innerHTML = LENGTH_CONFIG[val];
+  let span = document.getElementById("PKTLEN");
+  if(val == 0) {
+   span.textContent = "current: bytes " + parseInt(obj[6], 16) + "  |  nibbles " + parseInt(obj[6], 16) * 2 + "  |  bits " + parseInt(obj[6], 16) * 8;
+  } else {
+   span.textContent = "current: disabled";
+  }
+
+  // 0x0C: FSCTRL0 
+  if(document.getElementsByName('afc')[0].checked) {
+   var off = ( parseInt(obj[12], 16) );
    if (off > 127) {
     off -= 255;
    }
    off = (26000000 / 16384 * off / 1000);
-   document.getElementById('n' + i).innerHTML = regExplanation[i] + ' (Freq. offset ' + off.toFixed(0) + ' kHz)';
+   document.getElementById('n' + 12).innerHTML = Explan[12] + ' (Freq. offset ' + off.toFixed(0) + ' kHz)';
+  }
+
+  // 0x0D: FREQ2 0x0E: FREQ1 0x0F: FREQ0
+  Freq = parseInt(obj[13], 16) * 256;
+  Freq = (Freq + parseInt(obj[14], 16) ) * 256;
+  Freq = (Freq + parseInt(obj[15], 16) );
+  Freq = (26 * Freq) / 65536;
+  document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
+  document.getElementById('p2').maxLength = "6";
+  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+  Freq = Freq - (obj[49] * 1);
+  document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
+  document.getElementById('p1').maxLength = "7";
+  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+  document.getElementsByName('freq')[0].value = Freq.toFixed(3);
+
+  // 0x10: MDMCFG4 0x11: MDMCFG3
+  var CHANBW_M = (parseInt(obj[16], 16) & 0b00110000) >> 4;
+  var CHANBW_E = (parseInt(obj[16], 16) >> 6);
+  var RxBwComp = (26000000 / (8 * (4 + CHANBW_M) * (2 ** CHANBW_E)) / 1000).toFixed(2);
+  var selectElement = document.getElementById('bandw');
+  if(!bw_list) {
+   bw_list = true;
+   for (var bwExp = 3; bwExp >= 0; bwExp--) {
+    for (var bwMant = 3; bwMant >= 0; bwMant--) {
+     var RxBw = (26000000 / (8 * (4 + bwMant) * (2 ** bwExp)) / 1000).toFixed(2);
+     selectElement.add(new Option(RxBw));
+    }
    }
   }
-  if (i == 13 || i == 14 || i == 15) {
-   if(i == 13){
-   Freq = parseInt(obj[i], 16) * 256;
-   }
-   if(i == 14){
-   Freq = (Freq + parseInt(obj[i], 16) ) * 256;
-   }
-   if(i == 15){
-   Freq = (Freq + parseInt(obj[i], 16) );
-   Freq = (26 * Freq) / 65536;
-   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-   document.getElementById('p2').maxLength = "6";
-   document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-   Freq = Freq + (obj[49] * 1);
-   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-   document.getElementById('p1').maxLength = "7";
-   document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
-   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
-   }
-  }
-  if (i == 16 || i == 17) {
-   if(i == 16) {
-   var CHANBW;
-   var CHANBW1 = ( parseInt(obj[i], 16) ) >> 4;
-   CHANBW1 = 4 + ( CHANBW1 & 3 );
-   var CHANBW2 = ( parseInt(obj[i], 16) ) >> 6;
-   CHANBW2 = ( CHANBW2 & 3 );
-   CHANBW2 = 1 << CHANBW2;
-   CHANBW = 26000.0 / (8.0 * CHANBW1 * CHANBW2);
-   document.getElementById('CHANBW').innerHTML = CHANBW.toFixed(1) + ' kHz';
-   document.getElementsByName('bandw')[0].value = CHANBW.toFixed(1);
-   document.getElementById('p3').maxLength = "5";
-   document.getElementById('p3').pattern = "^[\\d]{2,3}(\\.[\\d]{1,2})?$";
-   DRATE1 = parseInt(obj[i], 16);
-   }
-   if(i == 17) {
-   var DRATE;
-   DRATE2 = parseInt(obj[i], 16);
-   DRATE = ( ( (256 + DRATE2) * (2 ** (DRATE1 & 15)) ) * 26000000.0 / (2 ** 28) / 1000.0 );
-   document.getElementById('DRATE').innerHTML = DRATE.toFixed(2) + ' kBaud';
-   document.getElementsByName('datarate')[0].value = DRATE.toFixed(2);
-   document.getElementById('p4').maxLength = "6";
-   document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,2})?$";
-   }
-  }
-  if (i == 18) {
-   if (!mod_list) {
+  selectElement.value = RxBwComp;
+  document.getElementById('CHANBW').innerHTML = RxBwComp + ' kHz';
+
+  var DRATE_E = parseInt(obj[16], 16);
+  var DRATE_M = parseInt(obj[17], 16);
+  var DRATE = ( ( (256 + DRATE_M) * (2 ** (DRATE_E & 15)) ) * 26000000.0 / (2 ** 28) / 1000.0 ).toFixed(2);
+  document.getElementById('DRATE').innerHTML = DRATE + ' kBaud';
+  document.getElementsByName('datarate')[0].value = DRATE;
+  document.getElementById('p4').maxLength = "6";
+  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,2})?$";
+
+  // 0x12: MDMCFG2
+  if (!mod_list) {
    mod_list = true;
    var selectElement = document.getElementById('modulation');
    for (var j = 0; j<=7; j++) {
-    if (MOD_FORMAT[j] != '') {
-    selectElement.add(new Option(MOD_FORMAT[j]));
+    if (MOD[j] != '') {
+     selectElement.add(new Option(MOD[j]));
     }
    }
-   }
-   var val = (parseInt(obj[i], 16) & "01110000") >> 4;
-   document.getElementById('MOD_FORMAT').innerHTML = MOD_FORMAT[val];
-   document.getElementById('modulation').value = MOD_FORMAT[val];
-   var val = (parseInt(obj[i], 16) & "00000111");
-   document.getElementById('SYNC_MODE').innerHTML = SYNC_MODE[val];
   }
-  if(i == 19) {
-   var val = (parseInt(obj[i], 16) & "01110000") >> 4;
-   document.getElementById('MDMCFG1').innerHTML = 'minimum ' + NUM_PREAMBLE[val] + ' preamble bytes to be transmitted configured in MDMCFG1 register';
-  }
-  if (i == 21) {
-   var DEVIATN = parseInt(obj[i], 16);
-   DEVIATN = (8 + (DEVIATN & 7)) * ( 2 ** ((DEVIATN >> 4) & 7) ) * 26000.0 / ( 2 ** 17);
-   document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(2) + ' kHz';
-   document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(2);
-   document.getElementById('p5').maxLength = "5";
-   document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,2})?$";
-  }
-  }
-  if (document.getElementById('state')) {
-  document.getElementById('state').innerHTML = obj[48] + ' values readed &#10004;';
-  }
- }
-}
+  var val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
+  document.getElementById('MOD_FORMAT').innerHTML = MOD[val];
+  document.getElementById('modulation').value = MOD[val];
+  var val = (parseInt(obj[18], 16) & 0b00000111);
+  document.getElementById('SYNC_MODE').innerHTML = SYNC_MODE[val];
+
+  // 0x13: MDMCFG1
+  var val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
+  document.getElementById('MDMCFG1').innerHTML = 'minimum ' + NUM_PREAMBLE[val] + ' preamble bytes to be transmitted configured in MDMCFG1 register';
+
+  // 0x15: DEVIATN
+  var DEVIATN = parseInt(obj[21], 16);
+  DEVIATN = (8 + (DEVIATN & 7)) * ( 2 ** ((DEVIATN >> 4) & 7) ) * 26000.0 / ( 2 ** 17);
+  document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(2) + ' kHz';
+  document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(2);
+  document.getElementById('p5').maxLength = "5";
+  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,2})?$";
+
+  document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
+ }  // END - event.data.includes(',detail,')
+}   // END function onMessage(event)
+
 
 document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
- for ( i=0; i<regExplanation.length; i++ ) {
-  document.getElementById('n' + i).innerHTML = regExplanation[i];
-  var id = 't' + i;
+  const ts = document.title;
 
-  if (regExplanationAdd[i] != '') {
-   /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
-   var div = document.createElement("div");
-   div.id = "Mo"+i;
-   div.className = "mod";
-   document.getElementById(id).appendChild(div);
+  for ( i=0; i<Explan.length; i++ ) {
+   document.getElementById('n' + i).innerHTML = Explan[i];
+   var id = 't' + i;
 
-   var div2 = document.createElement("div");
-   div.appendChild(div2);
-   div2.className = "mod-cont";
+   if (ExplanAdd[i] != '') {
+     document.getElementById(id).innerHTML = '&#128712;';
 
-   var Span = document.createElement("span");
-   Span.className = "close";
-   Span.innerHTML = "&times;";
-   div2.appendChild(Span);
+    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
+    var div = document.createElement("div");
+    div.id = "Mo"+i;
+    div.className = "mod";
+    document.getElementById(id).appendChild(div);
 
-   var p = document.createElement("p");
-   p.innerHTML = regExplanation_short[i];
-   div2.appendChild(p);
-   div2.insertAdjacentHTML( 'beforeend', regExplanationAdd[i] );
-  } else {
-   document.getElementById(id).innerHTML = '';
+    var div2 = document.createElement("div");
+    div.appendChild(div2);
+    div2.className = "mod-cont";
+
+    var Span = document.createElement("span");
+    Span.className = "close";
+    Span.innerHTML = "&times;";
+    div2.appendChild(Span);
+
+    var p = document.createElement("p");
+    p.innerHTML = Explan_short[i];
+
+    div2.appendChild(p);
+    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
+   }
   }
- }
- status_html = 1;
- check();
- var lastmodal;
 
- window.onclick = function(event) {
-  var id = event.target.id.match(/t\d+/i);
-  var nr = event.target.id.substr(1);
-  var cla = event.target.className;
-  var modal = document.getElementById("Mo" + nr);   // Get the modal
+  status_html = 1;
+  check();
+  var lastmodal;
 
-  if (regExplanationAdd[nr] != ''){
-   if(id && modal) {
+  window.onclick = function(event) {
+   var id = event.target.id.match(/t\d+/i);
+   var nr = event.target.id.substr(1);
+   var cla = event.target.className;
+   var modal = document.getElementById("Mo" + nr);   // Get the modal
+
+   if (ExplanAdd[nr] != ''){
+    if(id && modal) {
      modal.style.display = "block";    // When the user clicks the button, open the modal
      lastmodal = modal;
-   }
-
-   if(cla && cla == 'close'){
+    }
+    if(cla && cla == 'close'){
      lastmodal.style.display = "none"; // When the user clicks on <span> (x), close the modal
+    }
    }
   }
- }
- }
-}
+ }  // END - document.readyState == 'complete'
+}   // END - document.onreadystatechange = function ()
+
 
 function check(){
  if (status_html && status_websocket) {
- websocket.send('cc110x_detail');
+  websocket.send('detail');
  }
 }
 
-const regExplanation = [
+
+const Explan = [
 'GDO2 Output Pin Configuration',
 'GDO1 Output Pin Configuration',
 'GDO0 Output Pin Configuration',
@@ -226,7 +228,7 @@ const regExplanation = [
 'Frequency Control Word, Low Byte',
 'Modem Configuration 4 (Datarate, Bandwidth)',
 'Modem Configuration 3 (Datarate)',
-'Modem Configuration 2 (Modulation,Sync_Mod, ...)',
+'Modem Configuration 2 (Modulation, Sync_Mod, ...)',
 'Modem Configuration 1 (Num_Preamble, ...)',
 'Modem Configuration 0',
 'Modem Deviation Setting',
@@ -257,7 +259,7 @@ const regExplanation = [
 'Various Test Settings 0'
 ];
 
-const regExplanation_short = [
+const Explan_short = [
 'IOCFG2',
 'IOCFG1',
 'IOCFG0',
@@ -307,32 +309,10 @@ const regExplanation_short = [
 'TEST0',
 ];
 
-const LENGTH_CONFIG = [
-'Fixed packet length. Length configured in PKTLEN register',
-'Variable packet length. Length configured by the first byte after sync word',
-'Infinite packet length',
-'Reserved'
-];
-
-const MOD_FORMAT = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
-
-const NUM_PREAMBLE = ['2', '3', '4', '6', '8', '12', '16', '24'];
-
-const SYNC_MODE = [
-'No preamble/sync',
-'15/16 sync word bits detected',
-'16/16 sync word bits detected',
-'30/32 sync word bits detected',
-'No preamble/sync, carrier-sense above threshold',
-'15/16 + carrier-sense above threshold',
-'16/16 + carrier-sense above threshold',
-'30/32 + carrier-sense above threshold'
-];
-
 const tabPre = '<table><tr><td>Bit No.</td><td>Name</td><td>Reset</td><td>R/W</td><td>Description</td></tr><tr><td>';
 const tabEnd = '</td></tr></table>';
 
-const regExplanationAdd = [
+const ExplanAdd = [
 tabPre + '7</td><td>&nbsp;</td><td>0x00</td><td>R0</td><td>Not used</td></tr><tr><td>6</td><td>GDO2_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td>5</td><td>GDO2_CFG[5:0]</td><td>0x29</td><td>R/W</td><td>Default is CHP_RDYn.' + tabEnd,
 tabPre + '7</td><td>GDO_DS</td><td>0x00</td><td>R/W</td><td>Set high (1) or low (0) output drive strength on the GDO pins.</td></tr><tr><td>6</td><td>GDO1_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td> 5:0</td><td>GDO1_CFG[5:0]</td><td>0x2e</td><td>R/W</td><td>Default is 3-state.' + tabEnd,
 tabPre + '7</td><td>TEMP_SENSOR_ENABLE</td><td>0x00</td><td>R/W</td><td>Enable analog temperature sensor. Write 0 in all other register bits when using temperature sensor.</td></tr><tr><td>6</td><td>GDO0_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td>5:0</td><td>GDO0_CFG[5:0]</td><td>0x3f</td><td>R/W</td><td>Default is CLK_XOSC/192. It is recommended to disable the clock output in initialization, in order to optimize RF performance.' + tabEnd,
@@ -380,4 +360,25 @@ tabPre + '7</td><td>FEC_EN</td><td>0x00</td><td>R/W</td><td>Enable Forward Error
 '',
 '',
 ''
+];
+
+const LENGTH_CONFIG = [
+'Fixed packet length. Length configured in PKTLEN register',
+'Variable packet length. Length configured by the first byte after sync word',
+'Infinite packet length',
+'Reserved'
+];
+
+const MOD = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
+const NUM_PREAMBLE = ['2', '3', '4', '6', '8', '12', '16', '24'];
+
+const SYNC_MODE = [
+'No preamble/sync',
+'15/16 sync word bits detected',
+'16/16 sync word bits detected',
+'30/32 sync word bits detected',
+'No preamble/sync, carrier-sense above threshold',
+'15/16 + carrier-sense above threshold',
+'16/16 + carrier-sense above threshold',
+'30/32 + carrier-sense above threshold'
 ];

@@ -6,18 +6,26 @@ function onMessage(event) {
  console.log('received message: ' + event.data);
 
  if(event.data == 'Connected') {
-  websocket.send('cc110x');
+  websocket.send('chip');
  }
 
  if(event.data.includes(',{') && event.data.includes('},')) {
+  const ts = document.title;
   const obj=event.data.split(',');
-  document.getElementById("MS").innerHTML = MARCSTATE[obj[1]];
+
+  if(ts == 'cc110x_rf_Gateway') {
+   document.getElementById("MS").innerHTML = MARCSTATE[obj[1]];
+  } else if (ts == 'rfm69_rf_Gateway') {
+   document.getElementById("MS").innerHTML = RegOpMode[obj[1]];
+  }
+
   document.getElementById("MODE").innerHTML = obj[0];
   document.getElementById("ToggleBank").innerHTML = obj[2].replace(/\s/g, '&emsp;');
   document.getElementById("Time").innerHTML = obj[3];
  }
 }
 
+// CC110x //
 const MARCSTATE = [
 '00 = SLEEP',
 '01 = IDLE',
@@ -42,4 +50,13 @@ const MARCSTATE = [
 '14 = TX_END',
 '15 = RXTX_SWITCH',
 '16 = TXFIFO_UNDERFLOW'
+];
+
+// SX1231 //
+const RegOpMode = [
+'00 = Sleep mode (SLEEP)',
+'01 = Standby mode (STDBY)',
+'02 = Frequency Synthesizer mode (FS)',
+'03 = Transmitter mode (TX)',
+'04 = Receiver mode (RX)'
 ];

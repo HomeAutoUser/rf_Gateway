@@ -39,3 +39,19 @@ a:hover, a:active {
  background-color: #ffff00;
  color: black;
 }
+
+input {
+ text-align: center;
+}
+
+input[disabled] {
+ background-color: #E3E3E3;
+ border-radius: 2px 2px 2px 2px;
+ border: 1px solid #767676;
+}
+
+/* color of changed values */
+:root {
+  --val_std: #0000b3;
+  --val_diff: #ff0000;
+}

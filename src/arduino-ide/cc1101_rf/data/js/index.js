@@ -5,7 +5,7 @@ document.head.appendChild(js);
 function onMessage(event) {
  console.log('received message: ' + event.data);
 
- if(event.data.includes('CC110x') ) {
+ if(event.data.includes('chip') ) {
   const obj=event.data.split(',');
   document.getElementById("RAM").innerHTML = obj[1];
   document.getElementById("Uptime").innerHTML = obj[2];
@@ -29,4 +29,11 @@ function onMessage(event) {
   }
   document.getElementById("WLANdB").innerHTML = obj[5];
  }
+}
+
+function refresh(event) {
+ console.log('Restart ESP, try to reload the page in 30 seconds.');
+ setTimeout(function(){
+  location.reload();
+ }, 30000);
 }

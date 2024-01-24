@@ -1,7 +1,8 @@
 #include "config.h"
-#include "register.h"
 
-/* all available CC110x registers to set */
+#ifdef CC110x
+#include "cc110x_register.h"
+// ############################## all available CC110x registers ##############################
 const uint8_t Config_Default[] PROGMEM = {
   /*
     Address Config = No address check
@@ -152,7 +153,6 @@ const uint8_t Config_Avantek[] PROGMEM = {
   //0x31,  // TEST1               Various Test Settings
   //0x0B,  // TEST0               Various Test Settings
 };
-
 #endif
 
 #ifdef Bresser_5in1
@@ -1713,22 +1713,16 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 };
 #endif
 
-
 /*
   Register array with all assignments ( define the array of structs )
-
   [x] is de array pos of Registers
-
   access to reg value´s                     -> Registers[x].reg_val[x]
   access to reg length                      -> Registers[x].length
   access to reg name TXT                    -> Registers[x].name
   access to PKTLEN from protocol            -> Registers[x].PKTLEN
-
   Registername        Registerlength,   Name from           Packet
   to access values                      register to View    length
-
   reg_val             length            name                PKTLEN
-
 */
 
 struct Data Registers[] = {
@@ -1801,7 +1795,10 @@ struct Data Registers[] = {
   /* under development END */
 };
 
+
 String ReceiveModeName;                                               // name of active mode from array
 float Freq_offset = 0;                                                /* cc110x - Frequency offset */
 uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
 uint8_t ToggleArray[4] = {255, 255, 255, 255};
+
+#endif // END ############################## all available CC110x registers ##############################

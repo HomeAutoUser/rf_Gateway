@@ -11,17 +11,25 @@
 #include <EEPROM.h>
 #include <SPI.h>
 
+static const char PROGMEM RECEIVE_MODE_USER[] = "CC110x user configuration";
+
 int Chip_readRSSI();
-uint8_t CC110x_readReg(uint8_t regAddr, uint8_t regType);
+uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);
 uint8_t CC110x_CmdStrobe(uint8_t cmd);
 void ChipInit();
-void CC110x_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
+void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
+void Chip_writeReg(uint8_t regAddr, uint8_t value);
+void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
+void Chip_setReceiveMode();
+void Chip_setFreq(long frequency, byte * arr);
+float Chip_readFreq();
 void CC110x_writeBurstReg(byte * uiBuffer, byte regAddr, byte len);
-void CC110x_writeReg(uint8_t regAddr, uint8_t value);
-void CC110x_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
 void CC110x_setTransmitMode();
-void CC110x_setReceiveMode();
 void CC110x_sendFIFO(char *startpos);
+byte Chip_Bandw_cal(float input);
+void Chip_Datarate_Set(long datarate, byte * arr);
+byte CC110x_Deviation_Set(float deviation);
+byte web_Mod_set(byte input);
 
 extern void InputCommand(String input);
 extern int RSSI_dez;
@@ -34,6 +42,12 @@ extern byte ReceiveModeNr;                   // activated protocol in flash
 extern byte ReceiveModePKTLEN;
 extern unsigned long ToggleTime;
 extern byte ToggleOrder[4];
+
+#define CHIP_NAME                 "CC110x"              // name Chip
+#define CHIP_RFNAME               "cc110x_rf_Gateway"   // name web interface
+#define REGISTER_MAX              46                    // register count
+#define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)
+#define CHIP_BitRate             0x10                   // first BitRate/DataRate address
 
 /** Command strobes */
 #define CC110x_SRES              0x30        // Reset CC110x chip
@@ -64,7 +78,7 @@ extern byte ToggleOrder[4];
 /** PATABLE & FIFO's */
 #define CC110x_PATABLE           0x3E        // PATABLE address
 #define CC110x_TXFIFO            0x3F        // TX FIFO address
-#define CC110x_RXFIFO            0x3F        // RX FIFO address
+#define CHIP_RXFIFO              0x3F        // RX FIFO address
 
 
 /** CC110x configuration registers */
@@ -74,7 +88,7 @@ extern byte ToggleOrder[4];
 #define CC110x_FIFOTHR           0x03        // RX FIFO and TX FIFO Thresholds
 #define CC110x_SYNC1             0x04        // Sync Word, High Byte
 #define CC110x_SYNC0             0x05        // Sync Word, Low Byte
-#define CC110x_PKTLEN            0x06        // Packet Length
+#define CHIP_PKTLEN              0x06        // Packet Length
 #define CC110x_PKTCTRL1          0x07        // Packet Automation Control
 #define CC110x_PKTCTRL0          0x08        // Packet Automation Control
 #define CC110x_ADDR              0x09        // Device Address
@@ -84,7 +98,7 @@ extern byte ToggleOrder[4];
 #define CC110x_FREQ2             0x0D        // Frequency Control Word, High Byte
 #define CC110x_FREQ1             0x0E        // Frequency Control Word, Middle Byte
 #define CC110x_FREQ0             0x0F        // Frequency Control Word, Low Byte
-#define CC110x_MDMCFG4           0x10        // Modem Configuration
+#define CC110x_MDMCFG4           0x10        // Modem Configuration (duplex)
 #define CC110x_MDMCFG3           0x11        // Modem Configuration
 #define CC110x_MDMCFG2           0x12        // Modem Configuration
 #define CC110x_MDMCFG1           0x13        // Modem Configuration
@@ -119,7 +133,7 @@ extern byte ToggleOrder[4];
 
 /** Status registers */
 #define CC110x_PARTNUM           0x30        // Chip ID
-#define CC110x_VERSION           0x31        // Chip Version
+#define CHIP_VERSION             0x31        // Chip Version
 #define CC110x_FREQEST           0x32        // Frequency Offset Estimate from Demodulator
 #define CC110x_LQI               0x33        // Demodulator Estimate for Link Quality
 #define CC110x_RSSI              0x34        // Received Signal Strength Indication
