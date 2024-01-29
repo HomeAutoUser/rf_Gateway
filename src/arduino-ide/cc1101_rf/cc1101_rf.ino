@@ -829,9 +829,9 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
     tmp = F("[DB] InputCommand ["); tmp += i; tmp += F("] = "); tmp += buf_input[i];
     MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
   }
-#endif
+#endif  // END - debug
 
   switch (buf_input[0]) { /* integrated ? m t tob tos x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
     case '?':             /* command ? */
@@ -840,7 +840,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         Serial.println(
 #elif CODE_ESP
         MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           F("e, foff, ft, m, t, tob, tos, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS"));
       }
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -857,7 +857,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               Serial.println(
 #elif CODE_ESP
               MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                 F("CC110x_Freq.Offset resets (The value is not in the range of -10 to 10 MHz)"));
             }
             EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
@@ -871,13 +871,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             Serial.print(F("CC110x_Freq.Offset saved to ")); Serial.print(Freq_offset); Serial.println(F(" MHz"));
 #elif CODE_ESP
             tmp = F("CC110x_Freq.Offset saved to "); tmp += Freq_offset; tmp += F(" MHz");
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           } else {
 #ifdef CODE_AVR
             Serial.println(F("CC110x_Freq.Offset value is not nummeric"));
 #elif CODE_ESP
             tmp = F("CC110x_Freq.Offset value is not nummeric");
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           }
 #ifdef CODE_ESP
           MSG_OUTPUTLN(tmp);
@@ -889,7 +889,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           Serial.println(
 #elif CODE_ESP
           MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
             F("CC110x_Frequency, send testsignal"));
           input = F("SN;D=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA;R=50;");
           InputCommand(input);
@@ -937,8 +937,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp = F("set register to "); tmp += Registers[int_substr1_serial].name;
                 MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 ReceiveModeName = Registers[int_substr1_serial].name;
                 ReceiveModeNr = int_substr1_serial;
                 ReceiveModePKTLEN = Registers[int_substr1_serial].PKTLEN;
@@ -949,17 +949,17 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
                 MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug_cc110x_ms
 
 #ifdef debug
 #ifdef CODE_AVR
                 Serial.println(
 #elif CODE_ESP
                 MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                   F("[DB] Input, writes all current values to EEPROM"));
-#endif
+#endif  // END - debug
                 for (byte i = 0; i < Registers[int_substr1_serial].length; i++) { /* write register values ​​to flash */
                   EEPROMwrite(i, pgm_read_byte_near(Registers[int_substr1_serial].reg_val + i));
                 }
@@ -969,7 +969,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Serial.println(
 #elif CODE_ESP
                 MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                   F("Developer gadget to test functions"));
               }
             }
@@ -983,7 +983,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         Serial.println(
 #elif CODE_ESP
         MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           uptime);
       } else {
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
@@ -1001,7 +1001,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 tmp = F("Toggle STOPPED, time too long [min "); tmp += ToggleTimeMin;
                 tmp += F(", max "); tmp += ToggleTimeMax; tmp += ']';
                 MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                 ToggleTime = 0;
                 ToggleAll = false;
               } else if (isNumeric(input.substring(3)) == 1 && (IntTime >= ToggleTimeMin)) { /* command tos<n> >= ToggleTime OK */
@@ -1010,7 +1010,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp = F("Toggle starts changing every "); tmp += IntTime; tmp += F(" milliseconds");
                 MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, IntTime); /* write to EEPROM */
                 ToggleCnt = 0;                                 // sonst evtl. CC110x switched to mode 66, ⸮=
                 ToggleTime = IntTime;
@@ -1028,7 +1028,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp = F("Toggle STOPPED, time to short [min "); tmp += ToggleTimeMin; tmp += ']';
                 MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                 ToggleTime = 0;
               }
             } else if (buf_input[2] == 'b') { /* command tob */
@@ -1040,8 +1040,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp = F("[DB] Input | cmd tob "); tmp += input.substring(3); tmp += F(" accepted");
                 MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 if (isNumeric(input.substring(4)) == 1) {
                   if (input.substring(4).toInt() == 99) {                                 /* command tob<0-3>99 -> reset togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = 255;                     /* 255 is max value and reset value */
@@ -1050,7 +1050,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                     Serial.print(F("ToggleBank ")); Serial.print(input.substring(3, 4)); Serial.println(F(" reset"));
 #elif CODE_ESP
                     tmp = F("ToggleBank "); tmp += input.substring(3, 4); tmp += F(" reset");
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                   } else if (input.substring(4).toInt() < RegistersMaxCnt) { /* command tob<0-3><n> -> set togglebank <n> */
                     ToggleArray[input.substring(3, 4).toInt()] = input.substring(4).toInt();
                     EEPROMwrite(input.substring(3, 4).toInt() + EEPROM_ADDR_ProtTo, input.substring(4).toInt());
@@ -1060,7 +1060,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                     tmp = F("ToggleBank "); tmp += input.substring(3, 4); tmp += F(" set to ");
                     tmp += Registers[input.substring(4).toInt()].name; tmp += F(" mode");
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                   } else if (input.substring(4).toInt() > RegistersMaxCnt) {
 #ifdef CODE_AVR
                     Serial.println(F("Mode number greater RegistersMaxCnt"));
@@ -1069,7 +1069,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                     tmp = F("Mode number greater RegistersMaxCnt");
                   }
                   MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                 }
                 if (ToggleTime > 0) {
                   ToggleValues = 0; /* counting Toggle values ​​and sorting into array */
@@ -1086,8 +1086,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Serial.println(F("[DB] Input, togglebank reset { - | - | - | - }"));
 #elif CODE_ESP
                 tmp = F("[DB] Input, togglebank reset { - | - | - | - }\n");
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 for (byte i = 0; i < 4; i++) {
                   ToggleArray[i] = 255;
                   EEPROMwrite(i + EEPROM_ADDR_ProtTo, 255);  // DEZ 45  HEX 2D  ASCII -
@@ -1101,14 +1101,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp += F("ToggleBank 0-3 reset and STOP Toggle");
                 MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
 #ifdef CODE_AVR
                 Serial.println(
 #elif CODE_ESP
                 MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                   F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')"));
                 ToggleAll = true;
                 ToggleTime = 15000;  // set to default and start
@@ -1141,7 +1141,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
             tmp = F("write "); tmp += buf_input[1]; tmp += buf_input[2]; tmp += F(" to PATABLE done");
             MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           }
         }
       }
@@ -1202,7 +1202,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp += F(" (only test)");
 #endif
           MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
         } else if (buf_input[1] && buf_input[2] && !buf_input[3]) { /* command C<n><n> - Read HEX adress values from Register, set raw CDA/CEA - disable/enable AFC */
           uint16_t Cret = hexToDec(input.substring(1));
           if (Cret <= 0x3D) {
@@ -1211,14 +1211,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             Serial.print('C');
 #else
             Serial.print(F("0x"));
-#endif
+#endif  // END - SIGNALduino_comp
             Serial.print(input.substring(1));
 
 #ifdef SIGNALduino_comp
             Serial.print(F(" = "));
 #else
             Serial.print(F(" - 0x"));
-#endif
+#endif  // END - SIGNALduino_comp
             byte CC110x_ret = Chip_readReg(Cret, READ_BURST);
             MSG_OUTPUT_DecToHEX_lz(CC110x_ret);
             Serial.println("");
@@ -1227,17 +1227,17 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             tmp = 'C';
 #else
             tmp = F("0x");
-#endif
+#endif  // END - SIGNALduino_comp
             tmp += input.substring(1);
 #ifdef SIGNALduino_comp
             tmp += F(" = ");
 #else
             tmp += F(" - 0x");
-#endif
+#endif  // END - SIGNALduino_comp
             byte CC110x_ret = Chip_readReg(Cret, READ_BURST);
             tmp += onlyDecToHex2Digit(CC110x_ret);
             MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           } else if (Cret == 0x99) { /* command C99 - ccreg */
             Chip_readBurstReg(uiBuffer, 0x00, 47);
 #ifdef CODE_AVR
@@ -1270,7 +1270,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               tmp += onlyDecToHex2Digit(uiBuffer[i]); tmp += ' ';
             }
             MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           } else if (Cret == 0x3E) { /* command C3E - patable  */
             Chip_readBurstReg(uiBuffer, 0x3E, 8);
 #ifdef CODE_AVR
@@ -1287,7 +1287,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               tmp += ' '; tmp += onlyDecToHex2Digit(uiBuffer[i]);
             }
             MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           } else if (Cret == 0xDA || Cret == 0xEA) {  // command CDA/CEA - disable/enable AFC
             freqAfc = buf_input[1] - 'D';             // CC110x AFC 0 oder 1
             freqOffAcc = 0;                           // reset cc110x afc offset
@@ -1326,7 +1326,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp += freqAfc;         // CC110x AFC an oder aus
           tmp += F(";Mred=0");
           MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
         } else if (input == "C0DnF") { /* command C0DnF - get ccconf */
 #ifdef CODE_AVR
           Serial.print(F("C0Dn11="));
@@ -1341,7 +1341,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             tmp += onlyDecToHex2Digit(Chip_readReg(0x0D + i, READ_BURST));
           }
           MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
         }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -1356,7 +1356,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         Serial.println(F("# # #   current status   # # #"));
 #elif CODE_ESP
         tmp = F("# # #   current status   # # #\n");
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
         if (ReceiveModeName == "" && ChipFound == true) {         // ReceiveModeName if uC restart
           ReceiveModeName = F("CC110x configuration");
         } else if (ReceiveModeName != "" && ChipFound == true) {  // ReceiveModeName is set with command m<n>
@@ -1430,7 +1430,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp += F("ToggleTime (ms)     "); tmp += ToggleTime;
         }
         MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'M': /* command M */
@@ -1455,7 +1455,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp += i; tmp += F(" - "); tmp += Registers[i].name; tmp += '\n';
         }
         MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'P': /* command P */
@@ -1464,7 +1464,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         Serial.println(
 #elif CODE_ESP
         MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           F("OK"));
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -1474,7 +1474,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         Serial.println(
 #elif CODE_ESP
         MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
           freeRam());
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
@@ -1482,16 +1482,15 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (ChipFound == false) {
         NO_Chip();
       } else {
-        if (buf_input[1] && buf_input[1] == 'N' && buf_input[2] == ';') { /* command SN */
+        if (buf_input[1] && buf_input[1] == 'N' && buf_input[2] == ';') { /* command SN | SN;R=5;D=9A46036AC8D3923EAEB470AB; */
 #ifdef debug
 #ifdef CODE_AVR
           Serial.println(
 #elif CODE_ESP
           MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
             F("[DB] Input | SN; raw message"));
-#endif
-          // SN;R=5;D=9A46036AC8D3923EAEB470AB; //
+#endif  // END - debug
 
           if (input.lastIndexOf(";") == int(input.length()) - 1) { /* check RAW msg END ; */
             char text[input.length()];
@@ -1510,8 +1509,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Serial.print(F("[DB] Input | SN; found ")); Serial.println(ptr);
 #elif CODE_ESP
                 tmp = F("[DB] Input | SN; found "); tmp += ptr; tmp += '\n';
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 if ((String(ptr).substring(2)).toInt() != 0) { /* repeats */
                   rep = (String(ptr).substring(2)).toInt();
 #ifdef debug
@@ -1520,8 +1519,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                   tmp += F("[DB] Input | SN; takeover repeats");
                   MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 }
               } else if (strstr(ptr, "D=")) { /* datapart */
 #ifdef debug
@@ -1531,8 +1530,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
                 tmp = F("[DB] Input | SN; found "); tmp += ptr; tmp += F(" with length "); tmp += String(ptr + 2).length();
                 MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
                 ptr = ptr + 2; /* cut D= */
 
                 if (String(ptr).length() % 2 == 0) {                         /* check datapart is odd */
@@ -1550,7 +1549,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                   Serial.println(
 #elif CODE_ESP
                   MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
                     F("SN; found odd number of nibbles, no send !!!"));
                 }
               }
@@ -1568,8 +1567,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               tmp = F("[DB] Input | SN; valid and ready to send with repeats="); tmp += rep;
               MSG_OUTPUTLN(tmp);
               MSG_OUTPUTLN(senddata);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
               uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST); // old packet length
 #ifdef debug
 #ifdef CODE_AVR
@@ -1577,21 +1576,22 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
               tmp = F("[DB] SEND from FHEM, old PKTLEN is "); tmp += PKTLENis;
               MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
               uint8_t len = strlen(senddata) / 2;
               Chip_writeReg(CHIP_PKTLEN, len);
 #ifdef RFM69
               Chip_writeReg(0x3C, len - 1); // FifoThreshold setting
-#endif
+#endif  // END - RFM69
 #ifdef debug
 #ifdef CODE_AVR
-              Serial.print(F("[DB] SEND from FHEM, act PKTLEN is ")); Serial.println(i / 2);
+              Serial.print(F("[DB] SEND from FHEM, act PKTLEN is ")); Serial.println(len);
 #elif CODE_ESP
-              tmp = F("[DB] SEND from FHEM, act PKTLEN is "); tmp += i / 2;
+              tmp = F("[DB] SEND from FHEM, act PKTLEN is "); tmp += len;
               MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
+
               /*
                 AVANTEK           SN;D=08C114844FDA5CA2;R=1;
                 Bresser 5in1      SN;D=E7527FF78FF7EFF8FDD7BBCAFF18AD80087008100702284435000002;R=1;
@@ -1624,7 +1624,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
         tmp = FPSTR(TXT_VERSION); tmp += FPSTR(compile_date);
         MSG_OUTPUTLN(tmp);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'W': /* command W - write register*/
@@ -1645,8 +1645,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               tmp = F("[DB] Serial Input | cmd W with adr=0x"); tmp += onlyDecToHex2Digit(adr_dec);
               tmp += F(" value=0x"); tmp += onlyDecToHex2Digit(val_dec);
               MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
               Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);   // write in chip | adr - 2 because of sduino firmware
               EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);     // write in flash
 #ifdef CC110x
@@ -1658,8 +1658,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
               tmp = 'W'; tmp += onlyDecToHex2Digit(adr_dec); tmp += onlyDecToHex2Digit(val_dec);
               MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
               ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
             }
           }
@@ -1678,10 +1678,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
           tmp = F("cmdStrobeReg "); tmp += onlyDecToHex2Digit(reg); tmp += F(" chipStatus "); tmp += val; tmp += F(" delay1 "); tmp += val1;
           MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
         }
-#endif
+#endif  // END - CC110x
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
     default:
