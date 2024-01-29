@@ -1,4 +1,6 @@
-#ifdef defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#include "config.h"
+
+#ifdef CODE_ESP
 #include "wlan.h"
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -454,9 +456,9 @@ String WLAN_encryptionType(uint8_t i) {
     default:
       return F("unknown");
       break;
-#endif
-#endif
+#endif  // END - #ifdef ESP32_core_v1
+#endif  // END - ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
   }
 }
 
-#endif  // #ifdef defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#endif  // END - CODE_ESP

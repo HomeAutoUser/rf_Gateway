@@ -26,7 +26,7 @@ String WLAN_encryptionType(uint8_t i);
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 extern ESP8266WebServer HttpServer;
-#endif // END - #ifdef ARDUINO_ARCH_ESP8266
+#endif  // END - #ifdef ARDUINO_ARCH_ESP8266
 
 #ifdef ARDUINO_ARCH_ESP32
 // external integration: cc1101_rf.ino

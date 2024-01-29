@@ -1,4 +1,6 @@
-#ifdef defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#include "config.h"
+
+#ifdef CODE_ESP
 #include "websites.h"
 
 void web_index() {
@@ -1351,4 +1353,4 @@ String HTML_mod(String txt) {
   return txt;
 }
 
-#endif  // END - defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#endif  // END - CODE_ESP
