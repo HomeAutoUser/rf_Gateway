@@ -118,7 +118,7 @@ const char TXT_VERSION[] PROGMEM = "V 2.0.1pre SIGNALduino compatible rfm69_rf_G
 #else
 const char TXT_VERSION[] PROGMEM = "V 2.0.1pre SIGNALduino compatible rf_Gateway (2024-01-29) ";
 #endif
-byte Chip_writeReg_offset = 2; // for compatibility with SIGNALduino
+byte Chip_writeReg_offset = 2;                // for compatibility with SIGNALduino
 #else
 const char TXT_VERSION[] PROGMEM = "V 2.0.1pre rf_Gateway (2024-01-29) ";
 byte Chip_writeReg_offset = 0;
@@ -196,23 +196,15 @@ int wifiEventId;
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #include <ArduinoOTA.h>
 #include <WebSocketsServer.h>
-#define WEBSOCKETS_SAVE_RAM                 // moves all Header strings to Flash (~300 Byte)
+#define WEBSOCKETS_SAVE_RAM                   // moves all Header strings to Flash (~300 Byte)
 //#define WEBSOCKETS_SERVER_CLIENT_MAX  2     // default 5
 WebSocketsServer webSocket = WebSocketsServer(81);
 String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX] = {};
 
-/* https://unsinnsbasis.de/littlefs-esp32/
-   https://unsinnsbasis.de/littlefs-esp32-teil2/
-
-   https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html
-   https://randomnerdtutorials.com/install-esp8266-nodemcu-littlefs-arduino/
-   https://42project.net/esp8266-webserverinhalte-wie-bilder-png-und-jpeg-aus-dem-internen-flash-speicher-laden/
-
-  https://github.com/lorol/LITTLEFS/issues/43#issuecomment-1537234709
-
-  https://github.com/lorol/LITTLEFS --> Ths library is now part of Arduino esp32 core v2
-
-  ESP32 Bibliothek -> LittleFS_esp32
+/*
+   https://github.com/lorol/LITTLEFS/issues/43#issuecomment-1537234709
+   https://github.com/lorol/LITTLEFS --> Ths library is now part of Arduino esp32 core v2
+   ESP32 Bibliothek -> LittleFS_esp32
 */
 
 #ifdef ESP32_core_v1
@@ -289,13 +281,13 @@ void Interupt() {
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
 #ifdef CC110x
-  CC110x_CmdStrobe(CC110x_SIDLE); /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
+  CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 #endif
   Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
 #ifdef CC110x
-  CC110x_CmdStrobe(CC110x_SFRX);  /* Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states */
+  CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
 #elif RFM69
-  Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
+  Chip_writeReg(0x28, 0x10);      // FIFO are cleared when this bit is set.
 #endif
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -312,7 +304,7 @@ void Interupt_Variant(byte nr) {
     attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
   }
 #endif
-  Chip_setReceiveMode(); // start receive mode
+  Chip_setReceiveMode();  // start receive mode
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   WebSocket_chip();
   WebSocket_detail(1);
@@ -484,7 +476,7 @@ void setup() {
 #ifdef debug_wifi
   Serial.println(F("[DB] Starting HttpServer"));
 #endif
-  routing_websites(); /* load all routes to site´s */
+  routing_websites();   // load all routes to site´s
   HttpServer.begin();
 
 #ifdef debug_wifi
@@ -495,18 +487,18 @@ void setup() {
 #endif
 
 #ifdef debug
-#if defined(ARDUINO_AVR_NANO) || defined(ARDUINO_RADINOCC1101) || defined(ARDUINO_AVR_PRO)
+#if defined(ARDUINO_AVR_NANO) || defined(ARDUINO_RADINOCC1101) || defined(ARDUINO_AVR_PRO)  // ARDUINO_AVR_NANO || ARDUINO_RADINOCC1101 || ARDUINO_AVR_PRO
   Serial.println(F("[DB] -> found board without WLAN"));
-#elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
+#elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)                          // ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
   Serial.println(F("[DB] -> found board with WLAN"));
-#else
+#else                                                                                       // unknown board
   Serial.println(F("[DB] -> found unknown board"));
-#endif    // END ARDUINO_AVR_NANO || ARDUINO_RADINOCC1101 || ARDUINO_AVR_PRO
-#endif    // END debug
+#endif                                                                                      // END - BOARDS
+#endif                                                                                      // END debug
 
   ChipInit();
   toggleTick = ToggleTime;
-  if (ToggleTime == 0) {                    // wechseln in den zuletzt aktivierten Empfangsmodus
+  if (ToggleTime == 0) {                // wechseln in den zuletzt aktivierten Empfangsmodus
     ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
     Interupt_Variant(ReceiveModeNr);    // Empfangsvariante & Register einstellen
   }
@@ -1296,14 +1288,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
             MSG_OUTPUTLN(tmp);
 #endif
-          } else if (Cret == 0xDA || Cret == 0xEA) {      // command CDA/CEA - disable/enable AFC
-            freqAfc = buf_input[1] - 'D';                 // CC110x AFC 0 oder 1
-            freqOffAcc = 0;                               // reset cc110x afc offset
-            freqErrAvg = 0;                               // reset cc110x afc average
+          } else if (Cret == 0xDA || Cret == 0xEA) {  // command CDA/CEA - disable/enable AFC
+            freqAfc = buf_input[1] - 'D';             // CC110x AFC 0 oder 1
+            freqOffAcc = 0;                           // reset cc110x afc offset
+            freqErrAvg = 0;                           // reset cc110x afc average
 #ifdef CC110x
-            Chip_writeReg(CC110x_FSCTRL0, 0);           // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+            Chip_writeReg(CC110x_FSCTRL0, 0);         // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #elif RFM69
-            SX1231_afc(freqAfc); // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
+            SX1231_afc(freqAfc);                      // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
 #endif
             EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -1404,10 +1396,17 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
 #ifdef CC110x
           tmp += F("CC110x_MARCSTATE    "); tmp += onlyDecToHex2Digit(Chip_readReg(CC110x_MARCSTATE, READ_BURST));  tmp += "\n"; // MARCSTATE – Main Radio Control State Machine State
+          tmp += F("CC110x_Freq.Afc     ");
+#elif RFM69
+          tmp += F("RFM69_Freq.Afc     ");
 #endif
-          // TODO Bezeichnung
-          tmp += F("CC110x_Freq.Afc     "); tmp += (freqAfc == 1 ? F("on (1)") : F("off (0)")); tmp += "\n";
-          tmp += F("CC110x_Freq.Offset  "); tmp += String(Freq_offset, 3); tmp += F(" MHz"); tmp += "\n";
+          tmp += (freqAfc == 1 ? F("on (1)") : F("off (0)")); tmp += "\n";
+#ifdef CC110x
+          tmp += F("CC110x_Freq.Offset  ");
+#elif RFM69
+          tmp += F("RFM69_Freq.Offset  ");
+#endif
+          tmp += String(Freq_offset, 3); tmp += F(" MHz"); tmp += "\n";
         }
         tmp += F("ReceiveMode         "); tmp += ReceiveModeName; tmp += "\n";
         tmp += F("ReceiveMessageCount "); tmp += msgCount; tmp += "\n";
@@ -1605,10 +1604,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               }
               Chip_writeReg(CHIP_PKTLEN, PKTLENis); // restore old packet length
 #ifdef RFM69
-              Chip_writeReg(0x3C, PKTLENis - 1); // restore FifoThreshold setting
+              Chip_writeReg(0x3C, PKTLENis - 1);    // restore FifoThreshold setting
 #endif
-              Chip_setReceiveMode(); /* enable RX */
-              digitalWriteFast(LED, LOW);  // LED off
+              Chip_setReceiveMode();                // enable RX
+              digitalWriteFast(LED, LOW);           // LED off
             }
           }
         }
@@ -1648,10 +1647,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               MSG_OUTPUTLN(tmp);
 #endif
 #endif
-              Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);  // write in chip | adr - 2 because of sduino firmware
-              EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);      // write in flash
+              Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);   // write in chip | adr - 2 because of sduino firmware
+              EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);     // write in flash
 #ifdef CC110x
-              Chip_writeReg(CC110x_FSCTRL0, 0);                          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+              Chip_writeReg(CC110x_FSCTRL0, 0);                         // 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #endif
 #ifdef debug
 #ifdef CODE_AVR
@@ -1852,7 +1851,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
       break;
   }
 }
-#endif /* END - ESP8266 & ESP 32*/
+#endif  // END - defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 
 
 /* for OOK modulation */
@@ -1867,7 +1866,7 @@ void decode(const int pulse) {  /* Pulsübernahme und Weitergabe */
 }
 
 
-inline void doDetect() {        /* Pulsprüfung und Weitergabe an Patternprüfung */
+inline void doDetect() {  /* Pulsprüfung und Weitergabe an Patternprüfung */
   valid = (MsgLen == 0 || last == 0 || (first ^ last) < 0);   // true if a and b have opposite signs
   valid &= (MsgLen == MsgLenMax) ? false : true;
   valid &= ( (first > -t_maxP) && (first < t_maxP) );         // if low maxPulse detected, start processMessage()
@@ -1886,10 +1885,10 @@ inline void doDetect() {        /* Pulsprüfung und Weitergabe an Patternprüfun
 }
 
 
-void MSGBuild() {               /* Nachrichtenausgabe */
+void MSGBuild() { /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
     uint8_t rssi = Chip_readReg(0x34, 0xC0);  // nicht konvertiert
-    digitalWriteFast(LED, HIGH);                // LED on
+    digitalWriteFast(LED, HIGH);              // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
     String raw = "";
@@ -1937,7 +1936,7 @@ void MSGBuild() {               /* Nachrichtenausgabe */
 }
 
 
-void findpatt(int val) {      /* Patterneinsortierung */
+void findpatt(int val) {  /* Patterneinsortierung */
   for (uint8_t i = 0; i < PatMaxCnt; i++) {
     if (MsgLen == 0) {  /* ### nach RESET ### */
       msg = i;
@@ -1990,7 +1989,7 @@ void findpatt(int val) {      /* Patterneinsortierung */
 }
 
 
-void PatReset() {     /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
+void PatReset() { /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
   msg = "";
   MsgLen = 0;
   PatMAX = 0;

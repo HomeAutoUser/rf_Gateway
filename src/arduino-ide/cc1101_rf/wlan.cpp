@@ -1,3 +1,4 @@
+#ifdef defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #include "wlan.h"
 
 #ifdef ARDUINO_ARCH_ESP32
@@ -457,3 +458,5 @@ String WLAN_encryptionType(uint8_t i) {
 #endif
   }
 }
+
+#endif  // #ifdef defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
