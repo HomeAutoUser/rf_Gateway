@@ -334,23 +334,24 @@ void setup() {
   if (!LittleFS.begin()) {
 #ifdef debug
     Serial.println(F("[DB] LittleFS mount failed, formatting filesystem"));
-#endif
+#endif  // END - debug
     LittleFS.format();
   } else {
 #ifdef debug
     Serial.println(F("[DB] Starting LittleFS"));
-#endif
+#endif  // END - debug
   }
   File logFile = LittleFS.open("/files/log.txt", "w"); /* Datei mit Schreibrechten öffnen, wird erstellt wenn nicht vorhanden */
   if (!logFile) {
 #ifdef debug
     Serial.println(F("[DB] LittleFS file creation failed"));
-#endif
+#endif  // END - debug
   } else {
     String logText = F("Systemstart (");
 #ifdef ARDUINO_ARCH_ESP8266
     logText += ESP.getResetReason();
 #endif
+
 #ifdef ARDUINO_ARCH_ESP32
     esp_reset_reason_t reset_reason = esp_reset_reason();
     logText += reset_reason;
@@ -390,7 +391,7 @@ void setup() {
         logText += F("SDIO");
         break;
     }
-#endif
+#endif  // END - ARDUINO_ARCH_ESP32
     logText += ')';
     logFile.close(); /* Schließen der Datei */
     appendLogFile(logText);
@@ -416,7 +417,7 @@ void setup() {
   Serial.print(F("[DB] WIFI Adr Gateway  ")); Serial.println(esgw);
   Serial.print(F("[DB] WIFI Adr DNS      ")); Serial.println(edns);
   Serial.print(F("[DB] WIFI Adr NetMask  ")); Serial.println(esnm);
-#endif
+#endif  // END - debug_wifi
 
 #ifdef ARDUINO_ARCH_ESP8266
   uint32_t chipID = ESP.getChipId();
@@ -464,7 +465,7 @@ void setup() {
     else if (error == OTA_END_ERROR) Serial.println(F("[DB] OTA - End Failed"));
   });
   Serial.println(F("[DB] Starting OTA"));
-#endif
+#endif  // END - debug_wifi
   ArduinoOTA.begin();
 
 #ifdef debug_telnet
@@ -491,10 +492,10 @@ void setup() {
   Serial.println(F("[DB] -> found board without WLAN"));
 #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)                          // ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
   Serial.println(F("[DB] -> found board with WLAN"));
-#else                                                                                       // unknown board
+#else // unknown board
   Serial.println(F("[DB] -> found unknown board"));
-#endif                                                                                      // END - BOARDS
-#endif                                                                                      // END debug
+#endif  // END - BOARDS
+#endif  // END debug
 
   ChipInit();
   toggleTick = ToggleTime;
@@ -562,8 +563,8 @@ void loop() {
       Serial.print(F("[DB] Serial.available > 0 ")); Serial.println(msg);
 #elif CODE_ESP
       MSG_OUTPUT(F("[DB] Serial.available > 0 ")); MSG_OUTPUTLN(msg);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
       client_now = 255;         /* current client is set where data is received */
       InputCommand(msg);
       msg = "";     /* reset variable as it continues to be used elsewhere */
@@ -603,8 +604,8 @@ void loop() {
     Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
     MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug_cc110x_ms
     uint8_t uiBuffer[ReceiveModePKTLEN];                             // Array anlegen
     Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN); // Daten aus dem FIFO lesen
 #ifdef SIGNALduino_comp
@@ -614,20 +615,20 @@ void loop() {
 #elif CODE_ESP
     msg += char(2);           // STX
     msg += F("MN;D=");        // "MN;D=" | "data: "
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #else
 #ifdef CODE_AVR
     Serial.print(F("data: "));  // "MN;D=" | "data: "
 #elif CODE_ESP
     msg += F("data: ");         // "MN;D=" | "data: "
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #endif
     for (byte i = 0; i < ReceiveModePKTLEN; i++) { /* RawData */
 #ifdef CODE_AVR
       Serial.print(onlyDecToHex2Digit(uiBuffer[i]));
 #elif CODE_ESP
       msg += onlyDecToHex2Digit(uiBuffer[i]);
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       html_raw += onlyDecToHex2Digit(uiBuffer[i]);
 #endif
@@ -637,53 +638,53 @@ void loop() {
     Serial.print(F(";R="));     // ";R=" | "; RSSI="
 #elif CODE_ESP
     msg += F(";R=");            // ";R=" | "; RSSI="
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #else
 #ifdef CODE_AVR
     Serial.print(F(" RSSI="));  // ";R=" | "; RSSI="
 #elif CODE_ESP
     msg += F(" RSSI=");         // ";R=" | "; RSSI="
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #endif
 
 #ifdef CODE_AVR
     Serial.print(rssi);
 #elif CODE_ESP
     msg += rssi;
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
     Serial.print(F(";A="));         // ";A=" | "; FREQAFC="
 #elif CODE_ESP
     msg += F(";A=");                // ";A=" | "; FREQAFC="
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #else
 #ifdef CODE_AVR
     Serial.print(F("; FREQAFC="));  // ";A=" | "; FREQAFC="
 #elif CODE_ESP
     msg += F("; FREQAFC=");         // ";A=" | "; FREQAFC="
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #endif
 
 #ifdef CODE_AVR
     Serial.print(freqErr); Serial.print(';');
 #elif CODE_ESP
     msg += freqErr; msg += ';';
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 
 #ifdef SIGNALduino_comp
 #ifdef CODE_AVR
     Serial.print(char(3));    // ETX
 #elif CODE_ESP
     msg += char(3);           // ETX
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #else
 #ifdef CODE_AVR
     Serial.print(char(13));   // CR
 #elif CODE_ESP
     msg += char(13);          // CR
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 #endif
 
 #ifdef CODE_AVR
@@ -691,7 +692,7 @@ void loop() {
 #elif CODE_ESP
     msg += char(10);          // LF
     MSG_OUTPUTALL(msg);   /* output msg to all */
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
 
     //Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
@@ -699,8 +700,8 @@ void loop() {
     Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #elif CODE_ESP
     MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug_cc110x_ms
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
@@ -765,8 +766,8 @@ void ToggleOnOff() {
 #elif CODE_ESP
   String tmp = F("[DB] ToggleCnt="); tmp += (ToggleCnt + 1); tmp += F(" ToggleValues="); tmp += ToggleValues;
   MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR
+#endif  // END - debug
 
   if (ToggleAll == true) {
     ReceiveModeNr = ToggleCnt + 1;
@@ -777,8 +778,8 @@ void ToggleOnOff() {
 #elif CODE_ESP
     tmp = F("[DB] ToggleAll ReceiveModeNr "); tmp += ReceiveModeNr; tmp += F(", ToggleValues "); tmp += ToggleValues;
     MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
   } else {
     if (ToggleValues <= 1) {
       ToggleTime = 0;
@@ -787,9 +788,9 @@ void ToggleOnOff() {
       Serial.println(
 #elif CODE_ESP
       MSG_OUTPUTLN(
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
         F("[DB] Toggle STOPPED, no toggle values in togglebank!"));
-#endif
+#endif  // END - debug
       return;
     }
     ReceiveModeNr = ToggleOrder[ToggleCnt];
@@ -801,8 +802,8 @@ void ToggleOnOff() {
 #elif CODE_ESP
   tmp = F("[DB] Toggle (output all)    | switched to "); tmp += Registers[ReceiveModeNr].name;
   MSG_OUTPUTLN(tmp);
-#endif
-#endif
+#endif  // END - CODE_AVR || CODE_ESP
+#endif  // END - debug
 
   ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
   Interupt_Variant(ReceiveModeNr);    // set receive variant & register
