@@ -22,17 +22,18 @@ void ChipInit() { /* Init RFM69 - Set default´s */
   SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0)); // SCLK frequency, burst access max. 10 MHz
   uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
   if (chipVersion == 0x23 || chipVersion == 0x24) {                 // found SX1231
-    SX1231_start_idle();
+    SX1231_setIdleMode();
     ChipFound = true;
 #ifdef debug_chip
+    delay(10000);
     Serial.print(F("[DB] Chip VERSION SX1231           ")); Serial.println(chipVersion, HEX); // VERSION – Chip ID
     Serial.print(F("[DB] Crystal oscillator frequency  ")); Serial.println(fxOsc);
     Serial.print(F("[DB] Frequency synthesizer step    ")); Serial.println(fStep, 8);
     Serial.print(F("[DB] Chip_available_modes          ")); Serial.println(RegistersMaxCnt);  // Number of compiled register modes
     Serial.print(F("[DB] Prog_Ident Firmware1          ")); Serial.println(Prog_Ident1, HEX); // 0xDE
     Serial.print(F("[DB] Prog_Ident Firmware2          ")); Serial.println(Prog_Ident2, HEX); // 0x22
-    // Serial.println(F("[DB] SX1231 read all 112 register before load new settings"));
-    // SX1231_read_reg_all();  // SX1231 read all 112 register
+    Serial.println(F("[DB] SX1231 read all 112 register before load new settings"));
+    SX1231_read_reg_all();  // SX1231 read all 112 register
 #endif
 
     /* wenn Registerwerte geändert wurden beim compilieren */
@@ -62,17 +63,15 @@ void ChipInit() { /* Init RFM69 - Set default´s */
 #endif
       }
       ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
-#ifdef debug_chip
-      Serial.print(F("[DB] freqAfc                       ")); Serial.println(freqAfc);
-      Serial.print(F("[DB] Freq_offset                   ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
-      Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
-#endif
       ToggleTime = EEPROMread_long(EEPROM_ADDR_Toggle);
       if (ToggleTime > ToggleTimeMax) {
         ToggleTime = 0;
         EEPROMwrite_long(EEPROM_ADDR_Toggle, ToggleTime);
       }
 #ifdef debug_chip
+      Serial.print(F("[DB] freqAfc                       ")); Serial.println(freqAfc);
+      Serial.print(F("[DB] Freq_offset                   ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
+      Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
       Serial.print(F("[DB] ToggleTime (ms)               ")); Serial.println(ToggleTime);
 #endif
       if (ReceiveModeNr > 0 && ToggleTime == 0) {
@@ -205,7 +204,7 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
   Serial.print(F("[DB] Chip_writeRegFor length = ")); Serial.println(reg_length);
   Serial.print(F("[DB] Chip_writeRegFor modus  = ")); Serial.println(reg_modus);
 #endif
-  for (byte i = 1; i <= reg_length; i++) {
+  for (byte i = 1; i < reg_length; i++) {
     uint8_t addr = i;
     if (i >= 80) {
       addr = SX1231_RegAddrTranslate[i - 80];
@@ -257,8 +256,16 @@ void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   ChipDeselect();                 // Deselect RFM69
 }
 
+void SX1231_setTransmitMode() {   // start transmit mode
+  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
+  uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
+  Mode = SX1231_setOperatingMode(3, Mode, RegOpMode); // 3 = Transmitter
+#ifdef debug_chip
+  Serial.println(F("[DB] SX1231 Set RegOpMode to 0b100 = Transmitter mode (TX)"));
+#endif
+}
 void Chip_setReceiveMode() {   // start receive mode
-  uint8_t RegOpMode = Chip_readReg(0x01, 0x00);       // Operating modes of the transceiver
+  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST);       // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(4, Mode, RegOpMode); // 4 = Receiver
 #ifdef debug_chip
@@ -266,8 +273,8 @@ void Chip_setReceiveMode() {   // start receive mode
 #endif
 }
 
-void SX1231_start_idle () {     // set idle mode
-  uint8_t RegOpMode = Chip_readReg(0x01, 0x00);       // Operating modes of the transceiver
+void SX1231_setIdleMode () {     // set idle mode
+  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST);       // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(1, Mode, RegOpMode); // 1 = Standby mode (STDBY)
 #ifdef debug_chip
@@ -278,12 +285,14 @@ void SX1231_start_idle () {     // set idle mode
 uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode) {
   if (ModeNew != Mode) {
     RegOpMode = (RegOpMode & 0b11100011) | (ModeNew << 2);
-    Chip_writeReg(0x01, RegOpMode);                                       // SX1231 write register (High-Byte = address, low-Byte = value)
-    while ((Chip_readReg(0x27, 0x00) & 0x80) != 0x80);                    // ModeReady - Set when the operation mode requested in Mode, is ready, cleared when changing operating mode.
+    Chip_writeReg(0x01, RegOpMode);                     // SX1231 write register (High-Byte = address, low-Byte = value)
+    while ((Chip_readReg(0x27, READ_BURST) & 0x80) != 0x80) { // ModeReady - Set when the operation mode requested in Mode, is ready, cleared when changing operating mode.
+      delay(1);
+    }
     Mode = ModeNew;
 #ifdef debug_chip
     Serial.print(F("[DB] new Operating mode: ")); Serial.println(Mode);
-    RegOpMode = Chip_readReg(0x01, 0x00);                                 // Operating modes of the transceiver
+    RegOpMode = Chip_readReg(0x01, READ_BURST);                                 // Operating modes of the transceiver
     Serial.print(F("[DB] SX1231 RegOpMode is 0b")); Serial.println(RegOpMode, BIN);
 #endif
   }
@@ -291,13 +300,13 @@ uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode
 }
 
 void SX1231_afc(uint8_t freqAfc) {  // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
-  uint8_t RegAfcFei = Chip_readReg(0x1E, 0);            // read register AFC and FEI control and status
+  uint8_t RegAfcFei = Chip_readReg(0x1E, READ_BURST);            // read register AFC and FEI control and status
   RegAfcFei = (RegAfcFei & 0b11111011) | freqAfc << 2;
   Chip_writeReg(0x1E, RegAfcFei);                       // SX1231 write register (High-Byte = address, low-Byte = value)
 }
 
 int Chip_readRSSI() {   /* Read RSSI value from Register */
-  uint8_t rssiRaw = Chip_readReg(0x24, 0);  // not converted
+  uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST);  // not converted
   RSSI_dez = rssiRaw / -2;                  // SX1231 RSSI for website
   int16_t RSSI_raw = 0;
   if (rssiRaw >= 21 && rssiRaw < 149) {
@@ -432,6 +441,27 @@ void SX1231_Deviation_Set(float deviation, byte * arr) { // calculate register v
   uint16_t uFdev = round(fFdev);
   arr[0] = uFdev >> 8; // RegFdevMsb
   arr[1] = uFdev & 0x00FF; // RegFdevLsb
+}
+
+void Chip_sendFIFO(char *data) {
+#ifdef debug_chip
+  Serial.println(F("[DB] Chip_sendFIFO"));
+#endif
+  SX1231_setIdleMode(); // SX1231 start idle mode
+  ChipSelect();
+  SPI.transfer(0x80); // FIFO write address
+  uint8_t val;
+  for (uint8_t i = 0; i < strlen(data); i += 2) {
+    val = hex2int(data[i]) * 16;
+    val += hex2int(data[i + 1]);
+    SPI.transfer(val);  // fill FIFO with data
+  }
+  ChipDeselect();
+  SX1231_setTransmitMode(); // SX1231 start transmit mode
+  while ((Chip_readReg(0x28, 0) & 0x08) == 0x00) { // wait for PacketSent in RegIrqFlags2
+    delay(1);
+  }
+  SX1231_setIdleMode(); // SX1231 start idle mode
 }
 
 #endif

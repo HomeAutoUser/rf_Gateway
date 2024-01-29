@@ -1,9 +1,5 @@
-#pragma once
-
-/*
-    This file provides us with important information about the functional prototypes available to us,
-    provides us with symbolic constants and keeps a list of all available macros.
-*/
+#ifndef FUNCTIONS_H
+#define FUNCTIONS_H
 
 #include <Arduino.h>
 #include <SPI.h>
@@ -26,3 +22,4 @@ void EEPROMwrite(int adr, byte val);
 void EEPROMwrite_ipaddress(int address, String ip);
 void EEPROMwrite_long(int address, long value);
 void EEPROMwrite_string(int address, String str);
+#endif  // END - #ifndef FUNCTIONS_H

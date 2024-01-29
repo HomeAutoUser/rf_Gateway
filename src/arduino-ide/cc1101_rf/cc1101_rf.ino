@@ -101,7 +101,8 @@ int RSSI_dez;                                 // for the output on web server
 SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;        // store FIFO_LENGTH # ints
 
 /* varible´s for output */
-const char compile_date[] = __DATE__ " " __TIME__;
+extern const char compile_date[];
+const char PROGMEM compile_date[] = __DATE__ " " __TIME__;
 
 #ifdef SIGNALduino_comp
 /*  SIGNALduino helpful information !!!
@@ -109,18 +110,20 @@ const char compile_date[] = __DATE__ " " __TIME__;
     2) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
+extern const char TXT_VERSION[];
 #ifdef CC110x
-static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-24) ";
+const char TXT_VERSION[] PROGMEM = "V 2.0.1pre SIGNALduino compatible cc1101_rf_Gateway (2024-01-29) ";
 #elif RFM69
-static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-24) ";
+const char TXT_VERSION[] PROGMEM = "V 2.0.1pre SIGNALduino compatible rfm69_rf_Gateway (2024-01-29) ";
 #else
-static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre SIGNALduino compatible rf_Gateway (2024-01-24) ";
+const char TXT_VERSION[] PROGMEM = "V 2.0.1pre SIGNALduino compatible rf_Gateway (2024-01-29) ";
 #endif
-byte Chip_writeReg_offset = 2; // stimmt das noch?
+byte Chip_writeReg_offset = 2; // for compatibility with SIGNALduino
 #else
-static const char PROGMEM TXT_VERSION[] = "V 2.0.0pre rf_Gateway (2024-01-24) ";
+const char TXT_VERSION[] PROGMEM = "V 2.0.1pre rf_Gateway (2024-01-29) ";
 byte Chip_writeReg_offset = 0;
 #endif
+byte RegBeforeChange[REGISTER_MAX + 1];
 
 /* varible´s for Toggle */
 byte ToggleOrder[4] = { 255, 255, 255, 255 }; // Toggle, Reihenfolge
@@ -423,11 +426,11 @@ void setup() {
   Serial.print(F("[DB] WIFI Adr NetMask  ")); Serial.println(esnm);
 #endif
 
-#ifdef ESP8266
+#ifdef ARDUINO_ARCH_ESP8266
   uint32_t chipID = ESP.getChipId();
 #endif
 
-#ifdef ESP32
+#ifdef ARDUINO_ARCH_ESP32
   uint64_t macAddress = ESP.getEfuseMac();
   uint64_t macAddressTrunc = macAddress << 40;
   uint32_t chipID = macAddressTrunc >> 40;
@@ -719,25 +722,17 @@ void loop() {
     }
   }
 
-  /* only for send data from webfonted -> ESP devices */
+  /* only for send data from webfronted -> ESP devices */
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   if (msgRepeats > 0) {
     if (millis() >= msgSendStart) {
-      //Serial.print(F("send ")); Serial.println(msgRepeats);
-      uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST);
-
-      for (int i = 0; i < SENDDATA_LENGTH; i++) {
-        if (senddata_esp[i] == '\0') {
-          Chip_writeReg(CHIP_PKTLEN, i / 2);
-          break;
-        }
-      }
-
-#ifdef CC110x // TODO SX1231
-      CC110x_setTransmitMode();     /* enable TX */
-      CC110x_sendFIFO(senddata_esp);
+      uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST); // old packet length
+      uint8_t len = strlen(senddata_esp) / 2;
+      Chip_writeReg(CHIP_PKTLEN, len);
+#ifdef RFM69
+      Chip_writeReg(0x3C, len - 1); // FifoThreshold setting
 #endif
-
+      Chip_sendFIFO(senddata_esp);
 #ifdef CC110x
       for (uint8_t i = 0; i < 255; i++) {
         if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x01) {  /* 1 (0x01) IDLE IDLE */
@@ -746,13 +741,13 @@ void loop() {
         delay(1);
       }
 #endif
-
       msgSendStart = millis() + msgSendInterval;
       msgRepeats--;
-
-      Chip_writeReg(CHIP_PKTLEN, PKTLENis);
+      Chip_writeReg(CHIP_PKTLEN, PKTLENis); // restore old packet length
+#ifdef RFM69
+      Chip_writeReg(0x3C, PKTLENis - 1); // restore FifoThreshold setting
+#endif
       Chip_setReceiveMode(); // start receive mode
-
       if (msgRepeats == 0) {
         for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
           if (webSocketSite[num] == "/raw") {
@@ -944,11 +939,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 if (int_substr1_serial == 0) {
                   Freq_offset = 0;  // reset FrequencOffset
                 }
+#ifdef debug
 #ifdef CODE_AVR
                 Serial.print(F("set register to ")); Serial.println(Registers[int_substr1_serial].name);
 #elif CODE_ESP
                 tmp = F("set register to "); tmp += Registers[int_substr1_serial].name;
                 MSG_OUTPUTLN(tmp);
+#endif
 #endif
                 ReceiveModeName = Registers[int_substr1_serial].name;
                 ReceiveModeNr = int_substr1_serial;
@@ -1106,12 +1103,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 ToggleValues = 0;
                 ToggleTime = 0;
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);
-
+#ifdef debug
 #ifdef CODE_AVR
                 Serial.println(F("ToggleBank 0-3 reset and STOP Toggle"));
 #elif CODE_ESP
                 tmp += F("ToggleBank 0-3 reset and STOP Toggle");
                 MSG_OUTPUTLN(tmp);
+#endif
 #endif
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
 #ifdef CODE_AVR
@@ -1178,19 +1176,39 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             }
           }
 #elif CODE_ESP
-          tmp = F("Current register (address - CC110x value - EEPROM value)\n");
 
-          for (byte i = 0; i <= 46; i++) {
-            tmp += onlyDecToHex2Digit(i); tmp += '='; tmp += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
+          tmp = F("Current register (address - ");
+#ifdef CC110x
+          tmp += F("CC110x");
+#elif RFM69
+          tmp += F("RFM69");
+#endif
+          tmp += F(" value - EEPROM value)\n");
+
+          for (byte i = 0; i <= REGISTER_MAX; i++) {
+            if (i > 79) {
+#ifdef RFM69
+              tmp += onlyDecToHex2Digit(SX1231_RegAddrTranslate[i - 80]);
+#endif
+            } else {
+              tmp += onlyDecToHex2Digit(i);
+            }
+            tmp += '='; tmp += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
+#ifdef CC110x
             if (i < 41) {
               tmp += F(" ("); tmp += onlyDecToHex2Digit(EEPROMread(i)); tmp += F(" EEPROM)\n");
             } else {
-              if (i != 46) {
+              if (i != REGISTER_MAX) {
                 tmp += F(" (only test)\n");
               }
             }
+#elif RFM69
+            tmp += F(" ("); tmp += onlyDecToHex2Digit(EEPROMread(i)); tmp += onlyDecToHex2Digit(EEPROMread(i)); tmp += F(" EEPROM)\n");
+#endif
           }
+#ifdef CC110x
           tmp += F(" (only test)");
+#endif
           MSG_OUTPUTLN(tmp);
 #endif
         } else if (buf_input[1] && buf_input[2] && !buf_input[3]) { /* command C<n><n> - Read HEX adress values from Register, set raw CDA/CEA - disable/enable AFC */
@@ -1387,6 +1405,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CC110x
           tmp += F("CC110x_MARCSTATE    "); tmp += onlyDecToHex2Digit(Chip_readReg(CC110x_MARCSTATE, READ_BURST));  tmp += "\n"; // MARCSTATE – Main Radio Control State Machine State
 #endif
+          // TODO Bezeichnung
           tmp += F("CC110x_Freq.Afc     "); tmp += (freqAfc == 1 ? F("on (1)") : F("off (0)")); tmp += "\n";
           tmp += F("CC110x_Freq.Offset  "); tmp += String(Freq_offset, 3); tmp += F(" MHz"); tmp += "\n";
         }
@@ -1552,6 +1571,28 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               MSG_OUTPUTLN(senddata);
 #endif
 #endif
+              uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST); // old packet length
+#ifdef debug
+#ifdef CODE_AVR
+              Serial.print(F("[DB] SEND from FHEM, old PKTLEN is ")); Serial.println(PKTLENis);
+#elif CODE_ESP
+              tmp = F("[DB] SEND from FHEM, old PKTLEN is "); tmp += PKTLENis;
+              MSG_OUTPUTLN(tmp);
+#endif
+#endif
+              uint8_t len = strlen(senddata) / 2;
+              Chip_writeReg(CHIP_PKTLEN, len);
+#ifdef RFM69
+              Chip_writeReg(0x3C, len - 1); // FifoThreshold setting
+#endif
+#ifdef debug
+#ifdef CODE_AVR
+              Serial.print(F("[DB] SEND from FHEM, act PKTLEN is ")); Serial.println(i / 2);
+#elif CODE_ESP
+              tmp = F("[DB] SEND from FHEM, act PKTLEN is "); tmp += i / 2;
+              MSG_OUTPUTLN(tmp);
+#endif
+#endif
               /*
                 AVANTEK           SN;D=08C114844FDA5CA2;R=1;
                 Bresser 5in1      SN;D=E7527FF78FF7EFF8FDD7BBCAFF18AD80087008100702284435000002;R=1;
@@ -1559,14 +1600,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 Lacrosse_mode1    SN;D=9006106A62;R=1;
               */
               for (uint8_t repeats = 1; repeats <= rep; repeats++) {
-#ifdef CC110x // TODO SX1231
-                CC110x_setTransmitMode(); /* enable TX */
-                CC110x_sendFIFO(senddata);
-#elif RFM69
-                Serial.println(senddata); // TODO kann bei Anpassung weg
-#endif
+                Chip_sendFIFO(senddata);
                 delay(100);
               }
+              Chip_writeReg(CHIP_PKTLEN, PKTLENis); // restore old packet length
+#ifdef RFM69
+              Chip_writeReg(0x3C, PKTLENis - 1); // restore FifoThreshold setting
+#endif
               Chip_setReceiveMode(); /* enable RX */
               digitalWriteFast(LED, LOW);  // LED off
             }
@@ -1583,53 +1623,56 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         }
         Serial.println(compile_date);
 #elif CODE_ESP
-        tmp = FPSTR(TXT_VERSION); tmp += compile_date;
+        tmp = FPSTR(TXT_VERSION); tmp += FPSTR(compile_date);
         MSG_OUTPUTLN(tmp);
 #endif
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
-#ifdef CC110x // TODO SX1231
     case 'W': /* command W - write register*/
       if (ChipFound == false) {
         NO_Chip();
       } else {
-        if (buf_input[1] && buf_input[1] != 'S' && buf_input[1] > 47 && buf_input[1] < 52 && buf_input[2] && buf_input[3] && buf_input[4] && !buf_input[5]) {
-          /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... */
-          byte adr_dec = hexToDec(input.substring(1, 3));
-          byte val_dec = hexToDec(input.substring(3));
-          //TODO, check function with offset !!!
-
+        if (buf_input[1] && buf_input[1] != 'S' && buf_input[1] > 47 && buf_input[1] < CMD_W_REG_MAX && buf_input[2] && buf_input[3] && buf_input[4] && !buf_input[5]) {
+          /* command W1203 | only adress smaller 3E -> buf_input[4] > 47 && buf_input[4] < 52 for W0... W1... W2... W3... (CC110x, RFM69 W0 - W7 */
           if (isHexadecimalDigit(buf_input[1]) && isHexadecimalDigit(buf_input[2]) && isHexadecimalDigit(buf_input[3]) && isHexadecimalDigit(buf_input[4])) {
+            byte adr_dec = hexToDec(input.substring(1, 3));
+            if (adr_dec >= Chip_writeReg_offset) {
+              byte val_dec = hexToDec(input.substring(3));
 #ifdef debug
 #ifdef CODE_AVR
-            Serial.print(F("[DB] Serial Input | cmd W with adr=")); MSG_OUTPUT_DecToHEX_lz(adr_dec);
-            Serial.print(F(" and value=")); MSG_OUTPUT_DecToHEX_lz(val_dec); Serial.println("");
+              Serial.print(F("[DB] Serial Input | cmd W with adr=0x")); Serial.print(onlyDecToHex2Digit(adr_dec));
+              Serial.print(F(" value=0x")); Serial.println(onlyDecToHex2Digit(val_dec));
 #elif CODE_ESP
-            tmp = F("[DB] Serial Input | cmd W with adr="); tmp += onlyDecToHex2Digit(adr_dec);
-            tmp += F(" and value="); tmp += onlyDecToHex2Digit(val_dec);
-            MSG_OUTPUTLN(tmp);
+              tmp = F("[DB] Serial Input | cmd W with adr=0x"); tmp += onlyDecToHex2Digit(adr_dec);
+              tmp += F(" value=0x"); tmp += onlyDecToHex2Digit(val_dec);
+              MSG_OUTPUTLN(tmp);
 #endif
 #endif
-            Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);  // write in cc110x | adr - 2 because of sduino firmware
-            EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);      // write in flash
+              Chip_writeReg(adr_dec - Chip_writeReg_offset, val_dec);  // write in chip | adr - 2 because of sduino firmware
+              EEPROMwrite(adr_dec - Chip_writeReg_offset, val_dec);      // write in flash
 #ifdef CC110x
-            Chip_writeReg(CC110x_FSCTRL0, 0);                          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+              Chip_writeReg(CC110x_FSCTRL0, 0);                          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #endif
+#ifdef debug
 #ifdef CODE_AVR
-            Serial.print('W'); MSG_OUTPUT_DecToHEX_lz(adr_dec); MSG_OUTPUT_DecToHEX_lz(val_dec); Serial.println("");
+              Serial.print('W'); MSG_OUTPUT_DecToHEX_lz(adr_dec); MSG_OUTPUT_DecToHEX_lz(val_dec); Serial.println("");
 #elif CODE_ESP
-            tmp = 'W'; tmp += onlyDecToHex2Digit(adr_dec); tmp += onlyDecToHex2Digit(val_dec);
-            MSG_OUTPUTLN(tmp);
+              tmp = 'W'; tmp += onlyDecToHex2Digit(adr_dec); tmp += onlyDecToHex2Digit(val_dec);
+              MSG_OUTPUTLN(tmp);
 #endif
-            ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
+#endif
+              ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
+            }
           }
-        } else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
+        }
+#ifdef CC110x
+        else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
           uint8_t reg = hexToDec(input.substring(2, 4));
           String val = onlyDecToHex2Digit( CC110x_CmdStrobe(reg) >> 4 );
           delay(1);
           String val1 = onlyDecToHex2Digit( CC110x_CmdStrobe(CC110x_SNOP) >> 4 );
-
+#ifdef debug
 #ifdef CODE_AVR
           Serial.print(F("cmdStrobeReg ")); Serial.print(onlyDecToHex2Digit(reg)); Serial.print(F(" chipStatus "));
           Serial.print(val); Serial.print(F(" delay1 ")); Serial.println(val1);
@@ -1637,10 +1680,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           tmp = F("cmdStrobeReg "); tmp += onlyDecToHex2Digit(reg); tmp += F(" chipStatus "); tmp += val; tmp += F(" delay1 "); tmp += val1;
           MSG_OUTPUTLN(tmp);
 #endif
+#endif
         }
+#endif
       }
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
-#endif
     default:
       break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
   }

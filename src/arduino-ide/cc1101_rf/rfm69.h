@@ -1,7 +1,7 @@
-#pragma once
+#ifndef RFM69_H
+#define RFM69_H
 
 #ifdef RFM69
-
 #include <Arduino.h>
 #include <digitalWriteFast.h>             // https://github.com/ArminJo/digitalWriteFast
 #include <EEPROM.h>
@@ -13,11 +13,12 @@ const float fStep = fxOsc / pow(2, 19);         // Frequency synthesizer step
 #define CHIP_NAME         "RFM69"               // name Chip
 #define CHIP_RFNAME       "rfm69_rf_Gateway"    // name web interface
 #define REGISTER_MAX      84                    // register count
+#define CMD_W_REG_MAX     56                    // command W address max 0x80 (ASCII 56 = 8)
 
 #define READ_BURST        0x00                  // for compatibility with the CC110x
 #define CHIP_VERSION      0x10                  // RegVersion - Semtech ID relating the silicon revision
 #define CHIP_RXFIFO       0x00                  // RX FIFO address
-#define CHIP_PKTLEN       0x06                  // Packet Length address
+#define CHIP_PKTLEN       0x38                  // RegPayloadLength - payload length
 #define CHIP_RxBw         0x19                  // Bandwidth address
 #define CHIP_BitRate      0x03                  // first BitRate address
 
@@ -36,12 +37,14 @@ void Chip_setReceiveMode(); // SX1231 start receive mode
 float Chip_readFreq();
 byte Chip_Bandw_cal(float input);
 void Chip_Datarate_Set(long datarate, byte * arr);
-void SX1231_start_idle(); // SX1231 start idle mode
+void Chip_sendFIFO(char *startpos);
+void SX1231_setIdleMode(); // SX1231 start idle mode
 uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode);
 void SX1231_afc(uint8_t freqAfc); // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
 void SX1231_read_reg_all();  // SX1231 read all 112 register
 void SX1231_Deviation_Set(float deviation, byte * arr); // calculate register values (RegFdevMsb 0x5, RegFdevLsb 0x06) for frequency deviation
-  
+void SX1231_setTransmitMode(); // SX1231 start transmit mode
+
 extern boolean ChipFound;
 extern int RSSI_dez;
 extern uint8_t freqAfc;
@@ -50,4 +53,5 @@ extern byte ReceiveModeNr;                   // activated protocol in flash
 extern byte ToggleValues;
 extern byte ToggleOrder[4];
 extern unsigned long ToggleTime;
-#endif
+#endif  // END - #ifdef RFM69
+#endif  // END - #ifndef RFM69_H

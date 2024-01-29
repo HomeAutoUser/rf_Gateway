@@ -413,16 +413,17 @@ int Chip_readRSSI() {                                        /* Read RSSI value 
 }
 
 
-void CC110x_sendFIFO(char *data) {
+void Chip_sendFIFO(char *data) {
+  CC110x_setTransmitMode();     // enable TX
 #ifdef debug_chip
-  Serial.println(F("[DB] CC110x_sendFIFO"));
+  Serial.println(F("[DB] Chip_sendFIFO"));
 #endif
 
   ChipSelect();
   SPI.transfer(CC110x_TXFIFO | WRITE_BURST);
 
   uint8_t val;
-  for (uint8_t i = 0; i < strlen(data); i += 2) { /* start 2 -> in data D=1234 - besser D= vorher entfernen, Handhabung in Website dann einfacher */
+  for (uint8_t i = 0; i < strlen(data); i += 2) {
     val = hex2int(data[i]) * 16;
     val += hex2int(data[i + 1]);
     SPI.transfer(val);  // fill FIFO with data

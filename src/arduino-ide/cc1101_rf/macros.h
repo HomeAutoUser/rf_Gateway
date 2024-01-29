@@ -1,9 +1,5 @@
-#pragma once
-
-/*
-    This file provides us with important information about the functional prototypes available to us,
-    provides us with symbolic constants and keeps a list of all available macros.
-*/
+#ifndef MACROS_H
+#define MACROS_H
 
 #include <Arduino.h>
 
@@ -146,3 +142,5 @@ void SerialPrintDecToHex(uint8_t dec);
 
 #endif
 /* --- END - all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------- */
+
+#endif // END - #ifndef MACROS_H

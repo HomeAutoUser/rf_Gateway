@@ -1,10 +1,7 @@
-#pragma once
+#ifndef CC110X_H
+#define CC110X_H
 
 #ifdef CC110x
-/*
-    This file provides us with important information about the functional prototypes available to us,
-    provides us with symbolic constants and keeps a list of all available macros.
-*/
 
 #include <Arduino.h>
 #include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
@@ -25,7 +22,7 @@ void Chip_setFreq(long frequency, byte * arr);
 float Chip_readFreq();
 void CC110x_writeBurstReg(byte * uiBuffer, byte regAddr, byte len);
 void CC110x_setTransmitMode();
-void CC110x_sendFIFO(char *startpos);
+void Chip_sendFIFO(char *startpos);
 byte Chip_Bandw_cal(float input);
 void Chip_Datarate_Set(long datarate, byte * arr);
 byte CC110x_Deviation_Set(float deviation);
@@ -46,6 +43,8 @@ extern byte ToggleOrder[4];
 #define CHIP_NAME                 "CC110x"              // name Chip
 #define CHIP_RFNAME               "cc110x_rf_Gateway"   // name web interface
 #define REGISTER_MAX              46                    // register count
+#define CMD_W_REG_MAX             52                    // command W address max 0x40 (ASCII 52 = 4)
+
 #define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)
 #define CHIP_BitRate             0x10                   // first BitRate/DataRate address
 
@@ -164,4 +163,5 @@ extern byte ToggleOrder[4];
 #define CC110x_STATUS_STATE_BM                 0x70
 #define CC110x_STATUS_FIFO_BYTES_AVAILABLE_BM  0x0F
 
-#endif
+#endif  // END - #ifdef CC110x
+#endif  // END - #ifndef CC110X_H

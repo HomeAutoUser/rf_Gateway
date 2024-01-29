@@ -1,10 +1,7 @@
-#pragma once
-#include <Arduino.h>
+#ifndef CC110X_REGISTER_H
+#define CC110X_REGISTER_H
 
-/*
-    This file provides us with important information about the functional prototypes available to us,
-    provides us with symbolic constants and keeps a list of all available macros.
-*/
+#include <Arduino.h>
 
 #ifdef CC110x
 struct Data {
@@ -19,4 +16,5 @@ extern float Freq_offset;
 extern struct Data Registers[];
 extern uint8_t RegistersMaxCnt;
 extern uint8_t ToggleArray[];
-#endif
+#endif  // END - #ifdef CC110x
+#endif  // END - #ifndef CC110X_REGISTER_H

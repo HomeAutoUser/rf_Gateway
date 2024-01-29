@@ -266,9 +266,9 @@ const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
   0x09, // Address 0x59 - RegTestTcxo
-  0x02, // Address 0x5F - RegTestPIIBW
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 FineOffset_WH57 register values
@@ -357,9 +357,9 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
   0x09, // Address 0x59 - RegTestTcxo
-  0x02, // Address 0x5F - RegTestPIIBW
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231  Inkbird_IBS-P01R register values
@@ -448,9 +448,9 @@ const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna
-  0x09, // Address 0x59 - RegTestPa1
-  0x08, // Address 0x5F - RegTestPa2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 Lacrosse_mode1 register values
@@ -484,7 +484,9 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
   0x89, // Address 0x18 - RegLna
-  0x53, // Address 0x19 - RegRxBw
+  //  0x53, // Address 0x19 - RegRxBw (41.667 kHz)
+  //  0x4B, // Address 0x19 - RegRxBw (50.000 kHz)
+  0x4B, // Address 0x19 - RegRxBw (62.500 kHz)
   0x53, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
   0x80, // Address 0x1C - RegOokAvg
@@ -539,9 +541,9 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
   0x09, // Address 0x59 - RegTestTcxo
-  0x02, // Address 0x5F - RegTestPIIBW
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 Lacrosse_mode2 register values

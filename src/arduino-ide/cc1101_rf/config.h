@@ -1,10 +1,7 @@
-#pragma once
-#include <Arduino.h>
+#ifndef CONFIG_H
+#define CONFIG_H
 
-/*
-   This file is part of the cc1101_rf_Gateway project.
-   all define pins
-*/
+#include <Arduino.h>
 
 /* **********************************************************
    Receiving hardware and some Definitions for program code */
@@ -167,3 +164,5 @@
 #define EEPROM_ADDR_Toggle      212      /* ToggleTime 56 - 59 */
 #define EEPROM_ADDR_SSID        256     /* Strings (max 32)*/
 #define EEPROM_ADDR_PASS        288     /* Strings (max 32)*/
+
+#endif  // END - #ifndef CONFIG_H
