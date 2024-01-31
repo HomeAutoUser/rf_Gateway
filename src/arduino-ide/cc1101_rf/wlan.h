@@ -43,5 +43,10 @@ void ESP32_wpsStop();
 String ESP32_wpspin2string(uint8_t a[]);
 #endif  // END - #ifdef ARDUINO_ARCH_ESP32
 
+extern IPAddress eip;
+extern IPAddress esgw;
+extern IPAddress edns;
+extern IPAddress esnm;
+
 #endif  // END - #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #endif  // END - #ifndef WLAN_H
