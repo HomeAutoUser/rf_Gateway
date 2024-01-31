@@ -2,6 +2,7 @@
 #define WEBSITES_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <WebSocketsServer.h>
 #include "config.h"
 #include "functions.h"
@@ -9,10 +10,8 @@
 
 #ifdef CC110x
 #include "cc110x.h"
-#include "cc110x_register.h"
 #elif RFM69
 #include "rfm69.h"
-#include "rfm69_register.h"
 #endif
 
 #ifdef ESP32_core_v1
@@ -41,6 +40,7 @@ extern IPAddress edns;
 extern WebSocketsServer webSocket;
 extern String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX];
 extern int8_t freqErr;
+extern struct Data Registers[];
 
 /* predefinitions of the functions */
 void WebSocket_chip();                        /* CC110x Factory Default,1,{ - - - - },0 */

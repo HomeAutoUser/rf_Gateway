@@ -2,9 +2,8 @@
 #define FUNCTIONS_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 #include <SPI.h>
-
-extern float Freq_offset;
 
 String EEPROMread_string(int address);
 String onlyDecToHex2Digit(byte Dec);

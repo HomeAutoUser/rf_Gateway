@@ -4,7 +4,6 @@
 #include "rfm69.h"
 #include "functions.h"
 #include "macros.h"
-#include "rfm69_register.h"
 
 /********************* variables for RFM69 *********************/
 byte ReceiveModeNr = 0;           // activated protocol in flash
@@ -12,6 +11,27 @@ boolean ChipFound = false;        // against not clearly defined entrances (if f
 byte ReceiveModePKTLEN;
 
 /********************* functions *********************/
+struct Data Registers[] = {
+  { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "RFM69 Factory Default", 15 },
+#ifdef Bresser_5in1
+  { Config_Bresser_5in1,  sizeof(Config_Bresser_5in1) / sizeof(Config_Bresser_5in1[0]), "Bresser_5in1", 26  },
+#endif
+#ifdef Fine_Offset_WH57_868
+  { Config_Fine_Offset_WH57_868,  sizeof(Config_Fine_Offset_WH57_868) / sizeof(Config_Fine_Offset_WH57_868[0]), "Fine_Offset_WH57_868", 9  },
+#endif
+#ifdef Inkbird_IBS_P01R
+  { Config_Inkbird_IBS_P01R,  sizeof(Config_Inkbird_IBS_P01R) / sizeof(Config_Inkbird_IBS_P01R[0]), "Inkbird_IBS_P01R", 18  },
+#endif
+#ifdef Lacrosse_mode1
+  { Config_Lacrosse_mode1,  sizeof(Config_Lacrosse_mode1) / sizeof(Config_Lacrosse_mode1[0]), "Lacrosse_mode1", 5   },
+#endif
+#ifdef Lacrosse_mode2
+  { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
+#endif
+};
+
+uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
+
 void ChipInit() { /* Init RFM69 - Set default´s */
 #ifdef debug_chip
   Serial.println(F("[DB] RFM69 init starting"));

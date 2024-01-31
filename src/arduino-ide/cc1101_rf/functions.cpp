@@ -1,12 +1,5 @@
 #include "config.h"
-
-#ifdef CC110x
-#include "cc110x.h"
-#include "cc110x_register.h"
-#elif RFM69
-#include "rfm69.h"
-#include "rfm69_register.h"
-#endif
+#include "functions.h"
 #include "macros.h"
 
 #ifdef ARDUINO_ARCH_ESP8266
