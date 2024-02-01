@@ -402,7 +402,7 @@ void web_detail_SX1231_export() {
                "<script src=\"js/detail_rfm69_exp.js\"></script></head>"
                "Export all current register values<br>Just copy and paste string into your application<br>"
                "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =>"
-               "<br>-in development-<br>"
+               "<br>[<span id=\"REGs\"></span>]<br>"
                "<br>File to import on program SX1231SKB"
                "<br><button id=\"save-btn\" onclick=\"saveFile()\">save current register in \"SX1231 Starter Kit\" format</button><br>"
                "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"

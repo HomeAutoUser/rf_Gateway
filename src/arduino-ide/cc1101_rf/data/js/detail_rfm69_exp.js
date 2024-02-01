@@ -7,6 +7,9 @@ const tab = '	';
 const txt_hex = '0x';
 const txt_ln = '\n';
 var FileName;
+const FXOSC = 32000000;
+const Fstep = FXOSC / 524288;
+
 
 function onMessage(event) {
  console.log('received message: ' + event.data);
@@ -37,6 +40,29 @@ function onMessage(event) {
   }
   SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
   FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
+
+  let element = document.getElementById("REGs");
+  var txt = "";
+  var txt_freq = "";
+
+  // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
+  var txt_freq_val = parseInt(obj[7], 16) * 256;
+  txt_freq_val = (txt_freq_val + parseInt(obj[8], 16) ) * 256;
+  txt_freq_val = (txt_freq_val + parseInt(obj[9], 16) );
+  txt_freq_val = (Fstep * txt_freq_val) / 1000000;
+  // cc1101 FREQ2 (0x0D) | FREQ1 (0x0E) | FREQ0 (0x0F)
+  txt_freq_val = (txt_freq_val * 1000) / 26000 * 65536;
+  var freq0 = parseInt( txt_freq_val / 65536 );
+  txt_freq += "'0D" + freq0.toString(16) +"',";
+  var freq1 = parseInt((txt_freq_val % 65536) / 256 );
+  txt_freq += "'0E" + freq1.toString(16) + "',";
+  var freq2 = parseInt( txt_freq_val % 256 );
+  txt_freq += "'0F" + freq2.toString(16) + "'";
+  txt += txt_freq;
+  txt += " -in development " + obj[obj.length - 2] + "- ";
+  txt = txt.toUpperCase();
+
+  element.textContent = txt;
  }
 }
 
