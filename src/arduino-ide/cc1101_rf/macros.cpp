@@ -27,7 +27,7 @@ void MSG_OUTPUT_DecToHEX_lz(uint8_t output) {
 /* --- all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------------- */
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 /* output on the last client with input without ln */
-void MSG_OUTPUT(const char output) {
+void MSG_OUTPUT(String output) {
   if (TELNET_CLIENT_COUNTER == 0 || client_now == 255) {
     Serial.print(output);
   } else if (TELNET_CLIENT_COUNTER != 0) {

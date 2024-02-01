@@ -25,7 +25,7 @@ extern WiFiClient TelnetClient[TELNET_CLIENTS_MAX];
 extern byte TELNET_CLIENT_COUNTER;
 extern byte client_now;
 
-void MSG_OUTPUT(const char output);
+void MSG_OUTPUT(String output);
 void MSG_OUTPUTLN(String output); //917 1408
 void MSG_OUTPUTALL(String output);
 void MSG_OUTPUTALLLN(String output);
