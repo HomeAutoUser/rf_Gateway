@@ -13,7 +13,7 @@ function onMessage(event) {
   const ts = document.title;
   const obj=event.data.split(',');
 
-  if(ts == 'cc110x_rf_Gateway') {
+  if(ts == 'cc1101_rf_Gateway') {
    document.getElementById("MS").innerHTML = MARCSTATE[obj[1]];
   } else if (ts == 'rfm69_rf_Gateway') {
    document.getElementById("MS").innerHTML = RegOpMode[obj[1]];

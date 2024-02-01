@@ -146,7 +146,6 @@ function onMessage(event) {
 
 document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
-  const ts = document.title;
 
   for ( i=0; i<Explan.length; i++ ) {
    document.getElementById('n' + i).innerHTML = Explan[i];

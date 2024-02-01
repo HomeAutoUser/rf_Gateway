@@ -914,7 +914,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
         MSG_OUTPUTLN(
 #endif  // END - CODE_AVR || CODE_ESP
-          uptime);
+          (String) uptime);
       } else {
         if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
           if (ChipFound == false) {
@@ -1405,7 +1405,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #elif CODE_ESP
         MSG_OUTPUTLN(
 #endif  // END - CODE_AVR || CODE_ESP
-          freeRam());
+          (String) freeRam());
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'S': /* command S */

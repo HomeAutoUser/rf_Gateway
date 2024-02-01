@@ -4,6 +4,10 @@
   Der Sketch verwendet 22482 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
+  - Arduino Nano OHNE debug´s | FreeRam -> ??? | 240131
+  Der Sketch verwendet 22142 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 684 Bytes (33%) des dynamischen Speichers, 1364 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
@@ -29,6 +33,10 @@
   - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 235052
   Der Sketch verwendet 951885 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51620 Bytes (15%) des dynamischen Speichers, 276060 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+
+  - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ??? | 240131
+  Der Sketch verwendet 950717 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
