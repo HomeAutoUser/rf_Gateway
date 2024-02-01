@@ -11,7 +11,6 @@ void SerialPrintDecToHex(uint8_t dec);
 /* --- all SETTINGS for Arduino Nano ---------------------------------------------------------------------------------------------------------- */
 #if defined (ARDUINO_AVR_NANO) || defined (ARDUINO_RADINOCC1101) || defined (ARDUINO_AVR_PRO)
 void MSG_OUTPUT_DecToHEX_lz(uint8_t output);
-void MSG_OUTPUTALL_DecToHEX_lz(uint8_t output);
 #endif
 
 
@@ -31,7 +30,6 @@ void MSG_OUTPUTLN(String output); //917 1408
 void MSG_OUTPUTALL(String output);
 void MSG_OUTPUTALLLN(String output);
 void MSG_OUTPUT_DecToHEX_lz(uint8_t output);
-void MSG_OUTPUTALL_DecToHEX_lz(uint8_t output);
 
 /* Useful Constants | macros from DateTime.h */
 #define SECS_PER_MIN  (60UL)

@@ -21,14 +21,6 @@ void MSG_OUTPUT_DecToHEX_lz(uint8_t output) {
   Serial.print(output, HEX);
 }
 
-/* output DEC to HEX with a leading zero to serial without ln (all dec values < 16 obtain a zero in HEX value) */
-void MSG_OUTPUTALL_DecToHEX_lz(uint8_t output) {
-  if (output < 16) {
-    Serial.print('0');
-  }
-  Serial.print(output, HEX);
-}
-
 #endif
 
 
@@ -87,23 +79,6 @@ void MSG_OUTPUT_DecToHEX_lz(uint8_t output) {
     }
     TelnetClient[client_now].print(output, HEX);
   }
-}
-
-/* output DEC to HEX with a leading zero to all interfaces and clients without ln (all dec values < 16 obtain a zero in HEX value) */
-void MSG_OUTPUTALL_DecToHEX_lz(uint8_t output) {
-  for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
-    if (TelnetClient[i] && TelnetClient[i].connected()) {
-      if (output < 16) {
-        TelnetClient[i].print('0');
-      }
-      TelnetClient[i].print(output, HEX);
-      delay(1);
-    }
-  }
-  if (output < 16) {
-    Serial.print('0');
-  }
-  Serial.print(output, HEX);
 }
 
 #endif

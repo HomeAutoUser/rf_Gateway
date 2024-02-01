@@ -20,7 +20,7 @@
 //#define debug_wifi        1     // to debug wifi
 
 #define FWVer             "V 2.0.3pre"
-#define FWVerDate         "2024-01-31"
+#define FWVerDate         "2024-02-01"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
