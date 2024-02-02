@@ -1,12 +1,15 @@
 /*
 
-  - Arduino Nano OHNE debug´s | FreeRam -> 993
+  - Arduino Nano OHNE debug´s
+  // ... to 240131 - cc110x
   Der Sketch verwendet 22482 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-
-  - Arduino Nano OHNE debug´s | FreeRam -> ??? | 240131
+  // 240131 - cc110x
   Der Sketch verwendet 22142 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 684 Bytes (33%) des dynamischen Speichers, 1364 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  // 240202 - cc110x
+  Der Sketch verwendet 22138 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 686 Bytes (33%) des dynamischen Speichers, 1362 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -16,7 +19,8 @@
   Der Sketch verwendet 24890 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 28672 Bytes.
   Globale Variablen verwenden 675 Bytes des dynamischen Speichers.
 
-  - ESP8266 OHNE debug´s (alle Protokolle) | FreeRam -> 35496
+  - ESP8266 OHNE debug´s (alle Protokolle)
+  // ... to 240131 - cc110x
   . Variables and constants in RAM (global, static), used 39068 / 80192 bytes (48%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1812     initialized variables
@@ -29,13 +33,29 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 421992 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     421992   code in flash
+  // 240202 - cc110x
+  . Variables and constants in RAM (global, static), used 39128 / 80192 bytes (48%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1812     initialized variables
+  ╠══ RODATA   4540     constants
+  ╚══ BSS      32776    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     28787    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 421168 / 1048576 bytes (40%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     421168   code in flash
 
-  - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> 235052
+  - ESP32 OHNE debug´s (alle Protokolle)
+  // ... to 240130 - cc110x
   Der Sketch verwendet 951885 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51620 Bytes (15%) des dynamischen Speichers, 276060 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
-
-  - ESP32 OHNE debug´s (alle Protokolle) | FreeRam -> ??? | 240131
+  // 240131 - cc110x
   Der Sketch verwendet 950717 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  // 240202 - cc110x
+  Der Sketch verwendet 950693 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!

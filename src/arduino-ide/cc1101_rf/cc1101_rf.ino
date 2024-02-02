@@ -39,14 +39,20 @@ extern const char TXT_VERSION[];
 */
 
 byte Chip_writeReg_offset = 2;    // for compatibility with SIGNALduino
-#define FWtxtPart1        " SIGNALduino compatible "
+#define FWtxtPart1              " SIGNALduino compatible "
+#define MSG_BUILD_Data          F("MN;D=")
+#define MSG_BUILD_RSSI          F(";R=")
+#define MSG_BUILD_AFC           F(";A=")
 #else
-#define FWtxtPart1        " "
+#define FWtxtPart1              " "
+#define MSG_BUILD_Data          F("data: ")
+#define MSG_BUILD_RSSI          F("; RSSI=")
+#define MSG_BUILD_AFC           F("; FREQAFC=")
 byte Chip_writeReg_offset = 0;
 #endif  // END - SIGNALduino_comp || no compatible
 
 #ifndef CHIP_RFNAME
-#define CHIP_RFNAME       "rf_Gateway"
+#define CHIP_RFNAME             "rf_Gateway"
 #endif
 
 const char TXT_VERSION[] PROGMEM = FWVer FWtxtPart1 CHIP_RFNAME " (" FWVerDate ") ";
@@ -476,6 +482,7 @@ void loop() {
   }
 
   if (Serial.available() > 0) { /* Serial Input´s */
+    msg = "";
     while (Serial.available()) {
 #ifdef ARDUINO_ARCH_ESP32
       msg += String(char(Serial.read()));  /* only ESP32 | readString() no function | .read() empties .available() character by character */
@@ -488,11 +495,7 @@ void loop() {
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
-#ifdef CODE_AVR
       Serial.print(F("[DB] Serial.available > 0 ")); Serial.println(msg);
-#elif CODE_ESP
-      MSG_OUTPUT(F("[DB] Serial.available > 0 ")); MSG_OUTPUTLN(msg);
-#endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - debug
       client_now = 255;         /* current client is set where data is received */
       InputCommand(msg);
@@ -523,7 +526,7 @@ void loop() {
       Chip_writeReg(CC110x_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
     }
 #endif
-    msg = "";
+
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     String html_raw = "";   // für die Ausgabe auf dem Webserver
     html_raw.reserve(128);
@@ -535,93 +538,34 @@ void loop() {
     MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - debug_cc110x_ms
-    uint8_t uiBuffer[ReceiveModePKTLEN];                             // Array anlegen
-    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN); // Daten aus dem FIFO lesen
-#ifdef SIGNALduino_comp
-#ifdef CODE_AVR
-    Serial.print(char(2));    // STX
-    Serial.print(F("MN;D=")); // "MN;D=" | "data: "
-#elif CODE_ESP
-    msg += char(2);           // STX
-    msg += F("MN;D=");        // "MN;D=" | "data: "
-#endif  // END - CODE_AVR || CODE_ESP
-#else
-#ifdef CODE_AVR
-    Serial.print(F("data: "));  // "MN;D=" | "data: "
-#elif CODE_ESP
-    msg += F("data: ");         // "MN;D=" | "data: "
-#endif  // END - CODE_AVR || CODE_ESP
-#endif
+    uint8_t uiBuffer[ReceiveModePKTLEN];                          // Array anlegen
+    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);  // Daten aus dem FIFO lesen
+
+    msg = "";
+    MSG_BUILD_MN(char(2));        // STX
+    MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
+
     for (byte i = 0; i < ReceiveModePKTLEN; i++) { /* RawData */
-#ifdef CODE_AVR
-      Serial.print(onlyDecToHex2Digit(uiBuffer[i]));
-#elif CODE_ESP
-      msg += onlyDecToHex2Digit(uiBuffer[i]);
-#endif  // END - CODE_AVR || CODE_ESP
+      MSG_BUILD_MN(onlyDecToHex2Digit(uiBuffer[i]));
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       html_raw += onlyDecToHex2Digit(uiBuffer[i]);
 #endif
     }
-#ifdef SIGNALduino_comp
-#ifdef CODE_AVR
-    Serial.print(F(";R="));     // ";R=" | "; RSSI="
-#elif CODE_ESP
-    msg += F(";R=");            // ";R=" | "; RSSI="
-#endif  // END - CODE_AVR || CODE_ESP
-#else
-#ifdef CODE_AVR
-    Serial.print(F(" RSSI="));  // ";R=" | "; RSSI="
-#elif CODE_ESP
-    msg += F(" RSSI=");         // ";R=" | "; RSSI="
-#endif  // END - CODE_AVR || CODE_ESP
+
+    MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
+    MSG_BUILD_MN(rssi);
+    MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
+    MSG_BUILD_MN(freqErr);
+    MSG_BUILD_MN(';');
+    MSG_BUILD_MN(char(3));        // ETX
+#ifndef SIGNALduino_comp
+    MSG_BUILD_MN(char(13));       // CR
 #endif
-
-#ifdef CODE_AVR
-    Serial.print(rssi);
-#elif CODE_ESP
-    msg += rssi;
-#endif  // END - CODE_AVR || CODE_ESP
-
-#ifdef SIGNALduino_comp
-#ifdef CODE_AVR
-    Serial.print(F(";A="));         // ";A=" | "; FREQAFC="
-#elif CODE_ESP
-    msg += F(";A=");                // ";A=" | "; FREQAFC="
-#endif  // END - CODE_AVR || CODE_ESP
-#else
-#ifdef CODE_AVR
-    Serial.print(F("; FREQAFC="));  // ";A=" | "; FREQAFC="
-#elif CODE_ESP
-    msg += F("; FREQAFC=");         // ";A=" | "; FREQAFC="
-#endif  // END - CODE_AVR || CODE_ESP
-#endif
-
-#ifdef CODE_AVR
-    Serial.print(freqErr); Serial.print(';');
-#elif CODE_ESP
-    msg += freqErr; msg += ';';
-#endif  // END - CODE_AVR || CODE_ESP
-
-#ifdef SIGNALduino_comp
-#ifdef CODE_AVR
-    Serial.print(char(3));    // ETX
-#elif CODE_ESP
-    msg += char(3);           // ETX
-#endif  // END - CODE_AVR || CODE_ESP
-#else
-#ifdef CODE_AVR
-    Serial.print(char(13));   // CR
-#elif CODE_ESP
-    msg += char(13);          // CR
-#endif  // END - CODE_AVR || CODE_ESP
-#endif
-
-#ifdef CODE_AVR
-    Serial.print(char(10));   // LF
-#elif CODE_ESP
-    msg += char(10);          // LF
+    MSG_BUILD_MN(char(10));       // LF
+#ifdef CODE_ESP
     MSG_OUTPUTALL(msg);   /* output msg to all */
-#endif  // END - CODE_AVR || CODE_ESP
+#endif
+    // END - MSG_BUILD_MN
 
     //Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
 #ifdef debug_cc110x_ms    /* MARCSTATE – Main Radio Control State Machine State */
@@ -754,24 +698,20 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
   input.toCharArray(buf_input, input.length() + 1); /* String to char in buf */
 #ifdef debug
   for (byte i = 0; i < input.length(); i++) {
-#ifdef CODE_AVR
-    Serial.print(F("DB InputCommand [")); Serial.print(i); Serial.print(F("] = ")); Serial.println(buf_input[i]);
-#elif CODE_ESP
-    tmp = F("[DB] InputCommand ["); tmp += i; tmp += F("] = "); tmp += buf_input[i];
-    MSG_OUTPUTLN(tmp);
-#endif  // END - CODE_AVR || CODE_ESP
+    MSG_BUILD(F("DB InputCommand [")); MSG_BUILD(i); MSG_BUILD(F("] = ")); MSG_BUILD(buf_input[i]); MSG_BUILD(char(10));
   }
+#ifdef CODE_ESP
+  MSG_OUTPUTLN(tmp);
+#endif
 #endif  // END - debug
 
   switch (buf_input[0]) { /* integrated ? m t tob tos x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
     case '?':             /* command ? */
       if (!buf_input[1]) {
-#ifdef CODE_AVR
-        Serial.println(
-#elif CODE_ESP
-        MSG_OUTPUTLN(
-#endif  // END - CODE_AVR || CODE_ESP
-          F("e, foff, ft, m, t, tob, tos, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS"));
+        MSG_BUILD(F("e, foff, ft, m, t, tob, tos, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS\n"));
+#ifdef CODE_ESP
+        MSG_OUTPUT(tmp);
+#endif
       }
       break;                                                                                          /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':                                                                                         /* command f */
@@ -783,36 +723,25 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             Freq_offset = input.substring(4).toFloat();
             if (Freq_offset > 10.0 || Freq_offset < -10.0) {
               Freq_offset = 0;
-#ifdef CODE_AVR
-              Serial.println(
-#elif CODE_ESP
-              MSG_OUTPUTLN(
-#endif  // END - CODE_AVR || CODE_ESP
-                F("CC110x_Freq.Offset resets (The value is not in the range of -10 to 10 MHz)"));
+              MSG_BUILD(F("CC110x_Freq.Offset resets (The value is not in the range of -10 to 10 MHz)\n"));
             }
             EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
             EEPROM.commit();
-#endif  // END - defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+#endif
 #ifdef CC110x
             Chip_writeReg(CC110x_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
-#endif  // END - CC110x
-#ifdef CODE_AVR
-            Serial.print(F("CC110x_Freq.Offset saved to ")); Serial.print(Freq_offset); Serial.println(F(" MHz"));
-#elif CODE_ESP
-            tmp = F("CC110x_Freq.Offset saved to "); tmp += Freq_offset; tmp += F(" MHz");
-#endif  // END - CODE_AVR || CODE_ESP
+#endif
+            MSG_BUILD(F("CC110x_Freq.Offset saved to ")); MSG_BUILD(Freq_offset); MSG_BUILD(F(" MHz\n"));
           } else {
-#ifdef CODE_AVR
-            Serial.println(F("CC110x_Freq.Offset value is not nummeric"));
-#elif CODE_ESP
-            tmp = F("CC110x_Freq.Offset value is not nummeric");
-#endif  // END - CODE_AVR || CODE_ESP
+            MSG_BUILD(F("CC110x_Freq.Offset value is not nummeric\n"));
           }
 #ifdef CODE_ESP
-          MSG_OUTPUTLN(tmp);
-#endif  // END - CODE_ESP
+          MSG_OUTPUT(tmp);
+#endif
         }
+
+        // TODO MSG_BUILD variant please continue //
 
         if (buf_input[1] == 't' && !buf_input[2]) { /* command ft */
 #ifdef CODE_AVR
