@@ -43,7 +43,21 @@ function onMessage(event) {
 
   let element = document.getElementById("REGs");
   var txt = "";
-  var txt_freq = "";
+
+  // 0x2F RegSyncValue1 0x30 RegSyncValue2 0x31 RegSyncValue2 ...
+  const Sync = [obj[47], obj[48], obj[49]];
+  var SyncCnt = 0;
+  // cc1101 SYNC0 (0x05) | SYNC1 (0x04)
+  for (let i = 0; i < Sync.length; i++) {
+   if(Sync[i] != 'AA') {
+     SyncCnt ++;
+     if(SyncCnt == 1) {
+      txt += "'04" + Sync[i] + "',";
+     } else if (SyncCnt == 2) {
+      txt += "'05" + Sync[i] +"',";
+     }
+   }
+  }
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
   var txt_freq_val = parseInt(obj[7], 16) * 256;
@@ -53,15 +67,14 @@ function onMessage(event) {
   // cc1101 FREQ2 (0x0D) | FREQ1 (0x0E) | FREQ0 (0x0F)
   txt_freq_val = (txt_freq_val * 1000) / 26000 * 65536;
   var freq0 = parseInt( txt_freq_val / 65536 );
-  txt_freq += "'0D" + freq0.toString(16) +"',";
+  txt += "'0D" + freq0.toString(16) +"',";
   var freq1 = parseInt((txt_freq_val % 65536) / 256 );
-  txt_freq += "'0E" + freq1.toString(16) + "',";
+  txt += "'0E" + freq1.toString(16) + "',";
   var freq2 = parseInt( txt_freq_val % 256 );
-  txt_freq += "'0F" + freq2.toString(16) + "'";
-  txt += txt_freq;
+  txt += "'0F" + freq2.toString(16) + "'";
+
   txt += " -in development " + obj[obj.length - 2] + "- ";
   txt = txt.toUpperCase();
-
   element.textContent = txt;
  }
 }
