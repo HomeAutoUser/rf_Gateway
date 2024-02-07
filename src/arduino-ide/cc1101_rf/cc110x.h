@@ -44,7 +44,7 @@ extern uint8_t freqAfc;
 extern int RSSI_dez;
 extern struct Data Registers[];
 extern uint8_t RegistersMaxCnt;
-
+extern unsigned long uptime;
 
 struct Data {
   const uint8_t* reg_val;
@@ -1772,6 +1772,7 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 #endif
 
 #define REGISTER_MAX              46                    // register count
+#define REGISTER_STATUS_MAX     0x3D                    // register count inc. Status Registers
 #define CMD_W_REG_MAX             52                    // command W address max 0x40 (ASCII 52 = 4)
 
 #define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)

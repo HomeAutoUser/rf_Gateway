@@ -36,13 +36,13 @@ void MSG_OUTPUT(String output) {
 }
 
 /* output on the last client with input with ln */
-void MSG_OUTPUTLN(String output) {
-  if (TELNET_CLIENT_COUNTER == 0 || client_now == 255) {
-    Serial.println(output);
-  } else if (TELNET_CLIENT_COUNTER != 0) {
-    TelnetClient[client_now].println(output);
-  }
-}
+//void MSG_OUTPUTLN(String output) {
+//  if (TELNET_CLIENT_COUNTER == 0 || client_now == 255) {
+//    Serial.println(output);
+//  } else if (TELNET_CLIENT_COUNTER != 0) {
+//    TelnetClient[client_now].println(output);
+//  }
+//}
 
 /* output to all interfaces and clients without ln */
 void MSG_OUTPUTALL(String output) {

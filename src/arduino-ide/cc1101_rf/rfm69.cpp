@@ -12,7 +12,7 @@ byte ReceiveModePKTLEN;
 
 /********************* functions *********************/
 struct Data Registers[] = {
-  { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "RFM69 Factory Default", 15 },
+  { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "RFM69 Factory Default", 64 },
 #ifdef Bresser_5in1
   { Config_Bresser_5in1,  sizeof(Config_Bresser_5in1) / sizeof(Config_Bresser_5in1[0]), "Bresser_5in1", 26  },
 #endif

@@ -10,6 +10,31 @@
   // 240202 - cc110x
   Der Sketch verwendet 22138 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 686 Bytes (33%) des dynamischen Speichers, 1362 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  // 240203 - cc110x
+  Der Sketch verwendet 22212 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 686 Bytes (33%) des dynamischen Speichers, 1362 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  // 240204 - cc110x
+  Der Sketch verwendet 22302 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 686 Bytes (33%) des dynamischen Speichers, 1362 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  // command C angepasst - Warum jetzt so viel mehr Flash???
+  Der Sketch verwendet 23626 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 23588 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  Der Sketch verwendet 23542 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  // command C fertig - void ToggleOnOff umgebaut
+Der Sketch verwendet 23606 Bytes (76%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+// command I ohne: MSG_BUILD(F("Chip Freq.Offset: ")); MSG_BUILD(String(Freq_offset, 3)); MSG_BUILD(F(" MHz\n"));
+Der Sketch verwendet 22050 Bytes (71%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+// command I: MSG_BUILD(Freq_offset, 3);
+Der Sketch verwendet 22226 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+// 240207 - Macro für Ausgabe float neu
+Der Sketch verwendet 22194 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -57,6 +82,10 @@
   // 240202 - cc110x
   Der Sketch verwendet 950693 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  Der Sketch verwendet 950877 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+Der Sketch verwendet 950865 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 

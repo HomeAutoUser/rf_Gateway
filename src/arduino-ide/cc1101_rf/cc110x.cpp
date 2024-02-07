@@ -106,21 +106,23 @@ void ChipInit() { /* Init CC110x - Set default´s */
   Serial.println(F("[DB] CC110x_init starting"));
 #endif
 
-  pinMode(SS, OUTPUT);
-  SPI.begin();
-  SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // SCLK frequency, burst access max. 6,5 MHz
+  if (uptime == 0) { // for 
+    pinMode(SS, OUTPUT);
+    SPI.begin();
+    SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // SCLK frequency, burst access max. 6,5 MHz
 
-  ChipDeselect();  // HIGH
-  delayMicroseconds(10);
-  ChipSelect();    // LOW
-  delayMicroseconds(10);
-  ChipDeselect();  // Hold CSn high for at least 40 µS ìs relative to pulling CSn low
-  delayMicroseconds(40);
-  ChipSelect();                // LOW
-  wait_Miso();                    // Wait until SPI MISO line goes low
-  CC110x_CmdStrobe(CC110x_SRES);  // Reset CC110x chip
-  delay(10);
-
+    ChipDeselect();  // HIGH
+    delayMicroseconds(10);
+    ChipSelect();    // LOW
+    delayMicroseconds(10);
+    ChipDeselect();  // Hold CSn high for at least 40 µS ìs relative to pulling CSn low
+    delayMicroseconds(40);
+    ChipSelect();                // LOW
+    wait_Miso();                    // Wait until SPI MISO line goes low
+    CC110x_CmdStrobe(CC110x_SRES);  // Reset CC110x chip
+    delay(10);
+  }
+  
   uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
   if (chipVersion == 0x14 || chipVersion == 0x04 || chipVersion == 0x03 || chipVersion == 0x05 || chipVersion == 0x07 || chipVersion == 0x17) {  // found CC110x
     CC110x_CmdStrobe(CC110x_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
@@ -356,7 +358,7 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
 #endif
       for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
         if (pgm_read_byte_near(reg_name + i2 + 13) != value[i2]) {
-          Chip_writeReg(i2 + 13, value[i2]);  // write new values in SX1231
+          Chip_writeReg(i2 + 13, value[i2]);  // write new values in CC110x
         }
       }
     }
