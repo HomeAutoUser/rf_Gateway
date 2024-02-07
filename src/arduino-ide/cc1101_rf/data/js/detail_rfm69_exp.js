@@ -41,6 +41,7 @@ function onMessage(event) {
   SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
   FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
 
+  var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
   let element = document.getElementById("REGs");
   var txt = "";
 
@@ -73,6 +74,37 @@ function onMessage(event) {
   var freq2 = parseInt( txt_freq_val % 256 );
   txt += "'0F" + freq2.toString(16) + "'";
 
+  // 0x19 RegRxBw
+  var RxBwMant = (parseInt(obj[25], 16) & 0b00011000) >> 3;
+  var RxBwExp = (parseInt(obj[25], 16) & 0b00000111);
+  var RxBw = (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000).toFixed(3); // Rx filter bandwidth in kHz 
+  txt += " | " + RxBw;
+  // cc1101 MDMCFG4 (0x10)
+  var bits1 = 0;
+  var bits2 = 0;
+  var bw1 = 0;
+  var bw2 = 0;
+  var bw_result = 0;
+  exit_loops:
+  for (var e = 0; e < 4; e++) {
+    for (var m = 0; m < 4; m++) {
+      bits2 = bits1;
+      bits1 = (e << 6) + (m << 4);
+      bw2 = bw1;
+      bw1 = 26000 / (8 * (4 + m) * (1 << e));
+      if (RxBw >= bw1) {
+        break exit_loops;
+      }
+    }
+  }
+
+  if((~(RxBw - bw1) + 1) > (~(RxBw - bw2) + 1)) {
+   bw_result = bw1.toFixed(0);
+  } else {
+   bw_result = bw2.toFixed(0)
+  }
+  // TODO 0x4c & 0b00001111 std value
+  txt += " | " + ((0x4c & 0b00001111) + bw_result).toString(16);
   txt += " -in development " + obj[obj.length - 2] + "- ";
   txt = txt.toUpperCase();
   element.textContent = txt;
