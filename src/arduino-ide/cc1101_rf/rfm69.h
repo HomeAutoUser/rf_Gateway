@@ -21,6 +21,7 @@ const float fStep = fxOsc / pow(2, 19);         // Frequency synthesizer step
 #define CHIP_PKTLEN       0x38                  // RegPayloadLength - payload length
 #define CHIP_RxBw         0x19                  // Bandwidth address
 #define CHIP_BitRate      0x03                  // first BitRate address
+#define CHIP_FREQMSB      0x07                  // Frequency Control Word, High Byte address
 
 //const uint8_t SX1231_RegAddrTranslate[5] PROGMEM = {0x58, 0x59, 0x5F, 0x6F, 0x71};
 const uint8_t SX1231_RegAddrTranslate[5] = {0x58, 0x59, 0x5F, 0x6F, 0x71};

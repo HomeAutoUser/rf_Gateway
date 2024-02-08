@@ -1777,6 +1777,7 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 
 #define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)
 #define CHIP_BitRate             0x10                   // first BitRate/DataRate address
+#define CHIP_FREQMSB             0x0D                   // Frequency Control Word, High Byte
 
 /** Command strobes */
 #define CC110x_SRES              0x30        // Reset CC110x chip

@@ -66,7 +66,6 @@ void web_wlan();
 String HTML_mod(String txt);
 void sendHtml(String & str);
 
-
 /* Display of all websites from the web server
   https://wiki.selfhtml.org/wiki/HTML/Tutorials/Grundger%C3%BCst
   https://divtable.com/table-styler/

@@ -125,7 +125,7 @@ void web_chip() {
 
 void web_modes() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
   String InputCmd;                                        // preparation for processing | control html InputCommand
   String submit = HttpServer.arg("submit");               // welcher Button wurde betätigt
@@ -285,7 +285,7 @@ void web_modes() {
 #ifdef CC110x
 void web_detail_cc110x_export() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
 
   String website = FPSTR(html_meta);
@@ -321,7 +321,7 @@ void web_detail_cc110x_export() {
 
 void web_detail_cc110x_import() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
@@ -393,7 +393,7 @@ void web_detail_cc110x_import() {
 #elif RFM69 // SX1231
 void web_detail_SX1231_export() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
 
   String website = FPSTR(html_meta);
@@ -414,7 +414,7 @@ void web_detail_SX1231_export() {
 
 void web_detail() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
   // http://192.168.178.26/detail?freq=868.302&freq_off=0.001&bandw=203.2&submit=bbandw&datarate=8.23&deviation=57.13&modulation=2-FSK&r0=01&r1=2E&r2=2E&r3=46&r4=2D&r5=D4&r6=1A&r7=C0&r8=00&r9=00&r10=00&r11=06&r12=00&r13=21&r14=65&r15=6C&r16=88&r17=4C&r18=02&r19=22&r20=F8&r21=51&r22=07&r23=00&r24=18&r25=16&r26=6C&r27=43&r28=68&r29=91&r30=87&r31=6B&r32=FB&r33=56&r34=11&r35=EF&r36=0C&r37=3B&r38=1F&r39=41&r40=00&r41=59&r42=7F&r43=3E&r44=88&r45=31&r46=0B
   String afc = HttpServer.arg("afc");
@@ -492,13 +492,8 @@ void web_detail() {
       byte value[3];
       Chip_setFreq(freq, value);
       for (byte i = 0; i < 3; i++) {    /* write value to register */
-#ifdef CC110x
-        Chip_writeReg(i + 13, value[i]);  // write to chip
-        EEPROMwrite(i + 13, value[i]);    // write in flash
-#elif RFM69
-        Chip_writeReg(i + 7, value[i]);  // write to chip
-        EEPROMwrite(i + 7, value[i]);    // write in flash
-#endif
+        Chip_writeReg(i + CHIP_FREQMSB, value[i]);  // write Frequency Control Bytes to chip
+        EEPROMwrite(i + CHIP_FREQMSB, value[i]);    // write Frequency Control Bytes in flash
       }
       web_stat = F("Frequency, frequency offset and AFC set &#10004;");
       // bandwidth
@@ -653,11 +648,7 @@ void web_detail() {
 #endif
                "</td>"
                "<td class=\"ce\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
-               //#ifdef CC110x
-               //               "<td class=\"ce\"><input aria-label=\"Bw\" size=\"6\" id=\"p3\" name=\"bandw\" value=\"\"><div class=\"txt\">&ensp;kHz</div></td>"
-               //#elif RFM69
                "<td class=\"ce\"><select id=\"bandw\" name=\"bandw\"></select><div class=\"txt\">&ensp;kHz</div></td>"
-               //#endif
                "<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bbandw\">set</button></td></tr>"
                // DataRate
                "<tr><td colspan=\"2\">DataRate"
@@ -761,10 +752,9 @@ void web_log() {
   sendHtml(website);
 }
 
-
 void web_raw() {
   if (!ChipFound) {
-    HttpServer.send(404, "text/plain", F("Website not found !!!"));
+    web_chip();
   }
 
   String website = FPSTR(html_meta);

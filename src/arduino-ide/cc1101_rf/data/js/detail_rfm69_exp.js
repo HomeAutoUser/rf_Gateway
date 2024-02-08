@@ -45,6 +45,46 @@ function onMessage(event) {
   let element = document.getElementById("REGs");
   var txt = "";
 
+  // 0x05 RegFdevMsb 0x06 RegFdevLsb | TODO
+  var r05 = parseInt(obj[5], 16);
+  var r06 = parseInt(obj[6], 16);
+  var Fdev = ( Fstep * (r06 + r05 * 256) ) / 1000;
+  //console.log(Fdev);
+  // cc1101 DEVIATN (0x15)
+  if (Fdev > 380.859375) {
+   Fdev = 380.859375;
+  }
+  if (Fdev < 1.586914) {
+   Fdev = 1.586914;
+  }
+
+  var Fdev_val;
+  // int bits;
+  // int devlast = 0;
+  // int bitlast = 0;
+
+  // for (int DEVIATION_E = 0; DEVIATION_E < 8; DEVIATION_E++) {
+    // for (int DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
+      // Fdev_val = (8 + DEVIATION_M) * (pow(2, DEVIATION_E)) * 26000.0 / (pow(2, 17));
+      // bits = DEVIATION_M + (DEVIATION_E << 4);
+      // if (Fdev > Fdev_val) {
+        // devlast = Fdev_val;
+        // bitlast = bits;
+      // } else {
+        // if ((Fdev_val - Fdev) < (Fdev - devlast)) {
+          // devlast = Fdev_val;
+          // bitlast = bits;
+        // }
+      // }
+    // }
+  // }
+
+// #ifdef debug
+  // Serial.print(F("[DB] CC110x_Deviation_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
+// #endif
+  // return bitlast;
+
+
   // 0x2F RegSyncValue1 0x30 RegSyncValue2 0x31 RegSyncValue2 ...
   const Sync = [obj[47], obj[48], obj[49]];
   var SyncCnt = 0;
@@ -61,30 +101,32 @@ function onMessage(event) {
   }
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
-  var txt_freq_val = parseInt(obj[7], 16) * 256;
-  txt_freq_val = (txt_freq_val + parseInt(obj[8], 16) ) * 256;
-  txt_freq_val = (txt_freq_val + parseInt(obj[9], 16) );
-  txt_freq_val = (Fstep * txt_freq_val) / 1000000;
+  var r07to09 = parseInt(obj[7], 16) * 256;
+  r07to09 = (r07to09 + parseInt(obj[8], 16) ) * 256;
+  r07to09 = (r07to09 + parseInt(obj[9], 16) );
+  r07to09 = (Fstep * r07to09) / 1000000;
+  r07to09 = (r07to09 * 1000) / 26000 * 65536;
   // cc1101 FREQ2 (0x0D) | FREQ1 (0x0E) | FREQ0 (0x0F)
-  txt_freq_val = (txt_freq_val * 1000) / 26000 * 65536;
-  var freq0 = parseInt( txt_freq_val / 65536 );
-  txt += "'0D" + freq0.toString(16) +"',";
-  var freq1 = parseInt((txt_freq_val % 65536) / 256 );
-  txt += "'0E" + freq1.toString(16) + "',";
-  var freq2 = parseInt( txt_freq_val % 256 );
-  txt += "'0F" + freq2.toString(16) + "'";
+  var c0D = parseInt( r07to09 / 65536 );
+  txt += "'0D" + c0D.toString(16) +"',";
+  var c0E = parseInt((r07to09 % 65536) / 256 );
+  txt += "'0E" + c0E.toString(16) + "',";
+  var c0F = parseInt( r07to09 % 256 );
+  txt += "'0F" + c0F.toString(16) + "'";
 
-  // 0x19 RegRxBw
+  // 0x19 RegRxBw | TODO
   var RxBwMant = (parseInt(obj[25], 16) & 0b00011000) >> 3;
   var RxBwExp = (parseInt(obj[25], 16) & 0b00000111);
-  var RxBw = (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000).toFixed(3); // Rx filter bandwidth in kHz 
+  var RxBw = (2 * (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000)).toFixed(3);
   txt += " | " + RxBw;
-  // cc1101 MDMCFG4 (0x10)
+  // cc1101 MDMCFG4 (0x10) CHANBW_E & CHANBW_M
   var bits1 = 0;
   var bits2 = 0;
   var bw1 = 0;
   var bw2 = 0;
-  var bw_result = 0;
+  var DRATE_E = 0;
+  var c10 = 0
+
   exit_loops:
   for (var e = 0; e < 4; e++) {
     for (var m = 0; m < 4; m++) {
@@ -99,12 +141,49 @@ function onMessage(event) {
   }
 
   if((~(RxBw - bw1) + 1) > (~(RxBw - bw2) + 1)) {
-   bw_result = bw1.toFixed(0);
+   c10 = bits1;
   } else {
-   bw_result = bw2.toFixed(0)
+   c10 = bits2;
   }
-  // TODO 0x4c & 0b00001111 std value
-  txt += " | " + ((0x4c & 0b00001111) + bw_result).toString(16);
+
+  // 0x03 RegBitrateMsb 0x04 RegBitrateLsb | TODO
+  var r03 = parseInt(obj[3], 16);
+  var r04 = parseInt(obj[4], 16);
+  var rBitRate = (FXOSC / ((r03 * 256) + r04));
+  // cc1101 MDMCFG4 (0x0010) DRATE_E | MDMCFG3 (0x0011) DRATE_M
+  console.log(rBitRate);
+  if (rBitRate < 24795.5) {
+    rBitRate = 24795.5;
+  } else if (rBitRate > 1621830000) {
+    rBitRate = 1621830000;
+  }
+
+  var DRATE_E = rBitRate * ( 2**20 ) / 26000000.0;
+  DRATE_E = Math.log(DRATE_E) / Math.log(2);
+  DRATE_E = Math.trunc(DRATE_E);
+
+  var DRATE_M = (rBitRate * (2**28) / (26000000.0 * (2**DRATE_E))) - 256;
+  DRATE_M = Math.trunc(DRATE_M);
+  var DRATE_Mr = Math.round(DRATE_M);
+
+  var DRATE_M1 = DRATE_M + 1;
+  var DRATE_E1 = DRATE_E;
+
+  if (DRATE_M1 == 256) {
+   DRATE_M1 = 0;
+   DRATE_E1++;
+  }
+
+  if (DRATE_Mr != DRATE_M) {
+   DRATE_M = DRATE_M1;
+   DRATE_E = DRATE_E1;
+  }
+
+  console.log(DRATE_M);
+  c10 += DRATE_E;
+
+  txt += " |1 " + c10.toString(16);
+  txt += " |2 " + DRATE_M.toString(16);
   txt += " -in development " + obj[obj.length - 2] + "- ";
   txt = txt.toUpperCase();
   element.textContent = txt;
