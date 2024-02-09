@@ -263,7 +263,7 @@ const Explan = [
 'RegSyncValue7 (7st byte of Sync word)',
 'RegSyncValue8 (8st byte of Sync word)',
 'RegPacketConfig1 (PacketFormat, CRC, ...)',
-'RegPayloadLength (Payload length - only RX)',
+'RegPayloadLength (Payload length / Message length)',
 'RegNodeAdrs',
 'RegBroadcastAdrs',
 'RegAutoModes (IntermediateMode)',

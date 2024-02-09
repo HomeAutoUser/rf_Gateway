@@ -41,15 +41,23 @@ function onMessage(event) {
   SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
   FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
 
-  var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
   let element = document.getElementById("REGs");
-  var txt = "";
+  var txt = "'0001','022E','0342',";
+
+  // 0x02 RegDataModul | TODO
+  var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
+  // cc1101 MDMCFG2 (0x12)
+  var r02 = 0;
+  if(ModType == 0) { // FSK
+    r02 = "02";
+  } else { // OOK
+    r02 = "32";
+  }
 
   // 0x05 RegFdevMsb 0x06 RegFdevLsb | TODO
   var r05 = parseInt(obj[5], 16);
   var r06 = parseInt(obj[6], 16);
   var Fdev = ( Fstep * (r06 + r05 * 256) ) / 1000;
-  //console.log(Fdev);
   // cc1101 DEVIATN (0x15)
   if (Fdev > 380.859375) {
    Fdev = 380.859375;
@@ -59,31 +67,25 @@ function onMessage(event) {
   }
 
   var Fdev_val;
-  // int bits;
-  // int devlast = 0;
-  // int bitlast = 0;
+  var bits = 0;
+  var devlast = 0;
+  var bitlast = 0;
 
-  // for (int DEVIATION_E = 0; DEVIATION_E < 8; DEVIATION_E++) {
-    // for (int DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
-      // Fdev_val = (8 + DEVIATION_M) * (pow(2, DEVIATION_E)) * 26000.0 / (pow(2, 17));
-      // bits = DEVIATION_M + (DEVIATION_E << 4);
-      // if (Fdev > Fdev_val) {
-        // devlast = Fdev_val;
-        // bitlast = bits;
-      // } else {
-        // if ((Fdev_val - Fdev) < (Fdev - devlast)) {
-          // devlast = Fdev_val;
-          // bitlast = bits;
-        // }
-      // }
-    // }
-  // }
-
-// #ifdef debug
-  // Serial.print(F("[DB] CC110x_Deviation_Set, DEVIATN (15) to ")); Serial.print(bitlast, HEX); Serial.println(F(" (value set to next possible level)"));
-// #endif
-  // return bitlast;
-
+  for (var DEVIATION_E = 0; DEVIATION_E < 8; DEVIATION_E++) {
+    for (var DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
+      Fdev_val = (8 + DEVIATION_M) * (2 ** DEVIATION_E) * 26000.0 / (2 ** 17);
+      bits = DEVIATION_M + (DEVIATION_E << 4);
+      if (Fdev > Fdev_val) {
+        devlast = Fdev_val;
+        bitlast = bits;
+      } else {
+        if ((Fdev_val - Fdev) < (Fdev - devlast)) {
+          devlast = Fdev_val;
+          bitlast = bits;
+        }
+      }
+    }
+  }
 
   // 0x2F RegSyncValue1 0x30 RegSyncValue2 0x31 RegSyncValue2 ...
   const Sync = [obj[47], obj[48], obj[49]];
@@ -100,6 +102,11 @@ function onMessage(event) {
    }
   }
 
+  // 0x38 RegPayloadLength
+  txt += "'06" + obj[56] + "',";
+  // non-existent on RFM
+  txt += "'0780',";
+
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
   var r07to09 = parseInt(obj[7], 16) * 256;
   r07to09 = (r07to09 + parseInt(obj[8], 16) ) * 256;
@@ -112,13 +119,12 @@ function onMessage(event) {
   var c0E = parseInt((r07to09 % 65536) / 256 );
   txt += "'0E" + c0E.toString(16) + "',";
   var c0F = parseInt( r07to09 % 256 );
-  txt += "'0F" + c0F.toString(16) + "'";
+  txt += "'0F" + c0F.toString(16) + "',";
 
-  // 0x19 RegRxBw | TODO
+  // 0x19 RegRxBw
   var RxBwMant = (parseInt(obj[25], 16) & 0b00011000) >> 3;
   var RxBwExp = (parseInt(obj[25], 16) & 0b00000111);
   var RxBw = (2 * (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000)).toFixed(3);
-  txt += " | " + RxBw;
   // cc1101 MDMCFG4 (0x10) CHANBW_E & CHANBW_M
   var bits1 = 0;
   var bits2 = 0;
@@ -146,26 +152,23 @@ function onMessage(event) {
    c10 = bits2;
   }
 
-  // 0x03 RegBitrateMsb 0x04 RegBitrateLsb | TODO
+  // 0x03 RegBitrateMsb 0x04 RegBitrateLsb
   var r03 = parseInt(obj[3], 16);
   var r04 = parseInt(obj[4], 16);
   var rBitRate = (FXOSC / ((r03 * 256) + r04));
   // cc1101 MDMCFG4 (0x0010) DRATE_E | MDMCFG3 (0x0011) DRATE_M
-  console.log(rBitRate);
-  if (rBitRate < 24795.5) {
-    rBitRate = 24795.5;
-  } else if (rBitRate > 1621830000) {
-    rBitRate = 1621830000;
+  if (rBitRate < 24.7955) {
+    rBitRate = 24.7955;
+  } else if (rBitRate > 1621830) {
+    rBitRate = 1621830;
   }
 
   var DRATE_E = rBitRate * ( 2**20 ) / 26000000.0;
   DRATE_E = Math.log(DRATE_E) / Math.log(2);
   DRATE_E = Math.trunc(DRATE_E);
-
   var DRATE_M = (rBitRate * (2**28) / (26000000.0 * (2**DRATE_E))) - 256;
   DRATE_M = Math.trunc(DRATE_M);
   var DRATE_Mr = Math.round(DRATE_M);
-
   var DRATE_M1 = DRATE_M + 1;
   var DRATE_E1 = DRATE_E;
 
@@ -178,12 +181,12 @@ function onMessage(event) {
    DRATE_M = DRATE_M1;
    DRATE_E = DRATE_E1;
   }
-
-  console.log(DRATE_M);
   c10 += DRATE_E;
 
-  txt += " |1 " + c10.toString(16);
-  txt += " |2 " + DRATE_M.toString(16);
+  txt += "'10" + c10.toString(16) + "',";
+  txt += "'11" + DRATE_M.toString(16) + "',";
+  txt += "'12" + r02 + "',";
+  txt += "'15" + bitlast.toString(16) + "',";
   txt += " -in development " + obj[obj.length - 2] + "- ";
   txt = txt.toUpperCase();
   element.textContent = txt;
