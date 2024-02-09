@@ -186,6 +186,8 @@ function onMessage(event) {
   txt += "'10" + c10.toString(16) + "',";
   txt += "'11" + DRATE_M.toString(16) + "',";
   txt += "'12" + r02 + "',";
+  txt += "'1322',";
+  txt += "'14F8',";
   txt += "'15" + bitlast.toString(16) + "',";
   txt += " -in development " + obj[obj.length - 2] + "- ";
   txt = txt.toUpperCase();
