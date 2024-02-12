@@ -23,10 +23,12 @@
 
 // external integration: cc1101_rf.ino
 extern byte RegBeforeChange[];
+extern byte MOD_FORMAT;
 extern uint32_t msgCount;
 extern void InputCommand(String input);
 extern uint8_t freqAfc;
 extern void appendLogFile(String logText);
+extern void Interupt();
 extern unsigned long uptimeReset;
 extern unsigned long uptime;
 extern const char compile_date[];

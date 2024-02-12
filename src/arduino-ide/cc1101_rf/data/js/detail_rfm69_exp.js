@@ -42,7 +42,7 @@ function onMessage(event) {
   FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
 
   let element = document.getElementById("REGs");
-  var txt = "'0001','022E','0342',";
+  var txt = "'0001','012E','022E','0342',";
 
   // 0x02 RegDataModul | TODO
   var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;

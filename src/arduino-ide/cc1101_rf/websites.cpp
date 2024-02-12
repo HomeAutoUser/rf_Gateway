@@ -354,6 +354,7 @@ void web_detail_cc110x_import() {
     if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
       uint8_t Adr;
       uint8_t Val;
+      CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 
       for (uint16_t i = 0; i < imp.length(); i++) {
         if (imp[i] == ',' || imp[i] == ']') {
@@ -388,6 +389,14 @@ void web_detail_cc110x_import() {
       } else {
         website += F("Import of the register values closed​​");
       }
+      CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
+      MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+      if (MOD_FORMAT != 3) {
+        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+      } else {
+        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+      }
+      Chip_setReceiveMode();  // start receive mode
     }
   } else {
     website += F("Import of the register values ​​(minimum 2 pieces)<br>(Please paste the string in SIGNALduino format)<br><br>"
