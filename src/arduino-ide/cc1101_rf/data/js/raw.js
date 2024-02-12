@@ -46,13 +46,10 @@ function onMessage(event) {
   cell3.innerHTML = obj[3];
   if(obj[3] <= -80) {
    cell3.style.color = color2;
-   cell3.style.textAlign = "right";
   }else if(obj[3] > -50) {
    cell3.style.color = color1;
-   cell3.style.textAlign = "right";
-  }else{
-   cell3.style.textAlign = "right";
   }
+  cell3.style.textAlign = "right";
   cell4.innerHTML = obj[4];
   cell4.style.textAlign = "right";
  } else if (event.data.includes('MODE,')) {

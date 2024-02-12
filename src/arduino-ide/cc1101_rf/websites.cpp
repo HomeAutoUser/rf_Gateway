@@ -145,6 +145,12 @@ void web_modes() {
 #endif
 
   if (countargs != 0) {
+    if (HttpServer.hasArg("scan") && HttpServer.arg("scan") == "all") {  // button "scan all modes"
+#ifdef debug_html
+      Serial.println(F("[DB] web_modes, set scan all modes"));
+#endif
+      InputCmd = F("tob88");
+    }
     if (submit != "" && submit != "time") {  // button "enable reception"
       InputCmd = "m";
       InputCmd += submit;
@@ -277,7 +283,9 @@ void web_modes() {
                "<input name=\"tgt\" type=\"text\" size=\"4\" placeholder=\"");
   website += (ToggleTime != 0 ? String(ToggleTime) : F("(ms)"));
   website += F("\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"time\">START</button></td>"
-               "<td class=\"ac\"><button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank & STOP</button>"
+               "<td class=\"ac\">"
+               "<button class=\"btn\" type=\"submit\" name=\"tgb\" id=\"btLast\" value=\"9_0\">reset togglebank</button>"
+               "<button class=\"btn\" type=\"submit\" name=\"scan\" id=\"scan\" value=\"all\">scan all modes</button>"
                "</td></tr></table></body></html>");
   sendHtml(website);
 }
@@ -397,7 +405,7 @@ void web_detail_SX1231_export() {
   }
 
   String website = FPSTR(html_meta);
-  website.reserve(1200);
+  website.reserve(1000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/detail_rfm69_exp.css\">"
                "<script src=\"js/detail_rfm69_exp.js\"></script></head>"
                "Export all current register values<br>Just copy and paste string into your application<br>"
@@ -756,9 +764,44 @@ void web_raw() {
   if (!ChipFound) {
     web_chip();
   }
+#ifdef CC110x
+  uint8_t CC110x_PATABLE_VAL[8];
+  Chip_readBurstReg(CC110x_PATABLE_VAL, 0x3E, 8);
+  uint8_t OutputPower = CC110x_PATABLE_VAL[1];
+#elif RFM69
+  uint8_t RegPaLevel = Chip_readReg(0x11, READ_BURST); // PA selection and Output Power control
+  uint8_t OutputPower = RegPaLevel & 0b00011111; // Output power setting with 1 dB steps, Pout = -18 + OutputPower [dBm] with PA0 or PA1, Pout = -14 + OutputPower [dBm] with PA1 and PA2, (limited to the 16 upper values of OutputPower)
+#endif
+  uint8_t countargs = HttpServer.args();
+
+  if (countargs != 0) {
+#ifdef CC110x
+    uint8_t OutputPowerNew = HttpServer.arg("pow").toInt(); // PATABLE
+    if (OutputPowerNew != OutputPower) {
+      CC110x_PATABLE_VAL[1] = {OutputPowerNew};
+      CC110x_writeBurstReg(CC110x_PATABLE_VAL, CC110x_PATABLE, 8);
+#ifdef debug_chip
+      Serial.print(F("[DB] old CC110x PATABLE val: 0x")); Serial.println(OutputPower, HEX);
+      Serial.print(F("[DB] new CC110x PATABLE val: 0x")); Serial.println(OutputPowerNew, HEX);
+#endif
+      OutputPower = OutputPowerNew;
+    }
+#elif RFM69
+    int8_t OutputPowerNew = HttpServer.arg("pow").toInt(); // Output power setting with 1 dB steps, Pout = -18 + OutputPower [dBm] with PA0 or PA1, Pout = -14 + OutputPower [dBm] with PA1 and PA2, (limited to the 16 upper values of OutputPower)
+    if (OutputPowerNew != OutputPower) {
+      RegPaLevel = (RegPaLevel & 0b11100000) | (OutputPowerNew);
+      Chip_writeReg(0x11 , RegPaLevel); // PA selection and Output Power control
+      OutputPower = OutputPowerNew;
+#ifdef debug_chip
+      Serial.print(F("[DB] SX1231 write RegPaLevel 0x11: 0x")); Serial.println(RegPaLevel, HEX);
+      Serial.print(F("[DB] SX1231 new OutputPower: "));  Serial.println(OutputPower);
+#endif
+    }
+#endif // END - #ifdef RFM69
+  }
 
   String website = FPSTR(html_meta);
-  website.reserve(2000);
+  website.reserve(3072);
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/raw.css\">"
                "<script src=\"js/raw.js\"></script>"
@@ -771,7 +814,7 @@ void web_raw() {
                "<td class=\"td1\">repeats <input aria-label=\"n1\" name=\"rep\"type=\"number\" onkeypress=\"if(this.value.length==2) return false;\"></td>"
                "<td class=\"td1\">pause (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==6) return false;\"></td>"
                "<td class=\"td1\"><input class=\"btn\" type=\"button\" value=\"send\" onclick=\"msgSend()\"></td>"
-               "</tr><tr><td class=\"td1\" colspan=\"4\"><span id=\"val\">");
+               "</tr><tr><td class=\"td1\"><span id=\"val\">");
   if (msgRepeats != 0) {
     website += F("sending process active (");
     website += msgRepeats;
@@ -789,13 +832,46 @@ void web_raw() {
     website += F("ready to broadcast");
   }
 
-  website += F("</span></td></tr></table><br>"
-               "<div><table id=\"dataTable\">"
+  website += F("</span></td>"
+               "<td class=\"td1\" colspan=\"2\">" // Output Power setting
+               "Output Power&ensp;<select id=\"pow\" name=\"pow\">");
+#ifdef CC110x
+  float freq = Chip_readFreq(); // kHz
+  if (freq < 615000) { // Half between 433 and 868 MHz
+    memcpy_P(CC110x_PATABLE_VAL, CC110x_PATABLE_433, 8);
+  } else {
+    memcpy_P(CC110x_PATABLE_VAL, CC110x_PATABLE_868, 8);
+  }
+  for (int8_t x = 7; x >= 0; x--) {
+    website += F("<option ");
+    website += (OutputPower == CC110x_PATABLE_VAL[x] ? "selected " : "");
+    website += F("value=\"");
+    website += CC110x_PATABLE_VAL[x];
+    website += F("\">");
+    website += (int8_t)pgm_read_byte(&CC110x_PATABLE_POW[x]);
+    website += F("</option>");
+  }
+#elif RFM69
+  for (int8_t val = 0; val <= 31; val++) {
+    website += F("<option ");
+    website += (OutputPower == val ? "selected " : "");
+    website += F("value=\"");
+    website += val;
+    website += F("\">");
+    int8_t opt = val - 18;
+    website += opt;
+    website += F("</option>");
+  }
+#endif
+  website += F("</select>&ensp;dBm</td>"
+               "<td class=\"td1\"><input class=\"btn\" type=\"submit\" value=\"set\" id=\"set\"></td>" // Button set Output Power setting
+               "</tr></table><br>"
+               "<div><table id = \"dataTable\">"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += ReceiveModeName;
   website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
                "</table></div>"
-               "</body></html>");
+               "</form></body></html>");
   sendHtml(website);
 }
 

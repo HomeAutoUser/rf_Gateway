@@ -7,7 +7,10 @@
 #include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
-static const char PROGMEM RECEIVE_MODE_USER[] = "CC110x user configuration";
+static const char RECEIVE_MODE_USER[] PROGMEM = "CC110x user configuration";
+const uint8_t CC110x_PATABLE_433[8] PROGMEM = {0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
+const uint8_t CC110x_PATABLE_868[8] PROGMEM = {0xC2, 0xCB, 0x81, 0x50, 0x27, 0x1E, 0x0F, 0x03};
+const int8_t CC110x_PATABLE_POW[8] PROGMEM = {10, 7, 5, 0, -10, -15, -20, -30};
 
 int Chip_readRSSI();
 uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);

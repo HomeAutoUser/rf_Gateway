@@ -107,6 +107,10 @@ function onMessage(event) {
   // non-existent on RFM
   txt += "'0780',";
 
+  // 0x37 RegPacketConfig1
+  var r37_7 = obj[55] >> 7;
+  txt += "'080" + r37_7 + "',";
+
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
   var r07to09 = parseInt(obj[7], 16) * 256;
   r07to09 = (r07to09 + parseInt(obj[8], 16) ) * 256;
@@ -186,12 +190,11 @@ function onMessage(event) {
   txt += "'10" + c10.toString(16) + "',";
   txt += "'11" + DRATE_M.toString(16) + "',";
   txt += "'12" + r02 + "',";
-  txt += "'1322',";
-  txt += "'14F8',";
+  txt += "'1322','14F8',";
   txt += "'15" + bitlast.toString(16) + "',";
-  txt += " -in development " + obj[obj.length - 2] + "- ";
+  txt += "'1916','1B43','1C68'";
   txt = txt.toUpperCase();
-  element.textContent = txt;
+  element.innerText = txt;
  }
 }
 

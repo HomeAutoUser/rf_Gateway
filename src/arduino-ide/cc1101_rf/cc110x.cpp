@@ -106,7 +106,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
   Serial.println(F("[DB] CC110x_init starting"));
 #endif
 
-  if (uptime == 0) { // for 
+  if (uptime == 0) { // for
     pinMode(SS, OUTPUT);
     SPI.begin();
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // SCLK frequency, burst access max. 6,5 MHz
@@ -122,7 +122,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
     CC110x_CmdStrobe(CC110x_SRES);  // Reset CC110x chip
     delay(10);
   }
-  
+
   uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
   if (chipVersion == 0x14 || chipVersion == 0x04 || chipVersion == 0x03 || chipVersion == 0x05 || chipVersion == 0x07 || chipVersion == 0x17) {  // found CC110x
     CC110x_CmdStrobe(CC110x_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
@@ -157,20 +157,19 @@ void ChipInit() { /* Init CC110x - Set default´s */
 
     /* normaler Start */
     if (EEPROMread(EEPROM_ADDR_FW1) == Prog_Ident1 && EEPROMread(EEPROM_ADDR_FW2) == Prog_Ident2 && chk == chk_comp) {  // EEPROM OK, chk OK
-      /* cc110x - PATABLE */
-      uint8_t uiBuffer[8]; // Array anlegen
+      uint8_t uiBuffer[8]; /* cc110x - PATABLE - Array anlegen +5dB Default*/
       for (byte i = 0; i < 8; i++) {
         uiBuffer[i] = EEPROM.read(EEPROM_ADDR_PATABLE + i);
         if (uiBuffer[i] == 255) {   // EEPROM gelöscht
           if (i == 1) {
-            uiBuffer[i] = 0x81;     // 5dB Default
+            uiBuffer[i] = 0x81;     // +5dB Default
           } else {
             uiBuffer[i] = 0x00;
           }
           EEPROMwrite(EEPROM_ADDR_PATABLE + i, uiBuffer[i]);
         }
-        CC110x_writeBurstReg(uiBuffer, CC110x_PATABLE, 8);
       }
+      CC110x_writeBurstReg(uiBuffer, CC110x_PATABLE, 8);
       EEPROM.get(EEPROM_ADDR_AFC, freqAfc);         /* cc110x - afc from EEPROM */
       if (freqAfc > 1) {
         freqAfc = 0;

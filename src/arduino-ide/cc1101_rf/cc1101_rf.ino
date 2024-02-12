@@ -915,12 +915,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                 ToggleTime = 0;
                 EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);
               } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan modes */
-                MSG_BUILD(F("scan mode active (mode changes every 15 seconds, STOP with 'tos0')\n"));
+#ifdef debug
+                MSG_BUILD(F("[DB] Input, scan mode active (mode changes every 60 seconds, STOP with 'tos0')\n"));
 #ifdef CODE_ESP
                 MSG_OUTPUT(tmp);
 #endif
+#endif  // END - debug
                 ToggleAll = true;
-                ToggleTime = 15000;  // set to default and start
+                ToggleTime = 60000;  // set to default and start
                 ToggleOnOff();
               }
             }

@@ -21,8 +21,8 @@
 
 //#define countLoop         1     // loop-benchmark
 
-#define FWVer             "V 2.0.4pre"
-#define FWVerDate         "2024-02-07"
+#define FWVer             "V 2.0.5pre"
+#define FWVerDate         "2024-02-12"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
