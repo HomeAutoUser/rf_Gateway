@@ -1283,7 +1283,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (!buf_input[1]) {
 #ifdef CODE_AVR
         Serial.print((__FlashStringHelper*)TXT_VERSION);
-        Serial.println(compile_date);
+        Serial.println((__FlashStringHelper*)compile_date);
 #elif CODE_ESP
         MSG_BUILD(FPSTR(TXT_VERSION)); MSG_BUILD_LF(FPSTR(compile_date));
         MSG_OUTPUT(tmp);
