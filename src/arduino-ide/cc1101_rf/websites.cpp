@@ -16,8 +16,8 @@ void web_index() {
     ESP.restart();
   }
 
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/index.css\">"
-               "<script src=\"js/index.js\"></script>" // The type attribute is unnecessary for JavaScript resources.
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/index.css\">"
+               "<script src=\"/js/index.js\"></script>" // The type attribute is unnecessary for JavaScript resources.
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
@@ -66,8 +66,8 @@ void web_chip() {
   String website;
   website.reserve(2000);
   website += FPSTR(html_meta);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/chip.css\">"
-               "<script src=\"js/chip.js\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/chip.css\">"
+               "<script src=\"/js/chip.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
@@ -225,11 +225,11 @@ void web_modes() {
 
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/modes.css\">"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/modes.css\">"
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<body>"
-               "<script src=\"js/modes.js\"></script>"
+               "<script src=\"/js/modes.js\"></script>"
                "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<table id=\"rec_mod\">"
                "<tr>"
@@ -298,7 +298,7 @@ void web_detail_cc110x_export() {
 
   String website = FPSTR(html_meta);
   website.reserve(1500);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/detail_cc110x_exp.css\"></head>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_cc110x_exp.css\"></head>"
                "Export all current register values (without the registers 0x29 ... 0x2E)<br>Just copy and paste string into your application<br>"
                "<br>FHEM - SIGNALduino Format | set &lsaquo;name&rsaquo; cc1101_reg<br>");
   String website_p2 = F("<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register => <br>");
@@ -340,7 +340,7 @@ void web_detail_cc110x_import() {
 
   String website = FPSTR(html_meta);
   website.reserve(1000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/detail_cc110x_imp.css\"></head>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_cc110x_imp.css\"></head>"
                "<body><form method=\"post\">"); /* form method wichtig für Daten von Button´s !!! */
 
   if (countargs != 0) {
@@ -415,8 +415,8 @@ void web_detail_SX1231_export() {
 
   String website = FPSTR(html_meta);
   website.reserve(1000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/detail_rfm69_exp.css\">"
-               "<script src=\"js/detail_rfm69_exp.js\"></script></head>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_rfm69_exp.css\">"
+               "<script src=\"/js/detail_rfm69_exp.js\"></script></head>"
                "Export all current register values<br>Just copy and paste string into your application<br>"
                "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =>"
                "<br>[<span id=\"REGs\"></span>]<br>"
@@ -627,8 +627,8 @@ void web_detail() {
 #elif RFM69
   website.reserve(20000);
 #endif
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/detail.css\">"
-               "<script src=\"js/"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail.css\">"
+               "<script src=\"/js/"
 #ifdef CC110x
                "detail_cc110x.js"
 #elif RFM69
@@ -737,8 +737,8 @@ void web_detail() {
 void web_log() {
   String website = FPSTR(html_meta);
   website.reserve(10000);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/log.css\">"
-               "<script src=\"js/log.js\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/log.css\">"
+               "<script src=\"/js/log.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);
@@ -812,8 +812,8 @@ void web_raw() {
   String website = FPSTR(html_meta);
   website.reserve(3072);
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
-               "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/raw.css\">"
-               "<script src=\"js/raw.js\"></script>"
+               "<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/raw.css\">"
+               "<script src=\"/js/raw.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website += F("<table>"
@@ -922,8 +922,8 @@ void web_wlan() {
 
   String website = FPSTR(html_meta);
   website.reserve(10000); // MR | bei 16 WLAN´s --> website length 7092
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"css/wlan.css\">"
-               "<script src=\"js/wlan.js\"></script>"
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/wlan.css\">"
+               "<script src=\"/js/wlan.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
   website = HTML_mod(website);

@@ -78,7 +78,7 @@ const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to h
                                    "<head>"
                                    "<meta charset=\"utf-8\">"
                                    "<meta name=\"viewport\" content=\"width=device-width\">"
-                                   "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/all.css\">"
+                                   "<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/all.css\">"
                                    "<title>" CHIP_RFNAME"</title>"
                                  };
 
