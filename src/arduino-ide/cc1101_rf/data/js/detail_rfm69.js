@@ -56,7 +56,7 @@ function onMessage(event) {
    }
 
    element.maxLength = "2";
-   element.pattern = "^[\\da-fA-F]{1,2}$";
+   element.onkeypress = validHEX;
    element.placeholder = element.value.replace(element.value, obj[i]);
    element.setAttribute('size', '2');
    if(element.disabled == false) {
@@ -203,6 +203,12 @@ function check(){
  if (status_html && status_websocket) {
   websocket.send('detail');
  }
+}
+
+
+function validHEX(e) {
+ const pattern = /^[0-9a-fA-F]$/;
+ return pattern.test(e.key)
 }
 
 
