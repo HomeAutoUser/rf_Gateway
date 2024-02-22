@@ -1491,6 +1491,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
           Serial.print(F("[DB] send, msgSendInterval: ")); Serial.println(msgSendInterval);
           Serial.print(F("[DB] send, senddata:        ")); Serial.println(senddata_esp);
 #endif  // END - debug_chip
+        } else if (payloadString == "modes") {
+          WebSocket_modes();
         }
       }
       break;
