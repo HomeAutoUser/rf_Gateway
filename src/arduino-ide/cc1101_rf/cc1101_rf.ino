@@ -661,7 +661,7 @@ void ToggleOnOff() {
   client_now = 255;         /* to view message over serial */
 #endif
 #ifdef debug
-  MSG_BUILD(F("[DB] ToggleCnt=")); MSG_BUILD(ToggleCnt + 1); MSG_BUILD(F(" ToggleValues=")); MSG_BUILD_LF(ToggleValues);
+  MSG_BUILD(F("[DB] ToggleCnt=")); MSG_BUILD_LF(ToggleCnt);
 #ifdef CODE_ESP
   MSG_OUTPUT(tmp);
   tmp = "";
