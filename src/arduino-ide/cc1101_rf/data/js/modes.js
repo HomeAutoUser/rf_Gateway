@@ -23,8 +23,8 @@ function onMessage(event) {
    document.getElementById(id).innerHTML = obj[c];
    if (!onlyOne){
     var name = 't';
-    let element = document.getElementsByName(name)[0];
     name += c - 3;
+    let element = document.getElementsByName(name)[0];
     element.onkeypress = validateNumber;
     element.placeholder = element.value;
    }
