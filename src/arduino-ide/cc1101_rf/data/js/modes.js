@@ -25,12 +25,12 @@ function onMessage(event) {
     var name = 't';
     name += c - 3;
     let element = document.getElementsByName(name)[0];
-    element.onkeypress = validateNumber;
+    element.onkeypress = validNumber;
     element.placeholder = element.value;
    }
   }
   if (!onlyOne){
-   document.getElementsByName('ta')[0].onkeypress = validateNumber;
+   document.getElementsByName('ta')[0].onkeypress = validNumber;
    onlyOne = true;
   }
   /* erste Spalte | automatischer Farbwechsel aktiver Modus
@@ -63,7 +63,7 @@ function check(){
  }
 }
 
-function validateNumber(e) {
+function validNumber(e) {
  const pattern = /^[0-9]$/;
  return pattern.test(e.key)
 }
