@@ -7,6 +7,12 @@
 #include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
+#define NUMBER_OF_MODES  17  // Anzahl Datensätze in struct Data
+#else
+#define NUMBER_OF_MODES  6  // Anzahl Datensätze in struct Data
+#endif
+
 static const char RECEIVE_MODE_USER[] PROGMEM = "CC110x user configuration";
 const uint8_t CC110x_PATABLE_433[8] PROGMEM = {0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
 const uint8_t CC110x_PATABLE_868[8] PROGMEM = {0xC2, 0xCB, 0x81, 0x50, 0x27, 0x1E, 0x0F, 0x03};
@@ -30,15 +36,19 @@ void Chip_Datarate_Set(long datarate, byte * arr);
 byte CC110x_Deviation_Set(float deviation);
 byte web_Mod_set(byte input);
 
+#if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
+extern IRAM_ATTR void Interupt();     /* Pulseauswertung */
+#else
+extern void Interupt();
+#endif
+
 extern boolean ChipFound;
 extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 extern byte ReceiveModePKTLEN;
 
-extern byte ToggleOrder[4];
-extern byte ToggleValues;
-extern uint8_t ToggleArray[4];
-extern unsigned long ToggleTime;
+extern uint8_t ToggleArray[NUMBER_OF_MODES];
+extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 
 extern float Freq_offset;
 extern int8_t freqOffAcc;

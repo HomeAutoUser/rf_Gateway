@@ -38,6 +38,15 @@
   // 240210 - set PATABLE
   Der Sketch verwendet 22134 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v205pre_240215_Import
+  Der Sketch verwendet 22134 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 680 Bytes (33%) des dynamischen Speichers, 1368 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v206pre_240220_ToggleModes
+  Der Sketch verwendet 21472 Bytes (69%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 704 Bytes (34%) des dynamischen Speichers, 1344 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v206pre_240221_ToggleModes
+  Der Sketch verwendet 21462 Bytes (69%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 710 Bytes (34%) des dynamischen Speichers, 1338 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -92,6 +101,12 @@
   // 240212 - cc1101_rf_v201pre_240207_ScanAllModes
   Der Sketch verwendet 951377 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  // 240215 - cc1101_rf_v205pre_240212_Import
+  Der Sketch verwendet 951157 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  - 240220 - cc1101_rf_v206pre_240220_ToggleModes
+  Der Sketch verwendet 950605 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51764 Bytes (15%) des dynamischen Speichers, 275916 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 
@@ -102,7 +117,6 @@
   foff<n>           - frequency offset
   ft                - frequency testsignal SN;R=99;D=FF;
   m<0-6>            - register´s in Firmware (Avantek, Lacrosse, Bresser ...)
-  m<arraysizemax>   - "Developer gadget to test functions"
   t                 - get uptime
   tob<0-3><0-6>     - set togglebank (0-3) to value | <n> bank , <n> mode or 99 | 99 reset togglebank n (set to -)
   tob88             - scan all modes

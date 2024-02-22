@@ -42,7 +42,12 @@ function onMessage(event) {
   FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
 
   let element = document.getElementById("REGs");
-  var txt = "'0001','012E','022E','0342',";
+  var txt = "'0001','012E','022E',";
+
+  // 0x38 RegPayloadLength
+  var FIFO_THR = parseInt(obj[56], 16) / 4;
+  FIFO_THR = parseInt(FIFO_THR);
+  txt += "'034" + FIFO_THR.toString(16) + "',";
 
   // 0x02 RegDataModul | TODO
   var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
@@ -65,6 +70,7 @@ function onMessage(event) {
   if (Fdev < 1.586914) {
    Fdev = 1.586914;
   }
+  Fdev*=2;
 
   var Fdev_val;
   var bits = 0;

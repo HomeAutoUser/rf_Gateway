@@ -25,16 +25,16 @@
 extern byte RegBeforeChange[];
 extern byte MOD_FORMAT;
 extern uint32_t msgCount;
-extern void InputCommand(String input);
-extern uint8_t freqAfc;
-extern void appendLogFile(String logText);
-extern void Interupt();
-extern unsigned long uptimeReset;
-extern unsigned long uptime;
-extern const char compile_date[];
-extern const char TXT_VERSION[];
+extern uint32_t msgCountMode[NUMBER_OF_MODES];
 extern uint8_t msgRepeats;
 extern uint32_t msgSendInterval;
+extern uint8_t ToggleTimeMode[NUMBER_OF_MODES];      // Toggle, Zeit in Sekunden
+extern uint8_t freqAfc;
+extern unsigned long uptimeReset;
+extern unsigned long uptime;
+extern unsigned long toggleTick;
+extern const char compile_date[];
+extern const char TXT_VERSION[];
 extern IPAddress eip;
 extern IPAddress esnm;
 extern IPAddress esgw;
@@ -43,6 +43,10 @@ extern WebSocketsServer webSocket;
 extern String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX];
 extern int8_t freqErr;
 extern struct Data Registers[];
+extern void InputCommand(String input);
+extern void appendLogFile(String logText);
+extern void Interupt();
+extern void Interupt_Variant(byte nr);
 
 /* predefinitions of the functions */
 void WebSocket_chip();                        /* CC110x Factory Default,1,{ - - - - },0 */
@@ -78,7 +82,7 @@ const char html_meta[] PROGMEM = { "<!DOCTYPE html>"          /* added meta to h
                                    "<head>"
                                    "<meta charset=\"utf-8\">"
                                    "<meta name=\"viewport\" content=\"width=device-width\">"
-                                   "<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/all.css\">"
+                                   "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/all.css\">"
                                    "<title>" CHIP_RFNAME"</title>"
                                  };
 

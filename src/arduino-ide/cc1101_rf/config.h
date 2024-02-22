@@ -19,17 +19,16 @@
 //#define debug_websocket   1     // to debug websocket handling
 //#define debug_wifi        1     // to debug wifi
 
-//#define countLoop         1     // loop-benchmark
+//#define COUNT_LOOP         1     // loop-benchmark (höher=besser, ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
 
-#define FWVer             "V 2.0.5pre"
-#define FWVerDate         "2024-02-12"
+#define FWVer             "V 2.0.6pre"
+#define FWVerDate         "2024-02-21"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
 
 /* some backward compatibility */
 //#define ESP32_core_v1     1     // to compatible for ESP32 core v1.0.6
-
 
 /* Pins and other specific controller settings */
 #if defined(ARDUINO_ARCH_ESP8266) && defined(CC110x)
@@ -73,14 +72,18 @@
 #define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Nano (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
+#elif defined(ARDUINO_AVR_NANO) && defined(RFM69)
+#define EEPROM_SIZE   512
+#define LED           9           // LED      => Arduino Nano (OK msg)
+#define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #else
 
 #endif
 
 
 /* Definitions for flexible cc1101 configuration */
-#define ToggleTimeMin   15000     //   15000 milliseconds ->  15 seconds
-#define ToggleTimeMax   1800000   // 3600000 milliseconds -> 0.5 hour
+#define ToggleTimeMin   1     // seconds
+#define ToggleTimeMax   255   // seconds
 
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
@@ -158,16 +161,18 @@
 #define EEPROM_ADDR_NETMASK     168
 #define EEPROM_ADDR_DHCP        172     /* Flag´s */
 #define EEPROM_ADDR_AP          173
-#define EEPROM_ADDR_PATABLE     174
+#define EEPROM_ADDR_PATABLE     174     // 8 Byte 
 #define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über PKTLEN 183–184 */
 #define EEPROM_ADDR_FOFFSET     185     /* cc110x freq offset | 185 - 188 */
 #define EEPROM_ADDR_AFC         189     /* cc110x afc */
-#define EEPROM_ADDR_Prot        200
-#define EEPROM_ADDR_ProtTo      201     /* ToggleProtocolls 49 - 52 */
+#define EEPROM_ADDR_Prot        200     // mit command 'm' gesetzter Modus für start ohne toggle
+#define EEPROM_ADDR_ProtTo      201     /* ToggleProtocolls 49 - 52 TODO wird nicht mehr gebraucht */
 #define EEPROM_ADDR_FW1         209
 #define EEPROM_ADDR_FW2         210
-#define EEPROM_ADDR_Toggle      212      /* ToggleTime 56 - 59 */
+#define EEPROM_ADDR_Toggle      212      /* ToggleTime 56 - 59 TODO wird nicht mehr gebraucht */
 #define EEPROM_ADDR_SSID        256     /* Strings (max 32)*/
 #define EEPROM_ADDR_PASS        288     /* Strings (max 32)*/
+#define EEPROM_ADDR_ToggleTime  384     /* Byte ToggleTimeMode (max 64 free in EEPROM, size set in NUMBER_OF_MODES cc110x.h / rfm69.h) */
+#define EEPROM_ADDR_ToggleMode  448     /* Byte ToggleArray (max 64 free in EEPROM, size set in NUMBER_OF_MODES cc110x.h / rfm69.h) */
 
 #endif  // END - #ifndef CONFIG_H

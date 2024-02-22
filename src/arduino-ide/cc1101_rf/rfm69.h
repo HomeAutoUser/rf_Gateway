@@ -7,23 +7,24 @@
 #include <SPI.h>
 
 //#define FXOSC_28 // SX1231 FXOSC 28,375 MHz, sonst RFM69 FXOSC 32,000 MHz
-#define fxOsc 32000000                          // Crystal oscillator frequency
-const float fStep = fxOsc / pow(2, 19);         // Frequency synthesizer step
-#define CHIP_NAME         "RFM69"               // name Chip
-#define CHIP_RFNAME       "rfm69_rf_Gateway"    // name web interface
-#define REGISTER_MAX      84                    // register count
-#define REGISTER_STATUS_MAX   0x71              // register count (for compatibility with the CC110x)
-#define CMD_W_REG_MAX     56                    // command W address max 0x80 (ASCII 56 = 8)
+#define fxOsc 32000000                             // Crystal oscillator frequency
+const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
+#define CHIP_NAME             "RFM69"              // name Chip
+#define CHIP_RFNAME           "rfm69_rf_Gateway"   // name web interface
+#define REGISTER_MAX          84                   // register count
+#define REGISTER_STATUS_MAX   0x71                 // register count (for compatibility with the CC110x)
+#define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
+#define NUMBER_OF_MODES       6                    // Anzahl Datensätze in struct Data
 
-#define READ_BURST        0x00                  // for compatibility with the CC110x
-#define CHIP_VERSION      0x10                  // RegVersion - Semtech ID relating the silicon revision
-#define CHIP_RXFIFO       0x00                  // RX FIFO address
-#define CHIP_PKTLEN       0x38                  // RegPayloadLength - payload length
-#define CHIP_RxBw         0x19                  // Bandwidth address
-#define CHIP_BitRate      0x03                  // first BitRate address
-#define CHIP_FREQMSB      0x07                  // Frequency Control Word, High Byte address
+#define READ_BURST            0x00                 // for compatibility with the CC110x
+#define CHIP_VERSION          0x10                 // RegVersion - Semtech ID relating the silicon revision
+#define CHIP_RXFIFO           0x00                 // RX FIFO address
+#define CHIP_PKTLEN           0x38                 // RegPayloadLength - payload length
+#define CHIP_RxBw             0x19                 // Bandwidth address
+#define CHIP_BitRate          0x03                 // first BitRate address
+#define CHIP_FREQMSB          0x07                 // Frequency Control Word, High Byte address
 
-//const uint8_t SX1231_RegAddrTranslate[5] PROGMEM = {0x58, 0x59, 0x5F, 0x6F, 0x71};
+//const uint8_t SX1231_RegAddrTranslate[5] PROGMEM = {0x58, 0x59, 0x5F, 0x6F, 0x71}; // spart 16 Byte RAM, dafür aber 144 Byte mehr Flash
 const uint8_t SX1231_RegAddrTranslate[5] = {0x58, 0x59, 0x5F, 0x6F, 0x71};
 static const char PROGMEM RECEIVE_MODE_USER[] = "RFM69 user configuration";
 
@@ -51,10 +52,8 @@ extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 extern byte ReceiveModePKTLEN;
 
-extern byte ToggleOrder[4];
-extern byte ToggleValues;
-extern uint8_t ToggleArray[4];
-extern unsigned long ToggleTime;
+extern uint8_t ToggleArray[NUMBER_OF_MODES];
+extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 
 extern float Freq_offset;
 extern int RSSI_dez;
@@ -350,8 +349,10 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
   0x00, // Address 0x02 - RegDataModul
   0x0C, // Address 0x03 - RegBitrateMsb
   0x80, // Address 0x04 - RegBitrateLsb
-  0x01, // Address 0x05 - RegFdevMsb
-  0x37, // Address 0x06 - RegFdevLsb
+//  0x01, // Address 0x05 - RegFdevMsb
+//  0x37, // Address 0x06 - RegFdevLsb
+  0x00, // Address 0x05 - RegFdevMsb
+  0xA4, // Address 0x06 - RegFdevLsb
   0x6C, // Address 0x07 - RegFrfMsb
   0x7A, // Address 0x08 - RegFrfMid
   0xE1, // Address 0x09 - RegFrfLsb

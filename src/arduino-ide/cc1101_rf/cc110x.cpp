@@ -31,6 +31,9 @@ boolean ChipFound = false;    // against not clearly defined entrances (if flick
 
 struct Data Registers[] = {
   { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "CC110x Factory Default", 32  },
+#ifdef OOK_MU_433
+  { Config_OOK_MU_433,  sizeof(Config_OOK_MU_433) / sizeof(Config_OOK_MU_433[0]), "OOK_MU_433", 5  },
+#endif
 #ifdef Avantek
   { Config_Avantek, sizeof(Config_Avantek) / sizeof(Config_Avantek[0]), "Avantek",  8   },
 #endif
@@ -66,9 +69,6 @@ struct Data Registers[] = {
 #endif
 #ifdef Lacrosse_mode2
   { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
-#endif
-#ifdef OOK_MU_433
-  { Config_OOK_MU_433,  sizeof(Config_OOK_MU_433) / sizeof(Config_OOK_MU_433[0]), "OOK_MU_433", 5  },
 #endif
 #ifdef PCA301
   { Config_PCA301,  sizeof(Config_PCA301) / sizeof(Config_PCA301[0]), "PCA301", 32  },
@@ -106,7 +106,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
   Serial.println(F("[DB] CC110x_init starting"));
 #endif
 
-  if (uptime == 0) { // for
+  if (uptime == 0) { // for command f
     pinMode(SS, OUTPUT);
     SPI.begin();
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // SCLK frequency, burst access max. 6,5 MHz
@@ -173,7 +173,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
       EEPROM.get(EEPROM_ADDR_AFC, freqAfc);         /* cc110x - afc from EEPROM */
       if (freqAfc > 1) {
         freqAfc = 0;
-        EEPROM.put(EEPROM_ADDR_AFC, freqAfc);
+        EEPROM.write(EEPROM_ADDR_AFC, freqAfc);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         EEPROM.commit();
 #endif
@@ -186,21 +186,13 @@ void ChipInit() { /* Init CC110x - Set default´s */
         EEPROM.commit();
 #endif
       }
-      ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Freq.Offset              ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
-      Serial.print(F("[DB] read activated mode from EEPROM ")); Serial.println(ReceiveModeNr);
 #endif
-      ToggleTime = EEPROMread_long(EEPROM_ADDR_Toggle);
-      if (ToggleTime > ToggleTimeMax) {
-        ToggleTime = 0;
-        EEPROMwrite_long(EEPROM_ADDR_Toggle, ToggleTime);
-      }
+
+      if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
 #ifdef debug_chip
-      Serial.print(F("[DB] read toggletime from EEPROM     ")); Serial.println(ToggleTime);
-#endif
-      if (ReceiveModeNr > 0 && ToggleTime == 0) {
-#ifdef debug_chip
+        ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
         ReceiveModeName = Registers[ReceiveModeNr].name;
         Serial.println(F("[DB] CC110x use config from EEPROM"));
         Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
@@ -214,39 +206,28 @@ void ChipInit() { /* Init CC110x - Set default´s */
           Chip_writeReg(i, EEPROMread(i));
         }
       }
-      if (ToggleTime > 0) {
-        ToggleValues = 0; /* counting Toggle values ​​and sorting into array */
-        for (byte i = 0; i < 4; i++) {
-          if (EEPROMread(i + EEPROM_ADDR_ProtTo) != 255) {
-            ToggleValues++;
-            ToggleOrder[ToggleValues - 1] = EEPROMread(i + EEPROM_ADDR_ProtTo);
-            ToggleArray[i] = ToggleOrder[ToggleValues - 1];
-            if (ToggleValues == 1) {
-              ReceiveModeNr = ToggleOrder[ToggleValues - 1];
-            }
-#ifdef debug_chip
-            Serial.print(F("[DB] ChipInit, EEPROM read toggle value ")); Serial.print(ToggleValues);
-            Serial.print(F(" (")); Serial.print(ToggleOrder[ToggleValues - 1]);
-            Serial.print(F(") and put it in array at ")); Serial.println(ToggleValues - 1);
-#endif
-          }
-        }
+
+      if (ToggleCnt > 0) { // normaler Start
         Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
       }
-      ReceiveModeName = Registers[ReceiveModeNr].name;
-      ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-      // Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
+      
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
+      uint8_t MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+      if (MOD_FORMAT != 3) {
+        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+      } else {
+        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+      }
+      ReceiveModeName = Registers[ReceiveModeNr].name;
+      ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
       Chip_setReceiveMode(); /* enable RX */
-      // Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
+
     } else { /* Ende normaler Start */
       /* ERROR EEPROM oder Registeranzahl geändert */
       EEPROMwrite(EEPROM_ADDR_Prot, 0);  // reset
-      EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);
-      ToggleTime = 0;
-      ToggleValues = 0;
+      ToggleCnt = 0;
       ReceiveModeNr = 0;
       ReceiveModePKTLEN = 0;
       /* wenn Registerwerte geändert wurden beim compilieren */
@@ -262,15 +243,8 @@ void ChipInit() { /* Init CC110x - Set default´s */
         Serial.println(F("ChipInit, EEPROM Init to defaults after ERROR"));
         EEPROMwrite(EEPROM_ADDR_FW1, Prog_Ident1);  // reset Prog_Ident1
         EEPROMwrite(EEPROM_ADDR_FW2, Prog_Ident2);  // reset Prog_Ident2
-        EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);    // reset Toggle time
         /* set adr. 48 - 52 to value 0 (active protocol and toggle array) */
-        for (byte i = EEPROM_ADDR_Prot; i < (EEPROM_ADDR_ProtTo + 4); i++) {
-          if (i == EEPROM_ADDR_Prot) {
-            EEPROMwrite(i, 0);    // ReceiveModeNr
-          } else {
-            EEPROMwrite(i, 255);  // ToggleProtocols
-          }
-        }
+        EEPROMwrite(EEPROM_ADDR_Prot, 0);    // ReceiveModeNr
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure CC110x and write values to EEPROM"));
 #endif
@@ -289,7 +263,6 @@ void ChipInit() { /* Init CC110x - Set default´s */
       Serial.print(ReceiveModeNr); Serial.print(F(", ")); Serial.println(ReceiveModeName);
       Serial.println(F("[DB] Chip remains idle, please set receive mode!"));
 #endif
-      // Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX); // MARCSTATE – Main Radio Control State Machine State (1 = Idle)
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
   } else { /* NO CC110x found */
     ChipFound = false;

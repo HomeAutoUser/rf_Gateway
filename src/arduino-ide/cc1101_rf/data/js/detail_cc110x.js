@@ -53,7 +53,7 @@ function onMessage(event) {
   }
 
   // 0x06: PKTLEN 0x08: PKTCTRL0
-  var val = ( parseInt(obj[8], 16) & 0b00000011 ) >> 4;
+  var val = parseInt(obj[8], 16) & 0b00000011;
   document.getElementById('PKTCTRL0').innerHTML = LENGTH_CONFIG[val];
   let span = document.getElementById("PKTLEN");
   if(val == 0) {

@@ -8,14 +8,15 @@
  text-align: center;
 }
 
-.btn2 {
- background-color: #33b06b;
+.btn1 {
+ background-color: #3399FF;
  border-radius: 15px;
  color: white;
  cursor: pointer;
  margin: 0px 5px 0px 5px;
  padding: 2px 6px;
  text-align: center;
+ width:50px
 }
 
 .btn:hover {
@@ -23,35 +24,26 @@
  color: black;
 }
 
-.ac {
+.btn1:hover {
+ background-color: #FFFF00;
+ color: black;
+}
+
+.acf {
  text-align: center;
+ font-weight: bold;
 }
 
-.thf1 {
- width: 33.2%;
-}
+.ac {text-align: center;}
+.ar {text-align: right;}
+.thf1 {width: 33.2%;}
+.grn {color: green;}
+.bggn {background-color: #ccffcc;}
+.red {color: red;}
+input[type=number] {width: 6ch;}
+a:link.chip, a:visited.chip {color: #CC00CC;}
 
-.in {
- text-align: center;
-}
-
-.grn {
- color: green;
-}
-
-.red {
- color: red;
-}
-
-input {
- text-align: center;
-}
-
-a:link.chip, a:visited.chip {
- color: #CC00CC;
-}
-
-/* backgroud color of button "enable/active reception" */
+/* background color for buttons  */
 :root {
   --bt_reception_active: #ccffcc;
   --bt_reception_enable: #FFFFFF;

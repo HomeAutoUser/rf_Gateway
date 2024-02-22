@@ -11,12 +11,17 @@ function onMessage(event) {
  console.log('received message: ' + event.data);
 
  if (event.data.includes('Connected') ) {
-  document.getElementsByName('tgt')[0].maxLength = "7";
-  document.getElementsByName('tgt')[0].pattern = "^[\\d]{1,7}$";
-  document.getElementsByName('tgt')[0].title = "Input: 15000 ... 1800000 ms";
+  // document.getElementsByName('tgt')[0].maxLength = "7";
+  // document.getElementsByName('tgt')[0].pattern = "^[\\d]{1,7}$";
+  // document.getElementsByName('tgt')[0].title = "Input: 15000 ... 1800000 ms";
+
  } else if (event.data.includes('MODE,') ) {
   const obj=event.data.split(',');
-
+  for (var c = 3; c < obj.length; c++) { // msg count
+   var id = 'c';
+   id += c - 3;
+   document.getElementById(id).innerHTML = obj[c];
+  }
   /* erste Spalte | automatischer Farbwechsel aktiver Modus
     Zählweise Tabellen ID
     0,1,2 
@@ -24,36 +29,18 @@ function onMessage(event) {
     33,34,35
     ...
   */
-
   const cell = document.getElementById("rec_mod").getElementsByTagName("td");
   for (var i = 0; i < cell.length; i++) {
-   if (i % 3 == 0) {
-    btnr = i / 3;
-    var bt = '#bt' + btnr;
-    var myEle = document.querySelector(bt);   /* to check element of error: Cannot set properties of null (setting 'innerHTML') */
-
-    if (myEle!=null && bt != 'null' && bt != 'NULL') {
-     if (btnr == obj[2]) {
-      document.querySelector(bt).innerHTML = 'active reception';
-      document.querySelector(bt).className = 'btn2';
-     } else {
-      document.querySelector(bt).innerHTML = 'enable reception';
-      document.querySelector(bt).className = 'btn';
-     }
-    }
-   }
-
    if (cell[i].innerHTML.indexOf(' - ' + obj[1]) >= 0) {
-    var btnr = i / 3;
-    cell[i].style.backgroundColor = color1;     /* MODE */
-    cell[i+1].style.backgroundColor = color1;   /* set to bank 0 1 2 3 */
-    cell[i+2].style.backgroundColor = color1;   /* button enable(d) reception */
-    i = i + 2;
+    cell[i].style.backgroundColor = color1;
+    cell[i+1].style.backgroundColor = color1;
+    cell[i+2].style.backgroundColor = color1;
+    cell[i+3].style.backgroundColor = color1; /* count */
+    i = i + 3;
    } else {
     cell[i].style.backgroundColor = color2;
    }
   }
-
   var today = new Date();
   document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');
  }

@@ -69,7 +69,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       EEPROM.get(EEPROM_ADDR_AFC, freqAfc);         /* afc from EEPROM */
       if (freqAfc > 1) {
         freqAfc = 0;
-        EEPROM.put(EEPROM_ADDR_AFC, freqAfc);
+        EEPROM.write(EEPROM_ADDR_AFC, freqAfc);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         EEPROM.commit();
 #endif
@@ -82,19 +82,13 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         EEPROM.commit();
 #endif
       }
-      ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
-      ToggleTime = EEPROMread_long(EEPROM_ADDR_Toggle);
-      if (ToggleTime > ToggleTimeMax) {
-        ToggleTime = 0;
-        EEPROMwrite_long(EEPROM_ADDR_Toggle, ToggleTime);
-      }
 #ifdef debug_chip
       Serial.print(F("[DB] freqAfc                       ")); Serial.println(freqAfc);
       Serial.print(F("[DB] Freq_offset                   ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
       Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
-      Serial.print(F("[DB] ToggleTime (ms)               ")); Serial.println(ToggleTime);
 #endif
-      if (ReceiveModeNr > 0 && ToggleTime == 0) {
+
+      if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
         // if (ReceiveModeNr == 0 && ToggleTime == 0) { // für Test
 #ifdef debug_chip
         ReceiveModeName = Registers[ReceiveModeNr].name;
@@ -119,23 +113,8 @@ void ChipInit() { /* Init RFM69 - Set default´s */
           Chip_writeReg(addr, EEPROMread(i));
         }
       }
-      if (ToggleTime > 0) {
-        ToggleValues = 0; /* counting Toggle values ​​and sorting into array */
-        for (byte i = 0; i < 4; i++) {
-          if (EEPROMread(i + EEPROM_ADDR_ProtTo) != 255) {
-            ToggleValues++;
-            ToggleOrder[ToggleValues - 1] = EEPROMread(i + EEPROM_ADDR_ProtTo);
-            ToggleArray[i] = ToggleOrder[ToggleValues - 1];
-            if (ToggleValues == 1) {
-              ReceiveModeNr = ToggleOrder[ToggleValues - 1];
-            }
-#ifdef debug_chip
-            Serial.print(F("[DB] ChipInit, EEPROM read toggle value ")); Serial.print(ToggleValues);
-            Serial.print(F(" (")); Serial.print(ToggleOrder[ToggleValues - 1]);
-            Serial.print(F(") and put it in array at ")); Serial.println(ToggleValues - 1);
-#endif
-          }
-        }
+
+      if (ToggleCnt > 0) { // normaler Start
         Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
       }
       ReceiveModeName = Registers[ReceiveModeNr].name;
@@ -150,12 +129,11 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       Serial.println(F("[DB] SX1231 read all 112 register after load new settings"));
       SX1231_read_reg_all();      // SX1231 read all 112 register
 #endif
+
     } else { /* Ende normaler Start */
       /* ERROR EEPROM oder Registeranzahl geändert */
       EEPROMwrite(EEPROM_ADDR_Prot, 0);  // reset
-      EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);
-      ToggleTime = 0;
-      ToggleValues = 0;
+      ToggleCnt = 0;
       ReceiveModeNr = 0;
       ReceiveModePKTLEN = 0;
       /* wenn Registerwerte geändert wurden beim compilieren */
@@ -171,15 +149,8 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         Serial.println(F("ChipInit, EEPROM Init to defaults after ERROR"));
         EEPROMwrite(EEPROM_ADDR_FW1, Prog_Ident1);  // reset Prog_Ident1
         EEPROMwrite(EEPROM_ADDR_FW2, Prog_Ident2);  // reset Prog_Ident2
-        EEPROMwrite_long(EEPROM_ADDR_Toggle, 0);    // reset Toggle time
         /* set adr. 200 - 204 to value 0 or 255 (active protocol and toggle array) */
-        for (byte i = EEPROM_ADDR_Prot; i < (EEPROM_ADDR_ProtTo + 4); i++) {
-          if (i == EEPROM_ADDR_Prot) {
-            EEPROMwrite(i, 0);    // ReceiveModeNr
-          } else {
-            EEPROMwrite(i, 255);  // ToggleProtocols
-          }
-        }
+        EEPROMwrite(EEPROM_ADDR_Prot, 0);    // ReceiveModeNr
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure SX1231 and write values to EEPROM"));
 #endif

@@ -40,13 +40,12 @@
 <tr><td>foff&#60;n&#62;</td><td>frequency offset, &#60;n&#62; valid range from -10.000 to 10.000 MHz</td><td class="td2">SX1231</td></tr>
 <tr><td>ft</td><td>testsignal, sends an FF signal with 50 repeats on the set registers</td><td class="td2">SX1231</td></tr>
 <tr><td>m&#60;n&#62;</td><td>activates the mode (Avantek, Lacrosse, Bresser ...) !!! register´s compiled into firmware !!!</td><td class="td2">SX1231</td></tr>
-<tr><td>m&#60;arraysizemax&#62;</td><td>"Developer gadget to test functions"</td><td class="td2">SX1231</td></tr>
 <tr><td>t</td><td>get uptime</td><td></td></tr>
-<tr><td>tob<0-3><0-...></td><td>set togglebank (0-3) to value | &#60;n1&#62; bank , &#60;n2&#62; mode or 99 | 99 reset togglebank n (set to -)</td><td class="td2">SX1231</td></tr>
-<tr><td>tob88</td><td>scans all reception modes for a signal (default toggletime 15000ms | to stop m&#60;n&#62;)</td><td class="td2">SX1231</td></tr>
-<tr><td>tob99</td><td>reset togglebank | set to { - | - | - | - }</td><td class="td2">SX1231</td></tr>
-<tr><td>tos&#60;n&#62;</td><td>toggletime in milliseconds (min defined in config.h)</td><td class="td2">SX1231</td></tr>
-<tr><td>C&#60;n&#62;</td><td>read one register adress (0-61)</td><td class="td2">SX1231</td></tr>
+<tr><td>tob&#60;n&#62;&#60;m&#62;</td><td>set mode &#60;m&#62; to disable/enable (&#60;n&#62;=0 disable, &#60;n&#62;=1 enable)</td><td class="td2">SX1231</td></tr>
+<tr><td>tob88</td><td>scans all modes for a signal (default toggletime 60 seconds, to stop m&#60;n&#62;)</td><td class="td2">SX1231</td></tr>
+<tr><td>tob99</td><td>reset toggle bank (all modes are disabled)</td><td class="td2">SX1231</td></tr>
+<tr><td>tos&#60;n&#62;</td><td>toggletime in seconds (0-255)</td><td class="td2">SX1231</td></tr>
+<tr><td>C&#60;n&#62;</td><td>read one register adress (0x00-0x71)</td><td class="td2">SX1231</td></tr>
 <tr><td>C</td><td>reads complete RFM69 register</td><td class="td2">SX1231</td></tr>
 <tr><td>CG</td><td>get config (FHEM)</td><td class="td2">SX1231</td></tr>
 <tr><td>CEA, CDA</td><td>enable, disable AFC (FHEM)</td><td class="td2">SX1231</td></tr>
