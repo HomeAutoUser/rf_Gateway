@@ -8,18 +8,18 @@
 
 //#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
 //#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
-//#define debug_chip        1     // to debug chip routines
-//#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
-//#define debug_cc110x_ms   1     // to debug CC110x Marcstate
 
 //#define debug             1     // to debug other
+//#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
+//#define debug_cc110x_ms   1     // to debug CC110x Marcstate
+//#define debug_chip        1     // to debug chip routines
 //#define debug_eeprom      1     // to debug all EEPROM
 //#define debug_html        1     // to debug HTML handling
 //#define debug_telnet      1     // to debug telnet
 //#define debug_websocket   1     // to debug websocket handling
 //#define debug_wifi        1     // to debug wifi
 
-//#define COUNT_LOOP         1     // loop-benchmark (höher=besser, ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
+//#define COUNT_LOOP        1     // loop-benchmark (höher=besser, ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
 
 #define FWVer             "V 2.0.7pre"
 #define FWVerDate         "2024-02-22"
