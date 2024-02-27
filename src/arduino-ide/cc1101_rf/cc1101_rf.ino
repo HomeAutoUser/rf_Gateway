@@ -846,90 +846,122 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
       } else {
 
-        if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n> & tos<n> */
+        if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n><m> & tos<mm><nnn> */
           if (ChipFound == false) {
             NO_Chip();
           } else {
-            if (buf_input[2] == 's') { /* command tos<n> - toggletime | allowed length 1 - 9 (max 12 completely serial) */
-              uint32_t IntTime = input.substring(3).toInt();
-              if (isNumeric(input.substring(3))) { // command tos<n> OK
-                if (IntTime < ToggleTimeMin || IntTime > ToggleTimeMax) { // time < ToggleTimeMax || time > ToggleTimeMax
-                  MSG_BUILD(F("Toggle STOPPED, time not in range [min ")); MSG_BUILD(ToggleTimeMin);
-                  MSG_BUILD(F(", max ")); MSG_BUILD(ToggleTimeMax); MSG_BUILD(" seconds]\n");
-                  ToggleCnt = 0;
-                } else { /* command tos<n>  ToggleTime OK */
-                  ToggleCnt = 0;                                 // sonst evtl. CC110x switched to mode 66, ⸮=
-                  for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
-                    ToggleCnt += ToggleArray[modeNr];
-                    ToggleTimeMode[modeNr] = IntTime;
-                    EEPROM.write(EEPROM_ADDR_ToggleTime + modeNr, IntTime);
-                  }
+            if (buf_input[2] == 's') { // command tos<mm><nnn> - toggletime
+              if (isNumeric(input.substring(3)) && input.length() < 9) { // command tos<mm><nnn> (00-99,0-999) OK
+                uint8_t modeNr = input.substring(3, 5).toInt();
+                uint16_t intTime = input.substring(5).toInt();
+                if (modeNr >= NUMBER_OF_MODES) { // command tos<mm><nnn> mode NOT OK
+#ifdef debug
+                  MSG_BUILD(F("[DB] Input, Toggle mode not available [0-")); MSG_BUILD(NUMBER_OF_MODES - 1); MSG_BUILD_LF(F("]\n"));
+#endif
+                } else if (intTime < TOGGLE_TIME_MIN || intTime > TOGGLE_TIME_MAX) { // command tos<mm><nnn> time NOT OK
+#ifdef debug
+                  MSG_BUILD(F("[DB] Input, Toggle time not in range [")); MSG_BUILD(TOGGLE_TIME_MIN);
+                  MSG_BUILD('-'); MSG_BUILD(TOGGLE_TIME_MAX); MSG_BUILD(F(" seconds]\n"));
+#endif
+                } else { // command tos<mm><nnn> OK
+#ifdef debug
+                  MSG_BUILD(F("[DB] Input, Toggle time mode ")); MSG_BUILD(modeNr);
+                  MSG_BUILD(F(" set to ")); MSG_BUILD(intTime); MSG_BUILD(F(" seconds\n"));
+#endif
+                  ToggleTimeMode[modeNr] = intTime; // set toggle time
+                  EEPROM.write(EEPROM_ADDR_ToggleTime + modeNr, intTime); // save toggle time
 #ifdef CODE_ESP
                   EEPROM.commit();
 #endif
+                  ToggleCnt = 0;
+                  for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+                    ToggleCnt += ToggleArray[modeNr];
+                  }
                   if (ToggleCnt == 0) {
-                    MSG_BUILD_LF(F("Toggle time set, but no mode active"));
+#ifdef debug
+                    MSG_BUILD_LF(F("[DB] Input, Toggle time set, but no mode active"));
+#endif
                   } else if (ToggleCnt == 1) {
-                    MSG_BUILD_LF(F("Toggle time set, but only one mode active"));
+#ifdef debug
+                    MSG_BUILD_LF(F("[DB] Input, Toggle time set, but only one mode active"));
+#endif
                   } else {
-                    MSG_BUILD(F("Toggle starts, changing every ")); MSG_BUILD(IntTime); MSG_BUILD(F(" seconds\n"));
+#ifdef debug
+                    MSG_BUILD(F("[DB] Input, Toggle starts, ")); MSG_BUILD(ToggleCnt); MSG_BUILD(F(" modes active\n"));
+#endif
                   }
                 }
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
+              } else { // command tos<mm><nnn> (00-99, 0-999) NOT OK
+#ifdef debug
+                MSG_BUILD(F("[DB] Input, Toggle command incorrect, must be tos<mm><nnn> (mm=00-99,nnn=0-255)\n"));
 #endif
               }
-            } else if (buf_input[2] == 'b') { /* command tob */
-              if (input.substring(3, 4).toInt() <= 1) { /* command tob<0|1><nr> */
-#ifdef debug
-                MSG_BUILD(F("[DB] Input | cmd tob ")); MSG_BUILD(input.substring(3)); MSG_BUILD(F(" accepted\n"));
 #ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
+              MSG_OUTPUT(tmp);
 #endif
+
+            } else if (buf_input[2] == 'b') { // command tob 88, tob99 or tob<0|1><nr>
+              if (isNumeric(input.substring(3))) { // check command tob<0|1><nr> or tob99 or tob88
+#ifdef debug
+                tmp = "";
+                MSG_BUILD(F("[DB] Input, cmd tob ")); MSG_BUILD(input.substring(3)); MSG_BUILD(F(" accepted\n"));
 #endif  // END - debug
-                if (isNumeric(input.substring(4)) == 1) {
-                  if (input.substring(4).toInt() < RegistersMaxCnt) { /* command tob<n><m> -> set togglemode <m> to <n> (n=0 disable, n=1 enable)*/
-                    ToggleArray[input.substring(4).toInt()] = input.substring(3, 4).toInt();
-                    EEPROMwrite(input.substring(4).toInt() + EEPROM_ADDR_ToggleMode, input.substring(3, 4).toInt());
-                    MSG_BUILD(F("ToggleBank mode ")); MSG_BUILD(Registers[input.substring(4).toInt()].name);
-                    MSG_BUILD(F(" set to ")); MSG_BUILD(input.substring(3, 4)); MSG_BUILD(F("\n"));
-                  } else if (input.substring(4).toInt() >= RegistersMaxCnt) {
-                    MSG_BUILD(F("Mode number greater RegistersMaxCnt [")); MSG_BUILD(RegistersMaxCnt - 1); MSG_BUILD(F("]\n"));
+                if (buf_input[3] == '8' && buf_input[4] == '8') {        // command tob88 -> scan all modes
+#ifdef debug
+                  MSG_BUILD(F("[DB] Input, scan mode active (mode changes every 60 seconds\n"));
+#endif  // END - debug
+                  for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+                    ToggleArray[modeNr] = 1;       // enable mode
+                    ToggleTimeMode[modeNr] = 60;   // set toggle time to 60 seconds
                   }
-#ifdef CODE_ESP
-                  MSG_OUTPUT(tmp);
-#endif
-                }
-              } else if (buf_input[3] == '9' && buf_input[4] == '9' && !buf_input[5]) { /* command tob99 -> reset togglebank */
+                  ToggleCnt = NUMBER_OF_MODES - 1; // enable toggle
+                  ReceiveModeNr = NUMBER_OF_MODES - 1;
+                } else if (buf_input[3] == '9' && buf_input[4] == '9') { // command tob99 -> reset togglebank
 #ifdef debug
-                MSG_BUILD(F("[DB] Input, toggleBank reset and STOP Toggle\n"));
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
-#endif
+                  MSG_BUILD(F("[DB] Input, toggleBank reset and STOP Toggle\n"));
 #endif  // END - debug
-                for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-                  ToggleArray[i] = 0; // disable mode
-                }
-                ToggleCnt = 0; // stop toggle
-              } else if (buf_input[3] == '8' && buf_input[4] == '8' && !buf_input[5]) { /* command tob88 -> scan all modes */
+                  for (byte i = 0; i < NUMBER_OF_MODES; i++) {
+                    ToggleArray[i] = 0; // disable mode
+                  }
+                  ToggleCnt = 0; // stop toggle
+                } else {                                                 // command tob<0|1><nr> -> enable/disable toggle mode
+                  uint8_t enable = input.substring(3, 4).toInt();
+                  if (enable > 1) { // command tob<0|1><nr> enable|disable NOT OK
 #ifdef debug
-                MSG_BUILD(F("[DB] Input, scan mode active (mode changes every 60 seconds, STOP with 'tos0')\n"));
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
+                    MSG_BUILD(F("[DB] Input, first digit after tob incorrect, must be 0 or 1")); MSG_BUILD(F("\n"));
 #endif
-#endif  // END - debug
-                for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
-                  ToggleArray[modeNr] = 1;       // enable mode
-                  ToggleTimeMode[modeNr] = 60;   // set toggle time to 60 seconds
+                  } else if (input.substring(4).toInt() >= RegistersMaxCnt) { // command tob<0|1><nr> mode NOT OK
+#ifdef debug
+                    MSG_BUILD(F("[DB] Input, Mode number greater RegistersMaxCnt [")); MSG_BUILD(RegistersMaxCnt - 1); MSG_BUILD(F("]\n"));
+#endif
+                  } else { // command tob<0|1><nr> enable|disable and mode OK
+                    ReceiveModeNr = input.substring(4).toInt();
+                    ToggleArray[ReceiveModeNr] = enable; // set mode enable/disable
+                    EEPROMwrite(ReceiveModeNr + EEPROM_ADDR_ToggleMode, enable);
+                    ToggleCnt = 0;
+                    for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+                      ToggleCnt += ToggleArray[modeNr];
+                    }
+#ifdef debug
+                    MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(Registers[ReceiveModeNr].name);
+                    MSG_BUILD(F(" set to ")); MSG_BUILD(enable); MSG_BUILD(F("\n"));
+#endif
+                  }
                 }
-                ToggleCnt = NUMBER_OF_MODES - 1; // enable toggle
-                ReceiveModeNr = NUMBER_OF_MODES - 1;
+              } else { // command tob<m><nn> (00-99, 0-999) or tob88 or tob NOT OK
+#ifdef debug
+                MSG_BUILD(F("[DB] Input, Command tob incorrect, must be tob<m><nn> (m=0|1 n=0-99), tob88 or tob99\n"));
+#endif
               }
             }
+#ifdef CODE_ESP
+            MSG_OUTPUT(tmp);
+#endif
           }
         }
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
+
 #ifdef CC110x // TODO SX1231
     case 'x': /* command x - write patable*/
       if (ChipFound == false) {
@@ -1149,15 +1181,19 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         MSG_BUILD_LF(F("available register modes:"));
         for (uint8_t i = 0; i < RegistersMaxCnt; i++) {
           if (i < 10) {
-            MSG_BUILD(' ');
+            MSG_BUILD('0');
           }
           MSG_BUILD(i);
           MSG_BUILD(F(" - "));
           MSG_BUILD(Registers[i].name);
           MSG_BUILD(F(" ("));
           MSG_BUILD(ToggleArray[i] == 1 ? F("enabled") : F("disabled"));
-          MSG_BUILD(F(", msg count "));
-          MSG_BUILD(msgCountMode[i]);
+          if (ToggleArray[i]) {
+            MSG_BUILD(F(", msg count "));
+            MSG_BUILD(msgCountMode[i]);
+            MSG_BUILD(F(", scan time "));
+            MSG_BUILD(ToggleTimeMode[i]);
+          }
           MSG_BUILD_LF(')');
         }
 #ifdef CODE_ESP

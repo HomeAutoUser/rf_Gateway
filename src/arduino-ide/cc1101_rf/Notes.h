@@ -47,6 +47,9 @@
   - cc1101_rf_v206pre_240221_ToggleModes
   Der Sketch verwendet 21462 Bytes (69%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 710 Bytes (34%) des dynamischen Speichers, 1338 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v206pre_240224 - command tos and tob
+  Der Sketch verwendet 20950 Bytes (68%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -83,6 +86,20 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 421168 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     421168   code in flash
+  - cc1101_rf_v207pre_240224_Cmd-tos
+  . Variables and constants in RAM (global, static), used 38576 / 80192 bytes (48%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1628     initialized variables
+  ╠══ RODATA   4356     constants
+  ╚══ BSS      32592    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61015 / 65536 bytes (93%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     28247    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 415516 / 1048576 bytes (39%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     415516   code in flash
+
 
   - ESP32 OHNE debug´s (alle Protokolle)
   // ... to 240130 - cc110x
@@ -106,6 +123,9 @@
   Globale Variablen verwenden 51668 Bytes (15%) des dynamischen Speichers, 276012 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
   - 240220 - cc1101_rf_v206pre_240220_ToggleModes
   Der Sketch verwendet 950605 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 51764 Bytes (15%) des dynamischen Speichers, 275916 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  - cc1101_rf_v207pre_240224_Cmd-tos
+  Der Sketch verwendet 949989 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 51764 Bytes (15%) des dynamischen Speichers, 275916 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!

@@ -4,6 +4,7 @@ var color1 = value.getPropertyValue('--bt_reception_active');
 var color2 = value.getPropertyValue('--bt_reception_enable');
 var status_html = false;
 var onlyOne = false;
+var changed = 0;
 
 var js = document.createElement("script");
 js.src = '/js/all.js';
@@ -17,16 +18,21 @@ function onMessage(event) {
   check();
  } else if (event.data.includes('MODE,') ) {
   const obj=event.data.split(',');
-  for (var c = 3; c < obj.length; c++) { // msg count
+  const time=obj[3].split('_');
+  const msgcnt=obj[4].split('_');
+  for (var c = 0; c < time.length; c++) { // msg count
    var id = 'c';
-   id += c - 3;
-   document.getElementById(id).innerHTML = obj[c];
+   id += c;
+   var name = 't';
+   name += c;
+   document.getElementById(id).innerHTML = msgcnt[c];
+   if(changed == 0){
+    document.getElementsByName(name)[0].value = time[c];
+   };
+
    if (!onlyOne){
-    var name = 't';
-    name += c - 3;
-    let element = document.getElementsByName(name)[0];
-    element.onkeypress = validNumber;
-    element.placeholder = element.value;
+    document.getElementsByName(name)[0].onkeypress = validNumber;
+    document.getElementsByName(name)[0].placeholder = document.getElementsByName(name)[0].value;
    }
   }
   if (!onlyOne){
@@ -67,3 +73,9 @@ function validNumber(e) {
  const pattern = /^[0-9]$/;
  return pattern.test(e.key)
 }
+
+document.addEventListener('focusin', function(event) {
+  if (document.activeElement.tagName == "INPUT" && document.activeElement.type == "number") {
+    changed++;
+  }
+});

@@ -242,8 +242,11 @@ void web_modes() { // ########## modes ##########
     website += modeNr;
     website += F("\" type=\"number\" value=\"");
     website += ToggleTimeMode[modeNr];
-    website += F("\" min=\"0\" max=\"255\"></td>");
-    website += F("<td class=\"ar"); // Spalte 4 - msg count
+    website += F("\" min=\"");
+    website += TOGGLE_TIME_MIN;
+    website += F("\" max=\"");
+    website += TOGGLE_TIME_MAX;
+    website += F("\"></td><td class=\"ar"); // Spalte 4 - msg count
     website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
     website += F("\" colspan=\"1\"><span id=\"c"); // msg count
     website += modeNr;
@@ -254,8 +257,11 @@ void web_modes() { // ########## modes ##########
   website += web_status; // Spalte 1
   website += F("<td class=\"ac\">select <input class=\"btn1\" name=\"s\" type=\"submit\" value=\"all\">" // Spalte 2
                "<input class=\"btn1\" name=\"s\" type=\"submit\" value=\"none\"></td>"
-               "<td class=\"ac\">all times&nbsp;<input name=\"ta\" type=\"number\" value=\"60\" min=\"0\" max=\"255\">" // Spalte 3
-               "<input class=\"btn1\" name=\"s\" type=\"submit\" value=\"set\"></td>"
+               "<td class=\"ac\">all times&nbsp;<input name=\"ta\" type=\"number\" value=\"60\" min=\"");
+  website += TOGGLE_TIME_MIN;
+  website += F("\" max=\"");
+  website += TOGGLE_TIME_MAX;
+  website += F("\"> <input class=\"btn1\" name=\"s\" type=\"submit\" value=\"set\"></td>"  // Spalte 3
                "<td class=\"ac\"><input class=\"btn\" type=\"submit\" name=\"s\" value=\"START\"></td>" // Spalte 4
                "</tr></table></form></body></html>");
   sendHtml(website);
@@ -1212,9 +1218,19 @@ void WebSocket_modes() {
     website += ReceiveModeName;
     website += ',';
     website += ReceiveModeNr;
+    website += ',';
     for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
-      website += ',';
+      website += ToggleTimeMode[c];
+      if (c < RegistersMaxCnt - 1) {
+        website += '_';
+      }
+    }
+    website += ',';
+    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += msgCountMode[c];
+      if (c < RegistersMaxCnt - 1) {
+        website += '_';
+      }
     }
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/modes" || webSocketSite[num] == F("/raw")) {

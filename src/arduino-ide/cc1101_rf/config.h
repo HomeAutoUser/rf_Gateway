@@ -21,8 +21,8 @@
 
 //#define COUNT_LOOP        1     // loop-benchmark (höher=besser, ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
 
-#define FWVer             "V 2.0.7pre"
-#define FWVerDate         "2024-02-22"
+#define FWVer             "V 2.0.8pre"
+#define FWVerDate         "2024-02-27"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -82,8 +82,8 @@
 
 
 /* Definitions for flexible cc1101 configuration */
-#define ToggleTimeMin   1     // seconds
-#define ToggleTimeMax   255   // seconds
+#define TOGGLE_TIME_MIN   1     // seconds
+#define TOGGLE_TIME_MAX   255   // seconds
 
 /* Selection of available registers to compile into firmware
     Note: Please comment in or out to select !!!
