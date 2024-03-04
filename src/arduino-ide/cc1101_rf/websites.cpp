@@ -223,7 +223,7 @@ void web_modes() { // ########## modes ##########
     website += F("<tr><td"); // Spalte 1 - available modes
     website += ReceiveModeNr == modeNr ? F(" class=\"bggn\">") : F(">"); // background color light green
     if (modeNr <= 9) {
-      website += F("&nbsp;");
+      website += F("0");
     }
     website += modeNr;
     website += F(" - ");
@@ -638,7 +638,7 @@ void web_detail() {
                "<td class=\"ce\"><input aria-label=\"datra\" size=\"6\" id=\"p4\" name=\"datarate\" value=\"\">"
                "<div class=\"txt\">&ensp;kBaud</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdatarate\">set</button></td></tr>"
                // Deviation
-               "<tr><td colspan=\"2\">Deviation</td><td class=\"ce\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
+               "<tr><td colspan=\"2\">Deviation (no influence on RX)</td><td class=\"ce\" colspan=\"2\"><span id=\"DEVIATN\"></span></td>"
                "<td class=\"ce\"><input aria-label=\"devi\" size=\"6\" id=\"p5\" name=\"deviation\" value=\"\">"
                "<div class=\"txt\">&ensp;kHz</div></td><td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bdev\">set</button></td></tr>"
                // Modulation
@@ -1219,16 +1219,20 @@ void WebSocket_modes() {
     website += ',';
     website += ReceiveModeNr;
     website += ',';
-    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
+    for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
+//    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += ToggleTimeMode[c];
-      if (c < RegistersMaxCnt - 1) {
+      if (c < NUMBER_OF_MODES - 1) {
+//      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }
     website += ',';
-    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
+    for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
+//    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += msgCountMode[c];
-      if (c < RegistersMaxCnt - 1) {
+      if (c < NUMBER_OF_MODES - 1) {
+//      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }

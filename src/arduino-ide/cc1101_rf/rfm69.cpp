@@ -28,6 +28,9 @@ struct Data Registers[] = {
 #ifdef Lacrosse_mode2
   { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
 #endif
+#ifdef WMBus_C
+  { Config_WMBus_C,  sizeof(Config_WMBus_C) / sizeof(Config_WMBus_C[0]), "WMBus_C", 26   },
+#endif
 };
 
 uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array

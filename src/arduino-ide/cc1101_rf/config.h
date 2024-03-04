@@ -18,11 +18,13 @@
 //#define debug_telnet      1     // to debug telnet
 //#define debug_websocket   1     // to debug websocket handling
 //#define debug_wifi        1     // to debug wifi
+//#define debug_mbus        1     // to debug mbus
 
-//#define COUNT_LOOP        1     // loop-benchmark (höher=besser, ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
+//#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
+//                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?)
 
-#define FWVer             "V 2.0.8pre"
-#define FWVerDate         "2024-02-27"
+#define FWVer             "V 2.1.0pre"
+#define FWVerDate         "2024-03-04"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -107,11 +109,15 @@
 #define X_Sense                 1
 
 /* under development */
-//#define HomeMatic               1
-//#define Lacrosse_mode3          1
-//#define MAX                     1
-//#define WMBus_S                 1
-//#define WMBus_T                 1
+//#define HomeMatic               1   // only CC110x inside
+//#define Lacrosse_mode3          1   // only CC110x inside
+//#define MAX                     1   // only CC110x inside
+//#define WMBus_C                 1   // only RFM69 inside
+//#define WMBus_LINK_B            1   // only CC110x inside
+#ifdef CC110x
+#define WMBus_S                 1   // only CC110x inside
+#define WMBus_T                 1   // only CC110x inside
+#endif
 
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients

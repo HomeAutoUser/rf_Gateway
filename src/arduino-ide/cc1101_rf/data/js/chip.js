@@ -1,26 +1,21 @@
 ﻿var js = document.createElement("script");
 js.src = '/js/all.js';
 document.head.appendChild(js);
+const ts = document.title;
 
 function onMessage(event) {
  console.log('received message: ' + event.data);
-
  if(event.data == 'Connected') {
   websocket.send('chip');
- }
-
- if(event.data.includes(',{') && event.data.includes('},')) {
-  const ts = document.title;
+ }else{
   const obj=event.data.split(',');
-
   if(ts == 'cc1101_rf_Gateway') {
    document.getElementById("MS").innerHTML = MARCSTATE[obj[1]];
   } else if (ts == 'rfm69_rf_Gateway') {
    document.getElementById("MS").innerHTML = RegOpMode[obj[1]];
   }
-
   document.getElementById("MODE").innerHTML = obj[0];
-  document.getElementById("ToggleBank").innerHTML = obj[2].replace(/\s/g, '&emsp;');
+  document.getElementById("ToggleBank").innerHTML = obj[2];
   document.getElementById("Time").innerHTML = obj[3];
  }
 }

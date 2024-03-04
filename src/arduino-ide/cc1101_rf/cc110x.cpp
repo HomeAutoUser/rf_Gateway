@@ -76,8 +76,17 @@ struct Data Registers[] = {
 #ifdef Rojaflex
   { Config_Rojaflex,  sizeof(Config_Rojaflex) / sizeof(Config_Rojaflex[0]), "Rojaflex", 12  },
 #endif
+#ifdef WMBus_S
+  { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "WMBus_S", 32  },
+#endif
+#ifdef WMBus_T
+  { Config_WMBus_T,  sizeof(Config_WMBus_T) / sizeof(Config_WMBus_T[0]), "WMBus_T", 32  },
+#endif
 #ifdef X_Sense
   { Config_X_Sense,  sizeof(Config_X_Sense) / sizeof(Config_X_Sense[0]), "X_Sense", 6  },
+#endif
+#ifdef WMBus_LINK_B
+  { WMBUS_Link_B,  sizeof(WMBUS_Link_B) / sizeof(WMBUS_Link_B[0]), "WMBUS_Link_B", 32 },
 #endif
 
   /* under development */
@@ -89,12 +98,6 @@ struct Data Registers[] = {
 #endif
 #ifdef MAX
   { Config_MAX,  sizeof(Config_MAX) / sizeof(Config_MAX[0]), "under dev - MAX", 12  },
-#endif
-#ifdef WMBus_S
-  { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "under dev - WMBus_S", 12  },
-#endif
-#ifdef WMBus_T
-  { Config_WMBus_T,  sizeof(Config_WMBus_T) / sizeof(Config_WMBus_T[0]), "under dev - WMBus_T", 12  },
 #endif
   /* under development END */
 };
@@ -210,7 +213,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
       if (ToggleCnt > 0) { // normaler Start
         Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
       }
-      
+
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
@@ -336,6 +339,16 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     }
   }
   ReceiveModeName = reg_modus;
+  if (reg_modus.startsWith("W")) { // WMBUS
+    if (reg_modus.endsWith("S")) { // WMBUS_S
+      Serial.println(reg_modus);
+      mbus_init(11);
+    }
+    if (reg_modus.endsWith("T")) { // WMBUS_T
+      Serial.println(reg_modus);
+      mbus_init(12);
+    }
+  }
 }
 
 
@@ -406,6 +419,45 @@ uint8_t CC110x_CmdStrobe(byte cmd) {
   return ret;                       // Chip Status Byte
 }
 
+uint8_t CC110x_cmdStrobeTo(const uint8_t cmd) {            // wait MISO and send command strobe to the CC1101 IC via SPI
+  ChipSelect();                     // Select CC110x
+  if (waitTo_Miso() == 0) {                       // wait with timeout until MISO goes low
+    return false;          // timeout
+  }
+  SPI.transfer(cmd);                     // send strobe command
+  //wait_Miso();                                  // wait until MISO goes low
+  ChipDeselect();                   // Deselect CC110x
+  return true;
+}
+
+uint8_t waitTo_Miso() { // wait with timeout until MISO goes low
+  uint8_t i = 255;
+  while (digitalRead(MISO) > 0) { // Wait until SPI MISO line goes low
+    delayMicroseconds(10);
+    i--;
+    if (i == 0) { // timeout
+      ChipDeselect();                   // Deselect CC110x
+      break;
+    }
+  }
+  return i;
+}
+
+void CC110x_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi) {  // WMBus
+  ChipSelect();                     // Select CC110x
+  SPI.transfer(CHIP_RXFIFO | READ_BURST);    // send register address
+  for (uint8_t i = 0; i < length; i++)
+    data[i] = SPI.transfer(0);        // read result
+
+  // Optionally, two status bytes (see Table 27 and Table 28) with RSSI value, Link Quality Indication, and CRC status can be appended in the RX FIFO.
+  if (rssi) {
+    *rssi = SPI.transfer(0);
+    if (lqi) {
+      *lqi =  SPI.transfer(0);
+    }
+  }
+  ChipDeselect();                   // Deselect CC110x
+}
 
 void Chip_readBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   /* Read burst data from CC110x via SPI

@@ -5,6 +5,7 @@ var color2 = value.getPropertyValue('--bt_reception_enable');
 var status_html = false;
 var onlyOne = false;
 var changed = 0;
+var wsMsg = 0;
 
 var js = document.createElement("script");
 js.src = '/js/all.js';
@@ -20,6 +21,7 @@ function onMessage(event) {
   const obj=event.data.split(',');
   const time=obj[3].split('_');
   const msgcnt=obj[4].split('_');
+	wsMsg++;
   for (var c = 0; c < time.length; c++) { // msg count
    var id = 'c';
    id += c;
@@ -58,8 +60,10 @@ function onMessage(event) {
     cell[i].style.backgroundColor = color2;
    }
   }
-  var today = new Date();
-  document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');
+  if (document.getElementById('stat') && wsMsg > 1) {
+    var today = new Date();
+    document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');
+  }
  }
 }
 

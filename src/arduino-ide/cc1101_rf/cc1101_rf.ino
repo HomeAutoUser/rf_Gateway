@@ -10,6 +10,7 @@
 int RSSI_dez;                                 // for the output on web server
 #ifdef CC110x
 #include "cc110x.h"
+#include "mbus.h"
 #elif RFM69
 #include "rfm69.h"
 #endif
@@ -103,7 +104,7 @@ float freqErrAvg = 0;                         // CC110x automatic Frequency Synt
 uint8_t freqAfc = 0;                          // CC110x AFC an oder aus
 float Freq_offset = 0;                        // Frequency offset
 String ReceiveModeName;                       // name of active mode from array
-uint32_t msgCount = 0;                        // Nachrichtenzähler über alle empfangenen Nachrichten
+uint32_t msgCount;                            // Nachrichtenzähler über alle empfangenen Nachrichten
 uint32_t msgCountMode[NUMBER_OF_MODES];       // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
 unsigned long secTick = 0;                    // Zeit, zu der die Uhr zuletzt „tickte“
@@ -235,10 +236,14 @@ void Interupt_Variant(byte nr) {
 
 #ifdef CC110x
   MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-  if (MOD_FORMAT != 3) {
-    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+  if (Registers[ReceiveModeNr].name[0] == 'W') { // WMBUS
+    FSK_RAW = 2;
   } else {
-    attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+    if (MOD_FORMAT != 3) {
+      attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+    } else {
+      attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+    }
   }
 #endif
   Chip_setReceiveMode();  // start receive mode
@@ -259,8 +264,9 @@ void setup() {
     ; /* wait for serial port to connect. Needed for native USB */
   }
 #ifdef CC110x
-  pinMode(GDO0, OUTPUT);
-  digitalWriteFast(GDO0, LOW);
+  pinMode(GDO0, INPUT); // for WMBUS
+  //  pinMode(GDO0, OUTPUT);
+  //  digitalWriteFast(GDO0, LOW);
   pinMode(GDO2, INPUT);
 #endif
   pinMode(LED, OUTPUT);
@@ -469,6 +475,7 @@ void loop() {
   /* https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#timing-and-delays
      delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
   delay(1);
+  //yield;
 
   ArduinoOTA.handle();        // OTA Updates
   Telnet();                   // Telnet Input´s
@@ -480,8 +487,8 @@ void loop() {
     secTick += 1000UL;
     uptime++;
 #ifdef COUNT_LOOP
-    MSG_OUTPUTALLLN(countLoop);
-    //Serial.println(countLoop);
+    //MSG_OUTPUTALLLN(countLoop); // conversion from 'uint32_t' {aka 'unsigned int'} to 'String' is ambiguous
+    Serial.println(countLoop);
     countLoop = 0;
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -529,6 +536,14 @@ void loop() {
 
 #ifdef RFM69
   FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+#endif
+
+#ifdef CC110x // TODO only CC110x
+  if (FSK_RAW == 2) { // WMBUS
+    //Serial.println(F("WMBUS"));
+    //FSK_RAW = 0;
+    mbus_task(0);
+  }
 #endif
 
   /* not OOK */

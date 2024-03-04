@@ -4,14 +4,16 @@
 #ifdef CC110x
 
 #include <Arduino.h>
-#include <digitalWriteFast.h>           // https://github.com/ArminJo/digitalWriteFast
+#include <digitalWriteFast.h>   // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES  17  // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  19  // Anzahl Datensätze in struct Data
 #else
 #define NUMBER_OF_MODES  6  // Anzahl Datensätze in struct Data
 #endif
+
+#include "mbus.h"           // benötigt NUMBER_OF_MODES
 
 static const char RECEIVE_MODE_USER[] PROGMEM = "CC110x user configuration";
 const uint8_t CC110x_PATABLE_433[8] PROGMEM = {0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
@@ -21,6 +23,9 @@ const int8_t CC110x_PATABLE_POW[8] PROGMEM = {10, 7, 5, 0, -10, -15, -20, -30};
 int Chip_readRSSI();
 uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);
 uint8_t CC110x_CmdStrobe(uint8_t cmd);
+uint8_t CC110x_cmdStrobeTo(const uint8_t cmd); // wait MISO and send command strobe to the CC1101 IC via SPI
+uint8_t waitTo_Miso(); // wait with timeout until MISO goes low
+void CC110x_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi); // WMBus
 void ChipInit();
 void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
 void Chip_writeReg(uint8_t regAddr, uint8_t value);
@@ -259,11 +264,6 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0x00,  // CHANNR              Channel Number
   0x06,  // FSCTRL1             Frequency Synthesizer Control
   0x00,  // FSCTRL0             Frequency Synthesizer Control
-  /*
-    0x21,  // FREQ2               Frequency Control Word, High Byte (868.350 MHz)
-    0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.350 MHz)
-    0xE8,  // FREQ0               Frequency Control Word, Low Byte (868.350 MHz)
-  */
   0x21,  // FREQ2               Frequency Control Word, High Byte (868.300 MHz)
   0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.300 MHz)
   0x6A,  // FREQ0               Frequency Control Word, Low Byte (868.300 MHz)
@@ -341,11 +341,6 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0x00,  // CHANNR              Channel Number
   0x06,  // FSCTRL1             Frequency Synthesizer Control
   0x00,  // FSCTRL0             Frequency Synthesizer Control
-  /*
-    0x21,  // FREQ2               Frequency Control Word, High Byte (868.350 MHz)
-    0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.350 MHz)
-    0xE8,  // FREQ0               Frequency Control Word, Low Byte (868.350 MHz)
-  */
   0x21,  // FREQ2               Frequency Control Word, High Byte (868.300 MHz)
   0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.300 MHz)
   0x6A,  // FREQ0               Frequency Control Word, Low Byte (868.300 MHz)
@@ -423,11 +418,6 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x00,  // CHANNR              Channel Number
   0x06,  // FSCTRL1             Frequency Synthesizer Control
   0x00,  // FSCTRL0             Frequency Synthesizer Control
-  /*
-    0x21,  // FREQ2               Frequency Control Word, High Byte (868.350 MHz)
-    0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.350 MHz)
-    0xE8,  // FREQ0               Frequency Control Word, Low Byte (868.350 MHz)
-  */
   0x21,  // FREQ2               Frequency Control Word, High Byte (868.300 MHz)
   0x65,  // FREQ1               Frequency Control Word, Middle Byte (868.300 MHz)
   0x6A,  // FREQ0               Frequency Control Word, Low Byte (868.300 MHz)
@@ -1499,9 +1489,9 @@ const uint8_t Config_Lacrosse_mode3[] PROGMEM = {
     Whitening = false
   */
 
-  0x01,  // IOCFG2              GDO2 Output Pin Configuration
-  0x2E,  // IOCFG1              GDO1 Output Pin Configuration
-  0x2E,  // IOCFG0              GDO0 Output Pin Configuration
+  0x01,  // IOCFG2              GDO2 Output Pin Configuration - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold or the end of packet is reached. De-asserts when the RX FIFO is empty.
+  0x2E,  // IOCFG1              GDO1 Output Pin Configuration - High impedance (3-state)
+  0x2E,  // IOCFG0              GDO0 Output Pin Configuration - High impedance (3-state)
   0x41,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
   0x2D,  // SYNC1               Sync Word, High Byte
   0xD4,  // SYNC0               Sync Word, Low Byte
@@ -1650,54 +1640,57 @@ const uint8_t Config_WMBus_S[] PROGMEM = {
     Sync Word Qualifier Mode = 16/16 + carrier-sense above threshold
     TX Power = 0
     Whitening = false
+    "WMBus_S__N11_ab_firmware_V422"  => 'CW0006,0200,0307,0476,0596,06FF,0704,0800,0B08,0D21,0E65,0F6A,106A,114A,1206,1322,14F8,1547,1700,1818,192E,1A6D,1B04,1C09,1DB2,21B6,23EA,242A,2500,261F,3AA6,3D0B,3E08,4057,414D,4242,4375,4473,4553,4600',
   */
-  0x06,  // IOCFG2        GDO2 Output Pin Configuration
-  0x2E,  // IOCFG1        GDO1 Output Pin Configuration
-  0x00,  // IOCFG0        GDO0 Output Pin Configuration
-  0x40,  // FIFOTHR       RX FIFO and TX FIFO Thresholds
-  0x76,  // SYNC1         Sync Word, High Byte
-  0x96,  // SYNC0         Sync Word, Low Byte
-  0xFF,  // PKTLEN        Packet Length
-  0x04,  // PKTCTRL1      Packet Automation Control
-  0x02,  // PKTCTRL0      Packet Automation Control
-  0x00,  // ADDR          Device Address
-  0x00,  // CHANNR        Channel Number
-  0x08,  // FSCTRL1       Frequency Synthesizer Control
-  0x00,  // FSCTRL0       Frequency Synthesizer Control
-  0x21,  // FREQ2         Frequency Control Word, High Byte
-  0x65,  // FREQ1         Frequency Control Word, Middle Byte
-  0x6A,  // FREQ0         Frequency Control Word, Low Byte
-  0x6A,  // MDMCFG4       Modem Configuration
-  0x4A,  // MDMCFG3       Modem Configuration
-  0x06,  // MDMCFG2       Modem Configuration
-  0x22,  // MDMCFG1       Modem Configuration
-  0xF8,  // MDMCFG0       Modem Configuration
-  0x47,  // DEVIATN       Modem Deviation Setting
-  0x07,  // MCSM2         Main Radio Control State Machine Configuration
-  0x00,  // MCSM1         Main Radio Control State Machine Configuration
-  0x18,  // MCSM0         Main Radio Control State Machine Configuration
-  0x2E,  // FOCCFG        Frequency Offset Compensation Configuration
-  0x6D,  // BSCFG         Bit Synchronization Configuration
-  0x04,  // AGCCTRL2      AGC Control
-  0x09,  // AGCCTRL1      AGC Control
-  0xB2,  // AGCCTRL0      AGC Control
-  0x87,  // WOREVT1       High Byte Event0 Timeout
-  0x6B,  // WOREVT0       Low Byte Event0 Timeout
-  0xF8,  // WORCTRL       Wake On Radio Control
-  0xB6,  // FREND1        Front End RX Configuration
-  0x10,  // FREND0        Front End TX Configuration
-  0xEA,  // FSCAL3        Frequency Synthesizer Calibration (x)
-  0x2A,  // FSCAL2        Frequency Synthesizer Calibration (x)
-  0x00,  // FSCAL1        Frequency Synthesizer Calibration (x)
-  0x1F,  // FSCAL0        Frequency Synthesizer Calibration (x)
-  0x41,  // RCCTRL1       RC Oscillator Configuration       (x)
-  0x00,  // RCCTRL0       RC Oscillator Configuration       (x)
-  //0x59,  // FSTEST        Frequency Synthesizer Calibration Control
-  //0x7F,  // PTEST         Production Test
-  //0x3F,  // AGCTEST       AGC Test
-  //0x81,  // TEST2         Various Test Settings
-  //0x35,  // TEST1         Various Test Settings
-  //0x09,  // TEST0         Various Test Settings
+  0x06,  // 0x00 IOCFG2   GDO2 Output Pin Configuration - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+  0x2E,  // 0x01 IOCFG1   GDO1 Output Pin Configuration - High impedance (3-state)
+  0x00,  // 0x02 IOCFG0   GDO0 Output Pin Configuration - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+  //  0x40,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 1: TEST1 = 0x35 and TEST2 = 0x81 when waking up from SLEEP, FIFO_THR[3:0] 0 = 4 Bytes in RX FIFO
+  0x07,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
+  0x76,  // 0x04 SYNC1    Sync Word, High Byte
+  0x96,  // 0x05 SYNC0    Sync Word, Low Byte
+  0xFF,  // 0x06 PKTLEN   Packet Length
+  0x04,  // 0x07 PKTCTRL1 Packet Automation Control - APPEND_STATUS When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.
+  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
+  0x00,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Fixed packet length mode. Length configured in PKTLEN register
+  0x00,  // 0x09 ADDR     Device Address
+  0x00,  // 0x0A CHANNR   Channel Number
+  0x08,  // 0x0B FSCTRL1  Frequency Synthesizer Control
+  0x00,  // 0x0C FSCTRL0  Frequency Synthesizer Control
+  0x21,  // 0x0D FREQ2    Frequency Control Word, High Byte
+  0x65,  // 0x0E FREQ1    Frequency Control Word, Middle Byte
+  0x6A,  // 0x0F FREQ0    Frequency Control Word, Low Byte
+  0x6A,  // 0x10 MDMCFG4  Modem Configuration
+  0x4A,  // 0x11 MDMCFG3  Modem Configuration
+  0x06,  // 0x12 MDMCFG2  Modem Configuration
+  0x22,  // 0x13 MDMCFG1  Modem Configuration
+  0xF8,  // 0x14 MDMCFG0  Modem Configuration
+  0x47,  // 0x15 DEVIATN  Modem Deviation Setting
+  0x07,  // 0x16 MCSM2    Main Radio Control State Machine Configuration
+  0x00,  // 0x17 MCSM1    Main Radio Control State Machine Configuration
+  0x18,  // 0x18 MCSM0    Main Radio Control State Machine Configuration
+  0x2E,  // 0x19 FOCCFG   Frequency Offset Compensation Configuration
+  0x6D,  // 0x1A BSCFG    Bit Synchronization Configuration
+  0x04,  // 0x1B AGCCTRL2 AGC Control
+  0x09,  // 0x1C AGCCTRL1 AGC Control
+  0xB2,  // 0x1D AGCCTRL0 AGC Control
+  0x87,  // 0x1E WOREVT1  High Byte Event0 Timeout
+  0x6B,  // 0x1F WOREVT0  Low Byte Event0 Timeout
+  0xF8,  // 0x20 WORCTRL  Wake On Radio Control
+  0xB6,  // 0x21 FREND1   Front End RX Configuration
+  0x10,  // 0x22 FREND0   Front End TX Configuration
+  0xEA,  // 0x23 FSCAL3   Frequency Synthesizer Calibration (x)
+  0x2A,  // 0x24 FSCAL2   Frequency Synthesizer Calibration (x)
+  0x00,  // 0x25 FSCAL1   Frequency Synthesizer Calibration (x)
+  0x1F,  // 0x26 FSCAL0   Frequency Synthesizer Calibration (x)
+  0x41,  // 0x27 RCCTRL1  RC Oscillator Configuration       (x)
+  0x00,  // 0x28 RCCTRL0  RC Oscillator Configuration       (x)
+  //0x59,  // 0x29 FSTEST   Frequency Synthesizer Calibration Control
+  //0x7F,  // 0x2A PTEST    Production Test
+  //0x3F,  // 0x2B AGCTEST  AGC Test
+  //0x81,  // 0x2C TEST2    Various Test Settings
+  //0x35,  // 0x2D TEST1    Various Test Settings
+  //0x09,  // 0x2E TEST0    Various Test Settings
 };
 #endif
 
@@ -1726,54 +1719,114 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
     Sync Word Qualifier Mode = 16/16 + carrier-sense above threshold
     TX Power = 0
     Whitening = false
+    "WMBus_T_u_C__N12_ab_firmw_V422" => 'CW0006,0200,0307,0454,053D,06FF,0704,0800,0B08,0D21,0E6B,0FD0,105C,1104,1206,1322,14F8,1544,1700,1818,192E,1ABF,1B43,1C09,1DB5,21B6,23EA,242A,2500,261F,3AA6,3D0C,3E08,4057,414D,4242,4375,4473,4554,465F,4743'
   */
-  0x06,  // IOCFG2        GDO2 Output Pin Configuration
-  0x2E,  // IOCFG1        GDO1 Output Pin Configuration
-  0x00,  // IOCFG0        GDO0 Output Pin Configuration
-  0x00,  // FIFOTHR       RX FIFO and TX FIFO Thresholds
-  0x54,  // SYNC1         Sync Word, High Byte
-  0x3D,  // SYNC0         Sync Word, Low Byte
-  0xFF,  // PKTLEN        Packet Length
-  0x04,  // PKTCTRL1      Packet Automation Control
-  0x02,  // PKTCTRL0      Packet Automation Control
-  0x00,  // ADDR          Device Address
-  0x00,  // CHANNR        Channel Number
-  0x08,  // FSCTRL1       Frequency Synthesizer Control
-  0x00,  // FSCTRL0       Frequency Synthesizer Control
-  0x21,  // FREQ2         Frequency Control Word, High Byte
-  0x6B,  // FREQ1         Frequency Control Word, Middle Byte
-  0xD0,  // FREQ0         Frequency Control Word, Low Byte
-  0x5C,  // MDMCFG4       Modem Configuration
-  0x04,  // MDMCFG3       Modem Configuration
-  0x06,  // MDMCFG2       Modem Configuration
-  0x22,  // MDMCFG1       Modem Configuration
-  0xF8,  // MDMCFG0       Modem Configuration
-  0x44,  // DEVIATN       Modem Deviation Setting
-  0x07,  // MCSM2         Main Radio Control State Machine Configuration
-  0x00,  // MCSM1         Main Radio Control State Machine Configuration
-  0x18,  // MCSM0         Main Radio Control State Machine Configuration
-  0x2E,  // FOCCFG        Frequency Offset Compensation Configuration
-  0xBF,  // BSCFG         Bit Synchronization Configuration
-  0x43,  // AGCCTRL2      AGC Control
-  0x09,  // AGCCTRL1      AGC Control
-  0xB5,  // AGCCTRL0      AGC Control
-  0x87,  // WOREVT1       High Byte Event0 Timeout
-  0x6B,  // WOREVT0       Low Byte Event0 Timeout
-  0xF8,  // WORCTRL       Wake On Radio Control
-  0xB6,  // FREND1        Front End RX Configuration
-  0x10,  // FREND0        Front End TX Configuration
-  0xEA,  // FSCAL3        Frequency Synthesizer Calibration (x)
-  0x2A,  // FSCAL2        Frequency Synthesizer Calibration (x)
-  0x00,  // FSCAL1        Frequency Synthesizer Calibration (x)
-  0x1F,  // FSCAL0        Frequency Synthesizer Calibration (x)
-  0x41,  // RCCTRL1       RC Oscillator Configuration       (x)
-  0x00,  // RCCTRL0       RC Oscillator Configuration       (x)
-  //0x59,  // FSTEST        Frequency Synthesizer Calibration Control
-  //0x7F,  // PTEST         Production Test
-  //0x3F,  // AGCTEST       AGC Test
-  //0x88,  // TEST2         Various Test Settings
-  //0x31,  // TEST1         Various Test Settings
-  //0x09,  // TEST0         Various Test Settings
+  0x06,  // 0x00 IOCFG2   GDO2 Output Pin Configuration - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+  0x2E,  // 0x01 IOCFG1   GDO1 Output Pin Configuration - High impedance (3-state)
+  0x00,  // 0x02 IOCFG0   GDO0 Output Pin Configuration - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+  //  0x40,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 1: TEST1 = 0x35 and TEST2 = 0x81 when waking up from SLEEP, FIFO_THR[3:0] 0 = 4 Bytes in RX FIFO
+  0x07,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
+  0x54,  // 0x04 SYNC1         Sync Word, High Byte
+  0x3D,  // 0x05 SYNC0         Sync Word, Low Byte
+  0xFF,  // 0x06 PKTLEN        Packet Length
+  0x04,  // 0x07 PKTCTRL1 Packet Automation Control - APPEND_STATUS When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.
+  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
+  0x00,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Fixed packet length mode. Length configured in PKTLEN register
+  0x00,  // 0x09 ADDR          Device Address
+  0x00,  // 0x0A CHANNR        Channel Number
+  0x08,  // 0x0B FSCTRL1       Frequency Synthesizer Control
+  0x00,  // 0x0C FSCTRL0       Frequency Synthesizer Control
+  0x21,  // 0x0D FREQ2         Frequency Control Word, High Byte
+  0x6B,  // 0x0E FREQ1         Frequency Control Word, Middle Byte
+  0xD0,  // 0x0F FREQ0         Frequency Control Word, Low Byte
+  0x5C,  // 0x10 MDMCFG4       Modem Configuration
+  0x04,  // 0x11 MDMCFG3       Modem Configuration
+  0x06,  // 0x12 MDMCFG2       Modem Configuration
+  0x22,  // 0x13 MDMCFG1       Modem Configuration
+  0xF8,  // 0x14 MDMCFG0       Modem Configuration
+  0x44,  // 0x15 DEVIATN       Modem Deviation Setting
+  0x07,  // 0x16 MCSM2         Main Radio Control State Machine Configuration
+  0x00,  // 0x17 MCSM1         Main Radio Control State Machine Configuration
+  0x18,  // 0x18 MCSM0         Main Radio Control State Machine Configuration
+  0x2E,  // 0x19 FOCCFG        Frequency Offset Compensation Configuration
+  0xBF,  // 0x1A BSCFG         Bit Synchronization Configuration
+  0x43,  // 0x1B AGCCTRL2      AGC Control
+  0x09,  // 0x1C AGCCTRL1      AGC Control
+  0xB5,  // 0x1D AGCCTRL0      AGC Control
+  0x87,  // 0x1E WOREVT1       High Byte Event0 Timeout
+  0x6B,  // 0x1F WOREVT0       Low Byte Event0 Timeout
+  0xF8,  // 0x20 WORCTRL       Wake On Radio Control
+  0xB6,  // 0x21 FREND1        Front End RX Configuration
+  0x10,  // 0x22 FREND0        Front End TX Configuration
+  0xEA,  // 0x23 FSCAL3        Frequency Synthesizer Calibration (x)
+  0x2A,  // 0x24 FSCAL2        Frequency Synthesizer Calibration (x)
+  0x00,  // 0x25 FSCAL1        Frequency Synthesizer Calibration (x)
+  0x1F,  // 0x26 FSCAL0        Frequency Synthesizer Calibration (x)
+  0x41,  // 0x27 RCCTRL1       RC Oscillator Configuration       (x)
+  0x00,  // 0x28 RCCTRL0       RC Oscillator Configuration       (x)
+  //0x59,  // 0x29 FSTEST        Frequency Synthesizer Calibration Control
+  //0x7F,  // 0x2A PTEST         Production Test
+  //0x3F,  // 0x2B AGCTEST       AGC Test
+  //0x88,  // 0x2C TEST2         Various Test Settings
+  //0x31,  // 0x2E TEST1         Various Test Settings
+  //0x09,  // 0x2F TEST0         Various Test Settings
+};
+#endif
+
+#ifdef WMBus_LINK_B
+const uint8_t WMBUS_Link_B[] PROGMEM = {
+  // from swra234a.pdf, Appendix D, CC1101 Register Settings for Radio Link B
+  // 0x06, // IOCFG2 - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+  0x01,  // IOCFG2 - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold or the end of packet is reached. De-asserts when the RX FIFO is empty.
+  0x2E, // IOCFG1 - High impedance (3-state)
+  // 0x02, // IOCFG0 (TX) or 0x00 (RX) -
+  0x2E, // IOCFG0 - High impedance (3-state)
+  0x07, // FIFOTHR - TX 33 Bytes, RX 32 Bytes
+  0x54, // SYNC1
+  0x3D, // SYNC0
+  0xFF, // PKTLEN
+  0x04, // PKTCTRL1
+  0x00, // PKTCTRL0
+  0x00, // ADDR
+  0x00, // CHANNR
+  0x08, // FSCTRL1
+  0x00, // FSCTRL0
+  0x21, // FREQ2
+  0x6B, // FREQ1
+  0xD0, // FREQ0
+  0x5C, // MDMCFG4 (RX:103 kbaud) or 0x5B (TX:100 kbaud)
+  0x04, // MDMCFG3 (RX:103 kbaud) or 0xF8 (TX:100 kbaud)
+  // 0x05, // MDMCFG2 - Manchester disabled, 15/16 + carrier-sense above threshold
+  0x06, // MDMCFG2 - Manchester disabled, 16/16 + carrier-sense above threshold
+  // 0x07, // MDMCFG2 - Manchester disabled, 30/32 + carrier-sense above threshold - 0 Empfang
+  0x22, // MDMCFG1
+  0xF8, // MDMCFG0
+  0x44, // DEVIATN (RX: 38 kHz) or 0x50 (TX: 50 kHz)
+  0x07, // MCSM2
+  0x00, // MCSM1
+  0x18, // MCSM0
+  0x2E, // FOCCFG
+  0xBF, // BSCFG
+  0x43, // AGCCTRL2
+  0x09, // AGCCTRL1
+  0xB5, // AGCCTRL0
+  0x87, // WOREVT1
+  0x6B, // WOREVT0
+  0xFB, // WORCTRL
+  0xB6, // FREND1
+  0x10, // FREND0
+  0xEA, // FSCAL3
+  0x2A, // FSCAL2
+  0x00, // FSCAL1
+  0x1F, // FSCAL0
+  0x41, // RCCTRL1
+  0x00, // RCCTRL0
+  0x59, // FSTEST
+  0x7F, // PTEST
+  0x3F, // AGCTEST
+  0x81, // TEST2
+  0x35, // TEST1
+  0x09, // TEST0
 };
 #endif
 
@@ -1890,6 +1943,18 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 #define CC110x_RCCTRL1_STATUS    0x3C        // Last RC Oscillator Calibration Result
 #define CC110x_RCCTRL0_STATUS    0x3D        // Last RC Oscillator Calibration Result 
 
+#define MARCSTATE_SLEEP            0x00
+#define MARCSTATE_IDLE             0x01
+#define MARCSTATE_XOFF             0x02
+#define MARCSTATE_ENDCAL           0x0C
+#define MARCSTATE_RX               0x0D
+#define MARCSTATE_RX_END           0x0E
+#define MARCSTATE_RX_RST           0x0F
+#define MARCSTATE_RXFIFO_OVERFLOW  0x11
+#define MARCSTATE_TX               0x13
+#define MARCSTATE_TX_END           0x14
+#define MARCSTATE_RXTX_SWITCH      0x15
+#define MARCSTATE_TXFIFO_UNDERFLOW 0x16
 
 /** Chip States */
 #define CC110x_STATE_IDLE                      0x00
