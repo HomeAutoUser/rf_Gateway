@@ -13,7 +13,9 @@
 #define NUMBER_OF_MODES  6  // Anzahl Datensätze in struct Data
 #endif
 
+#if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"           // benötigt NUMBER_OF_MODES
+#endif
 
 static const char RECEIVE_MODE_USER[] PROGMEM = "CC110x user configuration";
 const uint8_t CC110x_PATABLE_433[8] PROGMEM = {0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};

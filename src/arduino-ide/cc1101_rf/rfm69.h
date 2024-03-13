@@ -14,8 +14,16 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define REGISTER_MAX          84                   // register count
 #define REGISTER_STATUS_MAX   0x71                 // register count (for compatibility with the CC110x)
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
+
+#if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES       8                    // Anzahl Datensätze in struct Data
+#else
+#define NUMBER_OF_MODES       6                    // Anzahl Datensätze in struct Data
+#endif
+
+#if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"                                  // benötigt NUMBER_OF_MODES
+#endif
 
 #define READ_BURST            0x00                 // for compatibility with the CC110x
 #define CHIP_VERSION          0x10                 // RegVersion - Semtech ID relating the silicon revision

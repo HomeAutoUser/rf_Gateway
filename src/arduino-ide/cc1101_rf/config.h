@@ -69,6 +69,10 @@
 #define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
+#elif defined(ARDUINO_AVR_PRO) && defined(RFM69)
+#define EEPROM_SIZE   512
+#define LED           9           // LED      => Arduino Pro Mini (OK msg)
+#define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_NANO) && defined(CC110x)
 #define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
@@ -130,13 +134,13 @@
 #define WLAN_hostname           "rf-Gateway"            // Hostname !!! maximum-length of 25 !!!
 #endif
 
-#else
+#else /* all other devices without WLAN */
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 #define OOK_MU_433              1
-//#define WMBus_S                 1   // ToDO Restrict processing of functions WMBUS
-//#define WMBus_T                 1   // ToDO Restrict processing of functions WMBUS
+//#define WMBus_S                 1
+//#define WMBus_T                 1
 #define X_Sense                 1
 #endif
 

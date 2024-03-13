@@ -235,6 +235,7 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     }
   }
   ReceiveModeName = reg_modus;
+#if defined (WMBus_S) || defined (WMBus_T)
   if (reg_modus.startsWith("W")) { // WMBUS
     if (reg_modus.endsWith("S")) { // WMBUS_S
 #ifdef debug_mbus
@@ -249,6 +250,7 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
       mbus_init(12);
     }
   }
+#endif
 }
 
 uint8_t Chip_readReg(uint8_t addr, uint8_t regType) {   // SX1231 read register (address) (regType for compatibility with the CC110x)

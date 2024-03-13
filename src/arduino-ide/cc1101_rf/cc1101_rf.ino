@@ -15,7 +15,10 @@ uint8_t rssi;
 #include "rfm69.h"
 #endif
 
+#if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"
+#endif
+
 #include "macros.h"
 #include "functions.h"
 
@@ -552,7 +555,9 @@ void loop() {
 #endif
 
   if (FSK_RAW == 2) { // WMBUS
+#if defined (WMBus_S) || defined (WMBus_T)
     mbus_task();
+#endif
   }
 
   /* not OOK */
@@ -923,7 +928,6 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CODE_ESP
               MSG_OUTPUT(tmp);
 #endif
-
             } else if (buf_input[2] == 'b') { // command tob 88, tob99 or tob<0|1><nr>
               if (isNumeric(input.substring(3))) { // check command tob<0|1><nr> or tob99 or tob88
 #ifdef debug
