@@ -927,7 +927,6 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             } else if (buf_input[2] == 'b') { // command tob 88, tob99 or tob<0|1><nr>
               if (isNumeric(input.substring(3))) { // check command tob<0|1><nr> or tob99 or tob88
 #ifdef debug
-                tmp = "";
                 MSG_BUILD(F("[DB] Input, cmd tob ")); MSG_BUILD(input.substring(3)); MSG_BUILD(F(" accepted\n"));
 #endif  // END - debug
                 if (buf_input[3] == '8' && buf_input[4] == '8') {        // command tob88 -> scan all modes

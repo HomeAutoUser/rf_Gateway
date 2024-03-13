@@ -135,8 +135,8 @@
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 #define OOK_MU_433              1
-//#define WMBus_S                 1
-//#define WMBus_T                 1
+//#define WMBus_S                 1   // ToDO Restrict processing of functions WMBUS
+//#define WMBus_T                 1   // ToDO Restrict processing of functions WMBUS
 #define X_Sense                 1
 #endif
 
