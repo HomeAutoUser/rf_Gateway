@@ -7,14 +7,15 @@
 #include <EEPROM.h>
 #include <digitalWriteFast.h>                 // https://github.com/ArminJo/digitalWriteFast
 #include "config.h"
-int RSSI_dez;                                 // for the output on web server
+int16_t RSSI_dez;                             // for the output on web server
+uint8_t rssi;
 #ifdef CC110x
 #include "cc110x.h"
-#include "mbus.h"
 #elif RFM69
 #include "rfm69.h"
 #endif
 
+#include "mbus.h"
 #include "macros.h"
 #include "functions.h"
 
@@ -235,15 +236,22 @@ void Interupt_Variant(byte nr) {
 #endif
 
 #ifdef CC110x
-  MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+  MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
   if (Registers[ReceiveModeNr].name[0] == 'W') { // WMBUS
     FSK_RAW = 2;
   } else {
-    if (MOD_FORMAT != 3) {
+    FSK_RAW = 0;
+    if (MOD_FORMAT != 3) { // FSK
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-    } else {
+    } else { // OOK
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
     }
+  }
+#elif RFM69
+  if (Registers[ReceiveModeNr].name[0] == 'W') { // WMBUS
+    FSK_RAW = 2;
+  } else {
+    FSK_RAW = 0;
   }
 #endif
   Chip_setReceiveMode();  // start receive mode
@@ -373,6 +381,7 @@ void setup() {
 #endif
 
   WiFi.disconnect();
+  //  WiFi.setOutputPower(0);
   OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
   OwnStationHostname += '-';
   OwnStationHostname += String(chipID, HEX);
@@ -466,6 +475,7 @@ void setup() {
     Interupt_Variant(ReceiveModeNr);    // Empfangsvariante & Register einstellen
   }
 }
+
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup end */
 void loop() {
 #ifdef COUNT_LOOP
@@ -474,8 +484,10 @@ void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   /* https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#timing-and-delays
      delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
-  delay(1);
-  //yield;
+  // delay(1);
+#ifdef Code_ESP8266
+  yield;
+#endif
 
   ArduinoOTA.handle();        // OTA Updates
   Telnet();                   // Telnet Input´s
@@ -487,14 +499,13 @@ void loop() {
     secTick += 1000UL;
     uptime++;
 #ifdef COUNT_LOOP
-    //MSG_OUTPUTALLLN(countLoop); // conversion from 'uint32_t' {aka 'unsigned int'} to 'String' is ambiguous
     Serial.println(countLoop);
     countLoop = 0;
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_index();                  // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
 #endif
-    if (ToggleCnt > 1) {               // Toggle Option
+    if (ToggleCnt > 1) {                // Toggle Option
       if (millis() - toggleTick > ToggleTimeMode[ReceiveModeNr] * 1000) { // Abfragen, ob Zeit zum einschalten erreicht
         toggleTick = millis();                  // Zeit merken, an der eingeschaltet wurde
         ToggleOnOff();
@@ -522,35 +533,33 @@ void loop() {
 #endif
     }
     Serial.flush();
-    msg.trim();                 /* String, strip off any leading/trailing space and \r \n */
+    msg.trim();                           /* String, strip off any leading/trailing space and \r \n */
 
     if (msg.length() > 0 && msg.length() <= BUFFER_MAX) {
 #ifdef debug
       Serial.print(F("[DB] Serial.available > 0 ")); Serial.println(msg);
 #endif  // END - debug
-      client_now = 255;         /* current client is set where data is received */
+      client_now = 255;                   /* current client is set where data is received */
       InputCommand(msg);
-      msg = "";     /* reset variable as it continues to be used elsewhere */
+      msg = "";                           /* reset variable as it continues to be used elsewhere */
     }
   }
 
 #ifdef RFM69
-  FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
-#endif
-
-#ifdef CC110x // TODO only CC110x
-  if (FSK_RAW == 2) { // WMBUS
-    //Serial.println(F("WMBUS"));
-    //FSK_RAW = 0;
-    mbus_task(0);
+  if (FSK_RAW != 2) { // no WMBUS
+    FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
   }
 #endif
+
+  if (FSK_RAW == 2) { // WMBUS
+    mbus_task();
+  }
 
   /* not OOK */
   if ( (FSK_RAW == 1) && (ChipFound == true) ) { /* Received data | RX (not OOK !!!) */
     FSK_RAW = 0;
     digitalWriteFast(LED, HIGH);    /* LED on */
-    int rssi = Chip_readRSSI();
+    rssi = Chip_readRSSI();
     msgCount++;
     msgCountMode[ReceiveModeNr]++;
 #ifdef CC110x
@@ -615,7 +624,7 @@ void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
-    Chip_setReceiveMode(); // start receive mode
+    Chip_setReceiveMode();      // start receive mode
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
     /* OOK */
@@ -648,9 +657,9 @@ void loop() {
       msgRepeats--;
       Chip_writeReg(CHIP_PKTLEN, PKTLENis); // restore old packet length
 #ifdef RFM69
-      Chip_writeReg(0x3C, PKTLENis - 1); // restore FifoThreshold setting
+      Chip_writeReg(0x3C, PKTLENis - 1);    // restore FifoThreshold setting
 #endif
-      Chip_setReceiveMode(); // start receive mode
+      Chip_setReceiveMode();                // start receive mode
       if (msgRepeats == 0) {
         for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
           if (webSocketSite[num] == "/raw") {
@@ -671,9 +680,9 @@ void ToggleOnOff() {
   detachInterrupt(digitalPinToInterrupt(GDO2));
 #endif
 #ifdef CODE_ESP
-  String tmp = "";        // for temp outputs print
+  String tmp = "";    // for temp outputs print
   tmp.reserve(256);
-  client_now = 255;         /* to view message over serial */
+  client_now = 255;   /* to view message over serial */
 #endif
 #ifdef debug
   MSG_BUILD(F("[DB] ToggleCnt=")); MSG_BUILD_LF(ToggleCnt);
@@ -1595,8 +1604,8 @@ inline void doDetect() {  /* Pulsprüfung und Weitergabe an Patternprüfung */
 
 void MSGBuild() { /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
-    uint8_t rssi = Chip_readReg(0x34, 0xC0);  // nicht konvertiert
-    digitalWriteFast(LED, HIGH);              // LED on
+    rssi = Chip_readReg(0x34, 0xC0);  // nicht konvertiert
+    digitalWriteFast(LED, HIGH);      // LED on
     uint8_t CP_PaNum = 0;
     int16_t PulseAvgMin = 32767;
     String raw = "";

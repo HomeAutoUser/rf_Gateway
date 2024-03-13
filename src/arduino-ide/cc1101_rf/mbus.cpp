@@ -10,8 +10,6 @@
 */
 
 #include "config.h"
-
-#ifdef CC110x
 #include "mbus.h"
 
 // Buffers
@@ -29,22 +27,21 @@ void mbus_init(uint8_t ccN) {
   else if (ccN == 12) {
     mbus_mode = WMBUS_TMODE;
   }
+#ifdef CC110x
   Chip_writeReg(CC1100_TEST2, 0x81);
   Chip_writeReg(CC1100_TEST1, 0x35);
   Chip_writeReg(CC1100_TEST0, 0x09);
-  memset( &RXinfo, 0, sizeof( RXinfo ));
-#ifdef CODE_ESP
-  String tmp = "";        // for temp outputs print
 #endif
+  memset( &RXinfo, 0, sizeof( RXinfo ));
+#ifdef debug_mbus
   Serial.print(F("mbus_init ")); Serial.println(mbus_mode);
+#endif
 }
 
-void mbus_init_tx(void) {
-
+/*
+  void mbus_init_tx(void) {
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
-
   Chip_writeReg(CC110x_FIFOTHR, TX_FIFO_THRESHOLD);
-
   if (mbus_mode == WMBUS_SMODE) {
     // SYNC ist bei TX und RX (7696) verschieden
     // The TX FIFO must apply the last byte of the Synchronization word
@@ -52,25 +49,22 @@ void mbus_init_tx(void) {
     Chip_writeReg(CC110x_SYNC0, 0x76);
   } else { // TMODE
     // SYNC ist bei TX und RX gleich
-
     // Set Deviation to 50 kHz (bei RX 0x44, 38 kHz)
     Chip_writeReg(CC110x_DEVIATN, 0x50);
-
     // Set data rate to 100 kbaud (bei RX 103 kbaud)
     Chip_writeReg(CC110x_MDMCFG4, 0x5B);
     Chip_writeReg(CC110x_MDMCFG3, 0xF8);
   }
-
   // Set GDO0 to be TX FIFO threshold signal
   Chip_writeReg(CC110x_IOCFG0, 0x02);
   // Set GDO2 to be high impedance
   Chip_writeReg(CC110x_IOCFG2, 0x2e);
-
   memset( &TXinfo, 0, sizeof( TXinfo ));
-}
+  }
+*/
 
-void mbus_init_tx_end(void) {
-
+/*
+  void mbus_init_tx_end(void) {
   if (mbus_mode == WMBUS_SMODE) {
     // SYNC ist bei TX und RX (7696) verschieden
     // SYNC RX
@@ -78,33 +72,39 @@ void mbus_init_tx_end(void) {
     Chip_writeReg(CC110x_SYNC0, 0x96);
   } else { // TMODE
     // SYNC ist bei TX und RX gleich
-
     // Set Deviation to RX 0x44, 38 kHz)
     Chip_writeReg(CC110x_DEVIATN, 0x44);
-
     // Set data rate to RX 103 kbaud
     Chip_writeReg(CC110x_MDMCFG4, 0x5C);
     Chip_writeReg(CC110x_MDMCFG3, 0x04);
   }
   Chip_writeReg(CHIP_PKTLEN, 0xFF);
-
   // Set GDO0
   Chip_writeReg(CC110x_IOCFG0, 0x00);
   // Set GDO2
   Chip_writeReg(CC110x_IOCFG2, 0x06);
-
   memset( &RXinfo, 0, sizeof( RXinfo ));
-}
+  }
+*/
 
 static uint8_t mbus_on(uint8_t force) {
   // already in RX?
+#ifdef CC110x
   if (!force && Chip_readReg(CC110x_MARCSTATE, READ_BURST) == MARCSTATE_RX)
     return 0;
-
+#elif RFM69
+  if (!force && (Chip_readReg(0x01, READ_BURST) & 0b00011100) >> 2 == 0x04) // 4 = Receiver
+    return 0;
+#endif
   // init RX here, each time we're idle
   RXinfo.state = 0;
-
-  //cc1101::flushrx();
+#ifdef CC110x
+  CC110x_CmdStrobe(CC110x_SIDLE);
+  CC110x_CmdStrobe(CC110x_SNOP);
+  CC110x_CmdStrobe(CC110x_SFRX);
+#elif RFM69
+  Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
+#endif
 
   // Initialize RX info variable
   RXinfo.lengthField = 0;           // Length Field in the wireless MBUS packet
@@ -117,300 +117,349 @@ static uint8_t mbus_on(uint8_t force) {
   RXinfo.framemode   = WMBUS_NONE;  // Received frame mode (Distinguish between C- and T-mode)
   RXinfo.frametype   = 0;           // Frame A or B in C-mode
 
-  // Set RX FIFO threshold to 4 bytes
-  Chip_writeReg(CC110x_FIFOTHR, RX_FIFO_START_THRESHOLD);
-  // Set infinite length
-  Chip_writeReg(CC110x_PKTCTRL0, INFINITE_PACKET_LENGTH);
+#ifdef CC110x
+  Chip_writeReg(CC110x_FIFOTHR, RX_FIFO_START_THRESHOLD); // Set RX FIFO threshold to 4 bytes
+  Chip_writeReg(CC110x_PKTCTRL0, INFINITE_PACKET_LENGTH); // Set infinite length
+#elif RFM69
+  Chip_writeReg(0x3C, 0x02); // Set RX FIFO threshold to 2 bytes
+  Chip_writeReg(0x37, 0x00); // RegPacketConfig1, Unlimited length packet format is selected when bit PacketFormat is set to 0 and PayloadLength is set to 0.
+  Chip_writeReg(0x38, 0x00); // RegPayloadLength, Unlimited length packet format is selected when bit PacketFormat is set to 0 and PayloadLength is set to 0.
+#endif
 
   Chip_setReceiveMode();
   RXinfo.state = 1;
-
-  //MSG_BUILD_LF(F("mb_on"));
+#ifdef debug_mbus
   Serial.print(F("mbus_on ")); Serial.println(RXinfo.mode);
-
+#endif
   return 1; // this will indicate we just have re-started RX
 }
 
-
-void mbus_task(uint16_t Boffs_ccN) {
+void mbus_task() {
   uint8_t bytesDecoded[2];
   uint8_t fixedLength;
-
+  //uint8_t rssi = 0;
+  uint8_t lqi = 0;
   if (mbus_mode == WMBUS_NONE) {
+#ifdef debug_mbus
     Serial.println(mbus_mode);
+#endif
     return;
   }
-#ifdef CODE_ESP
-  String tmp = "";        // for temp outputs print
-  tmp.reserve(256);
-#endif
-
-  //Serial.println(RXinfo.state);
-
   switch (RXinfo.state) {
     case 0:
       mbus_on(TRUE);
       return;
     case 1:       // RX active, awaiting SYNC
-      if (digitalReadFast(GDO2) == 1) { //PIN_RECEIVE
-        // if (isHigh(pinReceive[radionr])) {
-        Serial.print(F("mbus_task ")); Serial.println(RXinfo.state);
+#ifdef CC110x
+      if (digitalReadFast(GDO2) == 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+#elif RFM69
+      if (Chip_readReg(0x27, 0) & 0b00000001) { // SyncAddressMatch, Set when Sync and Address (if enabled) are detected. Cleared when leaving Rx or FIFO is emptied.
+#endif
+#ifdef debug_mbus
+        Serial.println(F("mbt1 sync"));
+#endif
         RXinfo.state = 2;
       }
       break;
     // awaiting pkt len to read
     case 2:
-      if (digitalReadFast(GDO0) == 1) { //PIN_SEND
-        // if (isHigh(pinSend[radionr])) {
+#ifdef CC110x
+      if (digitalReadFast(GDO0) == 1) { // PIN_SEND, Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+#elif RFM69
+      if (Chip_readReg(0x28, 0) & 0b00100000) { // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+#endif
         // Read the 3 first bytes
-        CC110x_readRXFIFO(RXinfo.pByteIndex, 3, NULL, NULL);
-        Serial.print(F("mbus_task ")); Serial.print(RXinfo.state);
-        Serial.print(F(" RXFIFO[0] = 0x")); Serial.println(RXinfo.pByteIndex[0], HEX);
-
+        Chip_readRXFIFO(RXinfo.pByteIndex, 3, NULL, NULL);
+#ifdef debug_mbus
+        Serial.print(F("mbt2 RX "));
+        for (uint8_t x = 0; x < 3; x++) {
+          Serial.print(onlyDecToHex2Digit(RXinfo.pByteIndex[x]));
+        }
+        Serial.println("");
+#endif
         // - Calculate the total number of bytes to receive -
         if (RXinfo.mode == WMBUS_SMODE) {
           // S-Mode
-          // Possible improvment: Check the return value from the deocding function,
-          // and abort RX if coding error.
+          // Possible improvment: Check the return value from the deocding function, and abort RX if coding error.
           if (manchDecode(RXinfo.pByteIndex, bytesDecoded) != MAN_DECODING_OK) {
-            Serial.println(F("mbus_task SMODE ERROR"));
+#ifdef debug_mbus
+            Serial.println(F("mbt2 SMODE ERROR"));
+#endif
             RXinfo.state = 0;
             return;
           }
           RXinfo.lengthField = bytesDecoded[0];
           RXinfo.length = byteSize(1, 0, (packetSize(RXinfo.lengthField)));
-        } else {
+        } else { // End WMBUS_SMODE
           // In C-mode we allow receiving T-mode because they are similar. To not break any applications using T-mode,
           // we do not include results from C-mode in T-mode.
-
           // If T-mode preamble and sync is used, then the first data byte is either a valid 3outof6 byte or C-mode
           // signaling byte. (http://www.ti.com/lit/an/swra522d/swra522d.pdf#page=6)
           if (RXinfo.pByteIndex[0] == 0x54) {
-            Serial.println(RXinfo.pByteIndex[1]);
+#ifdef debug_mbus
+            Serial.println(F("mbt2 WMBus_C"));
+#endif
             RXinfo.framemode = WMBUS_CMODE;
             // If we have determined that it is a C-mode frame, we have to determine if it is Type A or B.
             // 54CD3144934470551225350867497A080000200B6E1711084B6E070000427C87
             if (RXinfo.pByteIndex[1] == 0xCD) {
+#ifdef debug_mbus
+              Serial.println(F("mbt2 WMBus_C Frame A"));
+#endif
               RXinfo.frametype = WMBUS_FRAMEA;
               // Frame format A
               RXinfo.lengthField = RXinfo.pByteIndex[2];
-
               if (RXinfo.lengthField < 9) {
                 RXinfo.state = 0;
                 return;
               }
-
               // Number of CRC bytes = 2 * ceil((L-9)/16) + 2
               // Preamble + L-field + payload + CRC bytes
               RXinfo.length = 2 + 1 + RXinfo.lengthField + 2 * (2 + (RXinfo.lengthField - 10) / 16);
             } else if (RXinfo.pByteIndex[1] == 0x3D) {
+#ifdef debug_mbus
+              Serial.println(F("mbt2 WMBus_C Frame B"));
+#endif
               RXinfo.frametype = WMBUS_FRAMEB;
               // Frame format B
               RXinfo.lengthField = RXinfo.pByteIndex[2];
-
               if (RXinfo.lengthField < 12 || RXinfo.lengthField == 128) {
                 RXinfo.state = 0;
                 return;
               }
-
               // preamble + L-field + payload
               RXinfo.length = 2 + 1 + RXinfo.lengthField;
             } else {
               // Unknown type, reset.
+#ifdef debug_mbus
+              Serial.println(F("mbt2 WMBus_C ERROR unknown type"));
+#endif
               RXinfo.state = 0;
               return;
             }
             // T-Mode
-            // Possible improvment: Check the return value from the deocding function,
-            // and abort RX if coding error.
+            // Possible improvment: Check the return value from the deocding function, and abort RX if coding error.
           } else if (decode3outof6(RXinfo.pByteIndex, bytesDecoded, 0) != DECODING_3OUTOF6_OK) {
             RXinfo.state = 0;
+#ifdef debug_mbus
+            Serial.println(F("mbt2 T-MODE ERROR"));
+#endif
             return;
           } else {
-            Serial.println(F("T-Mode"));
+#ifdef debug_mbus
+            Serial.println(F("mbt2 T-Mode OK"));
+#endif
             RXinfo.framemode = WMBUS_TMODE;
             RXinfo.frametype = WMBUS_FRAMEA;
             RXinfo.lengthField = bytesDecoded[0];
             RXinfo.length = byteSize(0, 0, (packetSize(RXinfo.lengthField)));
           }
         }
-
         // check if incoming data will fit into buffer
         if (RXinfo.length > sizeof(MBbytes)) {
           RXinfo.state = 0;
-          Serial.println(RXinfo.length);
+#ifdef debug_mbus
+          Serial.print(F("mbt2 ERROR lenght too big ")); Serial.println(RXinfo.length);
+#endif
           return;
         }
-
+#ifdef debug_mbus
+        Serial.print(F("mbt2 len ")); Serial.println(RXinfo.length);
+#endif
         // we got the length: now start setup chip to receive this much data
         // - Length mode -
         // Set fixed packet length mode is less than 256 bytes
-        if (RXinfo.length < (MAX_FIXED_LENGTH)) {
+        if (RXinfo.length < (MAX_FIXED_LENGTH)) { // < 256
+#ifdef CC110x
           Chip_writeReg(CHIP_PKTLEN, (uint8_t)(RXinfo.length));
-          Chip_writeReg(CC110x_PKTCTRL0, FIXED_PACKET_LENGTH);
+          Chip_writeReg(CC110x_PKTCTRL0, FIXED_PACKET_LENGTH); // 0x08: PKTCTRL0 – Packet Automation Control, 0x00
+#endif
           RXinfo.format = FIXED;
-
           // Infinite packet length mode is more than 255 bytes
           // Calculate the PKTLEN value
         } else {
           fixedLength = RXinfo.length  % (MAX_FIXED_LENGTH);
           Chip_writeReg(CHIP_PKTLEN, (uint8_t)(fixedLength));
         }
-
         RXinfo.pByteIndex += 3;
         RXinfo.bytesLeft   = RXinfo.length - 3;
-
         // Set RX FIFO threshold to 32 bytes
         RXinfo.state = 3;
-        Chip_writeReg(CC110x_FIFOTHR, RX_FIFO_THRESHOLD);
-
-        //MSG_BUILD(F("mbus2 L="));
-        //MSG_BUILD_LF(RXinfo.bytesLeft);
-
-        /*cc1101::printHex2(RXinfo.pByteIndex[1]);
-          MSG_BUILD(" mode=");
-          cc1101::printHex2(RXinfo.framemode);
-          MSG_BUILD(" type=");
-          cc1101::printHex2(RXinfo.frametype);
-          MSG_BUILD(" L=");
-          MSG_BUILD_LF(RXinfo.bytesLeft);
-          //MSG_BUILD_LF("");
-          RXinfo.state = 0;*/
+#ifdef CC110x
+        Chip_writeReg(CC110x_FIFOTHR, RX_FIFO_THRESHOLD); // 0x03: FIFOTHR – RX FIFO and TX FIFO Thresholds, 0x07 = 32 Byte
+#endif
       }
       break;
+
     // awaiting more data to be read
     case 3:
-      if (digitalReadFast(GDO0) == 1) { //PIN_SEND
-        // if (isHigh(pinSend[radionr])) {
+#ifdef CC110x
+      if (digitalReadFast(GDO0) == 1) { // PIN_SEND, Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+#ifdef debug_mbus
+        Serial.println(F("mbt3 read FIFO"));
+#endif
         // - Length mode -
         // Set fixed packet length mode is less than MAX_FIXED_LENGTH bytes
-        if (((RXinfo.bytesLeft) < (MAX_FIXED_LENGTH )) && (RXinfo.format == INFINITE)) {
-          Chip_writeReg(CC110x_PKTCTRL0, FIXED_PACKET_LENGTH);
+        if (((RXinfo.bytesLeft) < (MAX_FIXED_LENGTH )) && (RXinfo.format == INFINITE)) { // MAX_FIXED_LENGTH = 256
+          Chip_writeReg(CC110x_PKTCTRL0, FIXED_PACKET_LENGTH); // 0x08: PKTCTRL0 – Packet Automation Control, 0x00
           RXinfo.format = FIXED;
         }
-
         // Read out the RX FIFO
         // Do not empty the FIFO (See the CC110x or 2500 Errata Note)
-        CC110x_readRXFIFO(RXinfo.pByteIndex, RX_AVAILABLE_FIFO - 1, NULL, NULL);
-
-#ifdef debug_mbus
-        tmp = "";
-        MSG_BUILD(F("L="));
-        MSG_BUILD_LF(RXinfo.bytesLeft);
-#endif
-        /*MSG_BUILD(" mode=");
-          MSG_BUILD(RXinfo.framemode);
-          MSG_BUILD(" type=");
-          MSG_BUILD_LF(RXinfo.frametype)*/
+        Chip_readRXFIFO(RXinfo.pByteIndex, RX_AVAILABLE_FIFO - 1, NULL, NULL); // read 31 Byte from FIFO
         if (RXinfo.bytesLeft < (RX_AVAILABLE_FIFO - 1)) {
+#ifdef debug_mbus
+          Serial.print(F("mbt3 ERROR read RX FIFO bytesLeft < 31 ")); Serial.println(RXinfo.bytesLeft);
+#endif
           RXinfo.state = 0;
           return;
         }
         RXinfo.bytesLeft  -= (RX_AVAILABLE_FIFO - 1);
         RXinfo.pByteIndex += (RX_AVAILABLE_FIFO - 1);
-      }
-      break;
-  }
-
-  // END OF PAKET
-  if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { //PIN_RECEIVE
-    //if (isLow(pinReceive[radionr]) && RXinfo.state>1) {
-    uint8_t rssi = 0;
-    uint8_t lqi = 0;
-    CC110x_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
-    RXinfo.complete = TRUE;
-
-    // decode!
-    uint16_t rxStatus = PACKET_CODING_ERROR;
-    uint16_t rxLength;
-
-    if (RXinfo.mode == WMBUS_SMODE) {
-      rxStatus = decodeRXBytesSmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
-      rxLength = packetSize(MBpacket[0]);
-    } else if (RXinfo.framemode == WMBUS_TMODE) {
-      //for (uint16_t ii = 0; ii<RXinfo.length; ii++) {
-      //    cc1101::printHex2(MBbytes[ii]);
-      //}
-      //MSG_BUILD_LF("");
-      rxStatus = decodeRXBytesTmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
-      rxLength = packetSize(MBpacket[0]);
-    } else if (RXinfo.framemode == WMBUS_CMODE) {
-      if (RXinfo.frametype == WMBUS_FRAMEA) {
-        rxLength = RXinfo.lengthField + 2 * (2 + (RXinfo.lengthField - 10) / 16) + 1;
-        rxStatus = verifyCrcBytesCmodeA(MBbytes + 2, MBpacket, rxLength);
-      } else if (RXinfo.frametype == WMBUS_FRAMEB) {
-        rxLength = RXinfo.lengthField + 1;
-        rxStatus = verifyCrcBytesCmodeB(MBbytes + 2, MBpacket, rxLength);
-      }
-    }
 #ifdef debug_mbus
-    tmp = "";
-    MSG_BUILD(F("mb L="));
-    MSG_BUILD(rxLength);
-    MSG_BUILD(F(" S="));
-    MSG_BUILD_LF(rxStatus);
+        Serial.print(F("mbt3 bLeft ")); Serial.println(RXinfo.bytesLeft);
 #endif
-
-    if (rxStatus == PACKET_OK) {
-      digitalWriteFast(LED, HIGH);    // LED on
-      msgCount++;
-      msgCountMode[ReceiveModeNr]++;
-      Serial.println(F("PACKET_OK"));
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-      String html_raw = "";   // für die Ausgabe auf dem Webserver
-      html_raw.reserve(255);
-      if (rssi >= 128) {
-        RSSI_dez = (rssi - 256) / 2 - 74;
-      } else if (rssi < 128) {
-        RSSI_dez = (rssi / 2) - 74;
       }
+      // END OF PAKET
+      if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+        Chip_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
+        RXinfo.complete = TRUE;
+        RXinfo.state = 4; // decode!
+#ifdef debug_mbus
+        Serial.println(F("mbt3 END OF PAKET"));
 #endif
-      freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
-      msg = "";
-      MSG_BUILD_MN(char(2));        // STX
-      MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
-      if (RXinfo.framemode == WMBUS_CMODE) {
-        if (RXinfo.frametype == WMBUS_FRAMEA) {
-          MSG_BUILD_MN('X'); // special marker for frame type A
-        } else {
-          MSG_BUILD_MN('Y'); // special marker for frame type B
+        goto DECODE;
+      }
+#elif RFM69 // Ende CC110x
+      if (Chip_readReg(0x28, 0) & 0b01000000) { // RegIrqFlags2, FifoNotEmpty - Set when FIFO contains at least one byte, else cleared.
+        Chip_readRXFIFO(RXinfo.pByteIndex, 1, NULL, NULL);        // read result from FIFO
+        RXinfo.bytesLeft--;
+        RXinfo.pByteIndex ++;
+        if (RXinfo.bytesLeft == 0) {
+          RXinfo.complete = TRUE;
+          RXinfo.state = 4; // decode!
+          rssi = Chip_readRSSI();
+#ifdef debug_mbus
+          Serial.println(F("mbt3 END OF PAKET"));
+#endif
         }
       }
-      for (uint8_t i = 0; i < rxLength; i++) {
-        MSG_BUILD_MN(onlyDecToHex2Digit(MBpacket[i]));
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-        html_raw += onlyDecToHex2Digit(MBpacket[i]);
 #endif
-      }
-      MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
-      MSG_BUILD_MN(onlyDecToHex2Digit(rssi));
-      MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
-      MSG_BUILD_MN(freqErr);
+      break;
 
-      MSG_BUILD_MN(F(";L="));
-      MSG_BUILD_MN(onlyDecToHex2Digit(lqi));
-      //MSG_BUILD(F(";N="));
-      //MSG_BUILD(tools::EEread(Boffs_ccN)); // read from EEPROM
-      MSG_BUILD(';');
-      MSG_BUILD_MN(char(10));       // LF
-#ifdef CODE_ESP
-      MSG_OUTPUTALL(msg);   /* output msg to all */
+    // decode!
+    case 4:
+#ifdef CC110x
+DECODE:
 #endif
-      // END - MSG_BUILD_MN
+      uint16_t rxStatus = PACKET_CODING_ERROR; // rxStatus = 1
+      uint16_t rxLength;
+#ifdef debug_mbus
+      Serial.print(F("mbt4 RX "));
+      for (uint16_t x = 0; x < RXinfo.length; x++) {
+        Serial.print(onlyDecToHex2Digit(MBbytes[x]));
+      }
+      Serial.println("");
+#endif
+      if (RXinfo.mode == WMBUS_SMODE) {
+        rxStatus = decodeRXBytesSmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
+        rxLength = packetSize(MBpacket[0]);
+#ifdef debug_mbus
+        Serial.print(F("mbt S-MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+#endif
+      } else if (RXinfo.framemode == WMBUS_TMODE) {
+        rxStatus = decodeRXBytesTmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
+        rxLength = packetSize(MBpacket[0]);
+#ifdef debug_mbus
+        Serial.print(F("mbt T_MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+#endif
+      } else if (RXinfo.framemode == WMBUS_CMODE) {
+        if (RXinfo.frametype == WMBUS_FRAMEA) {
+          rxLength = RXinfo.lengthField + 2 * (2 + (RXinfo.lengthField - 10) / 16) + 1;
+          rxStatus = verifyCrcBytesCmodeA(MBbytes + 2, MBpacket, rxLength);
+#ifdef debug_mbus
+          Serial.print(F("mbt C-MODE FRAME A")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+#endif
+        } else if (RXinfo.frametype == WMBUS_FRAMEB) {
+          rxLength = RXinfo.lengthField + 1;
+          rxStatus = verifyCrcBytesCmodeB(MBbytes + 2, MBpacket, rxLength);
+#ifdef debug_mbus
+          Serial.print(F("mbt C-MODE FRAME B")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+#endif
+        }
+      }
+      if (rxStatus == PACKET_OK) { // rxStatus == 0
+        digitalWriteFast(LED, HIGH);    // LED on
+        msgCount++;
+        msgCountMode[ReceiveModeNr]++;
+#ifdef debug_mbus
+        Serial.println(F("mbt PACKET_OK"));
+#endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-      WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+        String html_raw = "";   // für die Ausgabe auf dem Webserver
+        html_raw.reserve(255);
+        int16_t rssiTmp = rssi;
+        if (rssi >= 128) {
+          RSSI_dez = (rssiTmp - 256) / 2 - 74;
+        } else if (rssiTmp < 128) {
+          RSSI_dez = (rssiTmp / 2) - 74;
+        }
 #endif
-      digitalWriteFast(LED, LOW);    // LED off
-    }
+#ifdef CC110x
+        freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
+#endif
+        msg = "";
+        MSG_BUILD_MN(char(2));        // STX
+        MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
+        if (RXinfo.framemode == WMBUS_CMODE) {
+          if (RXinfo.frametype == WMBUS_FRAMEA) {
+            MSG_BUILD_MN('X'); // special marker for frame type A
+          } else {
+            MSG_BUILD_MN('Y'); // special marker for frame type B
+          }
+        }
+        for (uint8_t i = 0; i < rxLength; i++) {
+          MSG_BUILD_MN(onlyDecToHex2Digit(MBpacket[i]));
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+          html_raw += onlyDecToHex2Digit(MBpacket[i]);
+#endif
+        }
+        MSG_BUILD_MN(onlyDecToHex2Digit(lqi));  // LQI
+        MSG_BUILD_MN(onlyDecToHex2Digit(rssi)); // RSSI
+        MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
+        MSG_BUILD_MN(rssi);
+        MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
+        MSG_BUILD_MN(freqErr);
+        //MSG_BUILD_MN(F(";L=")); // LQI - nur bei CC110x - TODO - Parse_MN, faulty msg
+        //MSG_BUILD_MN(lqi);            // LQI
+        MSG_BUILD_MN(';');
+        MSG_BUILD_MN(char(3));        // ETX
+        MSG_BUILD_MN(char(10));       // LF
+#ifdef CODE_ESP
+        MSG_OUTPUTALL(msg);   /* output msg to all */
+#endif
+        // END - MSG_BUILD_MN
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+        WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+#endif
+        digitalWriteFast(LED, LOW);    // LED off
+      }
+      RXinfo.state = 0;
+      return;
+  }
+#ifdef RFM69
+  if (Chip_readReg(0x28, 0) & 0b00010000) { // RegIrqFlags2, FifoOverrun - Set when FIFO overrun occurs.
+    Serial.println(F("mbt FifoOverrun"));
     RXinfo.state = 0;
+    mbus_on( TRUE );
     return;
   }
-
+#endif
   mbus_on( FALSE );
 }
 
-
-uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t cmode, bool debug) {
+/* TODO
+  uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t cmode, bool debug) {
   uint16_t  bytesToWrite;
   uint16_t  fixedLength;
   uint8_t   txStatus;
@@ -418,10 +467,10 @@ uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t
   // uint8_t   lastMode = WMBUS_NONE; // TODO unused variable
   uint16_t  packetLength;
   uint16_t  TXn;
-#ifdef CODE_ESP
+  #ifdef CODE_ESP
   String tmp = "";        // for temp outputs print
   //  tmp.reserve(256);
-#endif
+  #endif
 
   // Calculate total number of bytes in the wireless MBUS packet
   packetLength = packetSize(pPacket[0]);
@@ -467,7 +516,7 @@ uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t
 
   // Flush TX FIFO
   // Ensure that FIFO is empty before transmit is started
-  if (CC110x_cmdStrobeTo(CC110x_SFTX) == false) {	// flush TX with wait MISO timeout
+  if (CC110x_cmdStrobeTo(CC110x_SFTX) == false) {  // flush TX with wait MISO timeout
     return TX_FLUSH_ERROR;
   }
 
@@ -545,11 +594,6 @@ uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t
     }
   }
 
-  /*if (debug == true) {
-      MSG_BUILD(F("wrfifoanz="));
-      MSG_BUILD_LF(iw);
-    }*/
-
   uint8_t maxloop = 0xff;
   while (maxloop-- && (Chip_readReg(CC110x_MARCSTATE, READ_BURST) != MARCSTATE_IDLE))
     delay(1);
@@ -567,7 +611,8 @@ uint8_t txSendPacket(uint8_t* pPacket, uint8_t* pBytes, uint16_t rawlen, uint8_t
     MSG_BUILD_LF(TXn);
   }
   return (retstate);
-}
+  }
+*/
 
 /* TODO
   void mbus_send(int8_t startdata) {
@@ -1790,4 +1835,3 @@ uint16_t crcCalc(uint16_t crcReg, uint8_t crcData)
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com.
 ***********************************************************************************/
-#endif

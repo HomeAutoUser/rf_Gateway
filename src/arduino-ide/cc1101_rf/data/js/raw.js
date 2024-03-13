@@ -36,6 +36,9 @@ function onMessage(event) {
   var cell2 = row.insertCell(1);
   var cell3 = row.insertCell(2);
   var cell4 = row.insertCell(3);
+
+  TableHandlers();
+
   // Time
   cell1.innerHTML = time;
   cell1.style.textAlign = "center";
@@ -82,4 +85,18 @@ function msgSend() {
    websocket.send('send,' + sd + ',' + rep + ',' + rept);
   }
  }
+}
+
+
+function TableHandlers() {
+  const tbody = document.querySelector('#dataTable tbody');
+  tbody.addEventListener('dblclick', function (e) {
+    const cell = e.target.closest('td');
+    if (!cell) {return;} // Quit, not clicked on a cell
+    const row = cell.parentElement;
+    if(cell.cellIndex == 1) {
+      var successful = document.execCommand('copy');
+      if (successful){ console.log('copyToClipboard ' + cell.innerHTML); }
+    }
+  });
 }

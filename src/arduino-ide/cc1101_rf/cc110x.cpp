@@ -217,14 +217,19 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
-      uint8_t MOD_FORMAT = ( Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-      if (MOD_FORMAT != 3) {
-        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-      } else {
-        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-      }
       ReceiveModeName = Registers[ReceiveModeNr].name;
       ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+      uint8_t MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+      if (ReceiveModeName[0] == 'W') { // WMBUS
+        FSK_RAW = 2;
+      } else {
+        FSK_RAW = 0;
+        if (MOD_FORMAT != 3) { // FSK
+          attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+        } else { // OOK
+          attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+        }
+      }
       Chip_setReceiveMode(); /* enable RX */
 
     } else { /* Ende normaler Start */
@@ -341,11 +346,15 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
   ReceiveModeName = reg_modus;
   if (reg_modus.startsWith("W")) { // WMBUS
     if (reg_modus.endsWith("S")) { // WMBUS_S
+#ifdef debug_mbus
       Serial.println(reg_modus);
+#endif
       mbus_init(11);
     }
     if (reg_modus.endsWith("T")) { // WMBUS_T
+#ifdef debug_mbus
       Serial.println(reg_modus);
+#endif
       mbus_init(12);
     }
   }
@@ -443,7 +452,7 @@ uint8_t waitTo_Miso() { // wait with timeout until MISO goes low
   return i;
 }
 
-void CC110x_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi) {  // WMBus
+void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi) {  // WMBus
   ChipSelect();                     // Select CC110x
   SPI.transfer(CHIP_RXFIFO | READ_BURST);    // send register address
   for (uint8_t i = 0; i < length; i++)

@@ -8,7 +8,7 @@
 #include <SPI.h>
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES  19  // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  19 // Anzahl Datensätze in struct Data
 #else
 #define NUMBER_OF_MODES  6  // Anzahl Datensätze in struct Data
 #endif
@@ -25,7 +25,7 @@ uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);
 uint8_t CC110x_CmdStrobe(uint8_t cmd);
 uint8_t CC110x_cmdStrobeTo(const uint8_t cmd); // wait MISO and send command strobe to the CC1101 IC via SPI
 uint8_t waitTo_Miso(); // wait with timeout until MISO goes low
-void CC110x_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi); // WMBus
+void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi); // WMBus
 void ChipInit();
 void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
 void Chip_writeReg(uint8_t regAddr, uint8_t value);
@@ -51,6 +51,7 @@ extern boolean ChipFound;
 extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 extern byte ReceiveModePKTLEN;
+extern byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
@@ -59,7 +60,7 @@ extern float Freq_offset;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern uint8_t freqAfc;
-extern int RSSI_dez;
+extern int16_t RSSI_dez;
 extern struct Data Registers[];
 extern uint8_t RegistersMaxCnt;
 extern unsigned long uptime;

@@ -28,8 +28,11 @@ struct Data Registers[] = {
 #ifdef Lacrosse_mode2
   { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
 #endif
-#ifdef WMBus_C
-  { Config_WMBus_C,  sizeof(Config_WMBus_C) / sizeof(Config_WMBus_C[0]), "WMBus_C", 26   },
+#ifdef WMBus_S
+  { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "WMBus_S", 58  },
+#endif
+#ifdef WMBus_T
+  { Config_WMBus_T,  sizeof(Config_WMBus_T) / sizeof(Config_WMBus_T[0]), "WMBus_T", 58  },
 #endif
 };
 
@@ -100,7 +103,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         Serial.print(F(", ")); Serial.println(ReceiveModeName);
 #endif
         // configure SX1231 registers from EEPROM
-        for (byte i = 1; i <= REGISTER_MAX; i++) { // ACHTUNG! Register müssen immer 84 Einträge umfassen!
+        for (byte i = 1; i < REGISTER_MAX; i++) { // ACHTUNG! Register müssen immer 84 Einträge umfassen!
           uint8_t addr = i;
           if (i >= 80) {
             addr = SX1231_RegAddrTranslate[i - 80];
@@ -122,12 +125,16 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       }
       ReceiveModeName = Registers[ReceiveModeNr].name;
       ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-      // Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
+      if (ReceiveModeName[0] == 'W') { // WMBUS
+        FSK_RAW = 2;
+      } else {
+        FSK_RAW = 0;
+      }
 #ifdef debug_chip
       Serial.print(F("[DB] RFM69_Frequency               ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
       Chip_setReceiveMode();     // SX1231 start receive mode
-      Chip_writeReg(0x28, 0x10);  // FIFO are cleared when this bit is set.
+      Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
 #ifdef debug_chip
       Serial.println(F("[DB] SX1231 read all 112 register after load new settings"));
       SX1231_read_reg_all();      // SX1231 read all 112 register
@@ -228,6 +235,20 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     }
   }
   ReceiveModeName = reg_modus;
+  if (reg_modus.startsWith("W")) { // WMBUS
+    if (reg_modus.endsWith("S")) { // WMBUS_S
+#ifdef debug_mbus
+      Serial.println(reg_modus);
+#endif
+      mbus_init(11);
+    }
+    if (reg_modus.endsWith("T")) { // WMBUS_T
+#ifdef debug_mbus
+      Serial.println(reg_modus);
+#endif
+      mbus_init(12);
+    }
+  }
 }
 
 uint8_t Chip_readReg(uint8_t addr, uint8_t regType) {   // SX1231 read register (address) (regType for compatibility with the CC110x)
@@ -244,10 +265,18 @@ void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   Serial.print(F("[DB] Chip_writeReg regAddr 0x")); SerialPrintDecToHex(regAddr);
   Serial.print(F(" value 0x")); SerialPrintDecToHex(value); Serial.println("");
 #endif
-  ChipSelect();                   // Select RFM69
-  SPI.transfer(regAddr | 0x80);   // Send register address
-  SPI.transfer(value);            // Send value
-  ChipDeselect();                 // Deselect RFM69
+  ChipSelect();                                 // Select RFM69
+  SPI.transfer(regAddr | 0x80);                 // Send register address
+  SPI.transfer(value);                          // Send value
+  ChipDeselect();                               // Deselect RFM69
+  /* The Frf setting is split across 3 bytes. A change in the center frequency will only be taken into account when the least significant byte FrfLsb in RegFrfLsb is written. */
+  if (regAddr == 0x07 || regAddr == 0x08) {     // RegFrfMsb || RegFrfMid
+    uint8_t RegFrfLsb = Chip_readReg(0x09, 0);  // RegFrfLsb
+    ChipSelect();                               // Select RFM69
+    SPI.transfer(0x09 | 0x80);                  // Send RegFrfLsb register address
+    SPI.transfer(RegFrfLsb);                    // Send value
+    ChipDeselect();                             // Deselect RFM69
+  }
 }
 
 void SX1231_setTransmitMode() {   // start transmit mode
@@ -258,8 +287,9 @@ void SX1231_setTransmitMode() {   // start transmit mode
   Serial.println(F("[DB] SX1231 Set RegOpMode to 0b100 = Transmitter mode (TX)"));
 #endif
 }
+
 void Chip_setReceiveMode() {   // start receive mode
-  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST);       // Operating modes of the transceiver
+  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(4, Mode, RegOpMode); // 4 = Receiver
 #ifdef debug_chip
@@ -268,7 +298,7 @@ void Chip_setReceiveMode() {   // start receive mode
 }
 
 void SX1231_setIdleMode () {     // set idle mode
-  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST);       // Operating modes of the transceiver
+  uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(1, Mode, RegOpMode); // 1 = Standby mode (STDBY)
 #ifdef debug_chip
@@ -279,29 +309,49 @@ void SX1231_setIdleMode () {     // set idle mode
 uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode) {
   if (ModeNew != Mode) {
     RegOpMode = (RegOpMode & 0b11100011) | (ModeNew << 2);
-    Chip_writeReg(0x01, RegOpMode);                     // SX1231 write register (High-Byte = address, low-Byte = value)
+    Chip_writeReg(0x01, RegOpMode);                           // SX1231 write register (High-Byte = address, low-Byte = value)
     while ((Chip_readReg(0x27, READ_BURST) & 0x80) != 0x80) { // ModeReady - Set when the operation mode requested in Mode, is ready, cleared when changing operating mode.
       delay(1);
     }
     Mode = ModeNew;
 #ifdef debug_chip
     Serial.print(F("[DB] new Operating mode: ")); Serial.println(Mode);
-    RegOpMode = Chip_readReg(0x01, READ_BURST);                                 // Operating modes of the transceiver
+    RegOpMode = Chip_readReg(0x01, READ_BURST);               // Operating modes of the transceiver
     Serial.print(F("[DB] SX1231 RegOpMode is 0b")); Serial.println(RegOpMode, BIN);
 #endif
   }
   return Mode;
 }
 
-void SX1231_afc(uint8_t freqAfc) {  // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
-  uint8_t RegAfcFei = Chip_readReg(0x1E, READ_BURST);            // read register AFC and FEI control and status
+void SX1231_afc(uint8_t freqAfc) {                      // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
+  uint8_t RegAfcFei = Chip_readReg(0x1E, READ_BURST);   // read register AFC and FEI control and status
   RegAfcFei = (RegAfcFei & 0b11111011) | freqAfc << 2;
   Chip_writeReg(0x1E, RegAfcFei);                       // SX1231 write register (High-Byte = address, low-Byte = value)
 }
 
+void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi) {  // WMBus
+  ChipSelect();                     // Select Chip
+  SPI.transfer(0x00 & 0x7F);        // read address
+  for (uint8_t i = 0; i < length; i++) {
+    data[i] = SPI.transfer(0);      // read result
+  }
+  ChipDeselect();                   // Deselect Chip
+  // Optionally
+  if (rssi) {
+    *rssi = Chip_readRSSI();
+    if (lqi) {
+#ifdef CC110x
+      *lqi = SPI.transfer(0); // only CC110x
+#elif RFM69
+      *lqi = 0; // gibt es beim SX1231 nicht
+#endif
+    }
+  }
+}
+
 int Chip_readRSSI() {   /* Read RSSI value from Register */
-  uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST);  // not converted
-  RSSI_dez = rssiRaw / -2;                  // SX1231 RSSI for website
+  uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST); // not converted
+  RSSI_dez = rssiRaw / -2;                          // SX1231 RSSI for website
   int16_t RSSI_raw = 0;
   if (rssiRaw >= 21 && rssiRaw < 149) {
     RSSI_raw = rssiRaw - 148;
@@ -393,8 +443,8 @@ void Chip_setFreq(uint32_t frequency, byte * arr) {   // frequency set & calcula
 byte Chip_Bandw_cal(float input) {   /* bandwidth calculation from web */
   int bits = 0;
   int bw = 0;
-  uint8_t RegDataModul = Chip_readReg(0x02, 0); // Data operation mode and Modulation settings
-  uint8_t ModulationType = (RegDataModul & 0b00011000) >> 3; // Modulation scheme (FSK / OOK)
+  uint8_t RegDataModul = Chip_readReg(0x02, 0);               // Data operation mode and Modulation settings
+  uint8_t ModulationType = (RegDataModul & 0b00011000) >> 3;  // Modulation scheme (FSK / OOK)
   for (int e = 0; e < 8; e++) {
     for (int m = 0; m < 3; m++) {
       bits = (e) + (m << 3);
@@ -420,7 +470,7 @@ void Chip_Datarate_Set(long datarate, byte * arr) { // calculate register values
   }
   float fBitrate = fxOsc / datarate;
   uint16_t uBitrate = round(fBitrate);
-  arr[0] = uBitrate >> 8; // RegBitrateMsb
+  arr[0] = uBitrate >> 8;     // RegBitrateMsb
   arr[1] = uBitrate & 0x00FF; // RegBitrateLsb
 }
 
@@ -433,8 +483,8 @@ void SX1231_Deviation_Set(float deviation, byte * arr) { // calculate register v
   }
   float fFdev = deviation / fStep;
   uint16_t uFdev = round(fFdev);
-  arr[0] = uFdev >> 8; // RegFdevMsb
-  arr[1] = uFdev & 0x00FF; // RegFdevLsb
+  arr[0] = uFdev >> 8;      // RegFdevMsb
+  arr[1] = uFdev & 0x00FF;  // RegFdevLsb
 }
 
 void Chip_sendFIFO(char *data) {
@@ -443,7 +493,7 @@ void Chip_sendFIFO(char *data) {
 #endif
   SX1231_setIdleMode(); // SX1231 start idle mode
   ChipSelect();
-  SPI.transfer(0x80); // FIFO write address
+  SPI.transfer(0x80);   // FIFO write address
   uint8_t val;
   for (uint8_t i = 0; i < strlen(data); i += 2) {
     val = hex2int(data[i]) * 16;
@@ -455,7 +505,7 @@ void Chip_sendFIFO(char *data) {
   while ((Chip_readReg(0x28, 0) & 0x08) == 0x00) { // wait for PacketSent in RegIrqFlags2
     delay(1);
   }
-  SX1231_setIdleMode(); // SX1231 start idle mode
+  SX1231_setIdleMode();     // SX1231 start idle mode
 }
 
 #endif

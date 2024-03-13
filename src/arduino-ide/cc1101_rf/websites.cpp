@@ -98,8 +98,12 @@ void web_chip() { // ########## web_chip ##########
     website += Chip_readReg(CC110x_MARCSTATE, READ_BURST);
 #elif RFM69
     website += (Chip_readReg(0x01, 0x00) & 0b00011100) >> 2;
+    website += (F("</span> RegIrqFlags1: "));
+    website += String(Chip_readReg(0x27, 0x00), BIN);
+    website += (F(" RegIrqFlags2: "));
+    website += String(Chip_readReg(0x28, 0x00), BIN);
 #endif
-    website += F("</span></td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
+    website += F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
     website += ReceiveModeName;
     website += F("</span></td></tr><tr><td>Enabled mode(s)</td><td colspan=\"2\"><span id=\"ToggleBank\">");
     for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
@@ -1220,19 +1224,19 @@ void WebSocket_modes() {
     website += ReceiveModeNr;
     website += ',';
     for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
-//    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
+      //    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += ToggleTimeMode[c];
       if (c < NUMBER_OF_MODES - 1) {
-//      if (c < RegistersMaxCnt - 1) {
+        //      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }
     website += ',';
     for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
-//    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
+      //    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += msgCountMode[c];
       if (c < NUMBER_OF_MODES - 1) {
-//      if (c < RegistersMaxCnt - 1) {
+        //      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }

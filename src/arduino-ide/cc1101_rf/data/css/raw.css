@@ -22,3 +22,12 @@ select {text-align: right;}
  background-color: #ffff00;
  color: black;
 }
+
+/*------ dataTable | changing color per line --------*/
+#dataTable tr:nth-child(even) > td {
+ background-color: #ffffff
+}
+
+#dataTable tr:nth-child(odd) > td {
+ background-color: #e3e3e3
+}

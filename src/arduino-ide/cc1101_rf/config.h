@@ -22,9 +22,10 @@
 
 //#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?)
+//                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS ca. 5800
 
-#define FWVer             "V 2.1.0pre"
-#define FWVerDate         "2024-03-04"
+#define FWVer             "V 2.1.1pre"
+#define FWVerDate         "2024-03-13"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -106,18 +107,15 @@
 #define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
+#define WMBus_S                 1
+#define WMBus_T                 1
 #define X_Sense                 1
 
 /* under development */
 //#define HomeMatic               1   // only CC110x inside
 //#define Lacrosse_mode3          1   // only CC110x inside
 //#define MAX                     1   // only CC110x inside
-//#define WMBus_C                 1   // only RFM69 inside
 //#define WMBus_LINK_B            1   // only CC110x inside
-#ifdef CC110x
-#define WMBus_S                 1   // only CC110x inside
-#define WMBus_T                 1   // only CC110x inside
-#endif
 
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
@@ -137,6 +135,8 @@
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 #define OOK_MU_433              1
+//#define WMBus_S                 1
+//#define WMBus_T                 1
 #define X_Sense                 1
 #endif
 

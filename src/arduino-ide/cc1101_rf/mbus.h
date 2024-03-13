@@ -35,6 +35,7 @@ extern bool FSKdebug;
 extern String msg;                                  // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
 extern uint32_t msgCount;                           // Nachrichtenzähler über alle empfangenen Nachrichten
 extern int8_t freqErr;                              // CC110x automatic Frequency Synthesizer Control
+extern uint8_t rssi;
 extern uint32_t msgCountMode[NUMBER_OF_MODES];      // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 extern uint8_t ToggleTimeMode[NUMBER_OF_MODES];     // Toggle, Zeit in Sekunden
 extern void WebSocket_raw(const String & html_raw); /* RAW,Lacrosse_mode1,9203816AB3,-98,-22 */
@@ -50,7 +51,7 @@ extern void WebSocket_raw(const String & html_raw); /* RAW,Lacrosse_mode1,920381
 #endif  // END - SIGNALduino_comp || no compatible
 
 void mbus_init(uint8_t ccN);
-void mbus_task(uint16_t Boffs_ccN);
+void mbus_task();
 void mbus_send(int8_t startdata);
 
 #define WMBUS_NONE 0
@@ -119,14 +120,10 @@ typedef struct TXinfoDescr {
 
 /***********************************************************************************
     Filename: mbus_defs.h
-
     Copyright 2007 Texas Instruments, Inc.
 ***********************************************************************************/
 
 #include <inttypes.h>
-
-//#define uint8 uint8_t
-//#define uint16 uint16_t
 
 //----------------------------------------------------------------------------------
 //  Standard Defines
