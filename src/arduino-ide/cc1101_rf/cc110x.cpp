@@ -85,9 +85,7 @@ struct Data Registers[] = {
 #ifdef X_Sense
   { Config_X_Sense,  sizeof(Config_X_Sense) / sizeof(Config_X_Sense[0]), "X_Sense", 6  },
 #endif
-#ifdef WMBus_LINK_B
-  { WMBUS_Link_B,  sizeof(WMBUS_Link_B) / sizeof(WMBUS_Link_B[0]), "WMBUS_Link_B", 32 },
-#endif
+
 
   /* under development */
 #ifdef HomeMatic
@@ -102,7 +100,6 @@ struct Data Registers[] = {
   /* under development END */
 };
 
-uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
 
 void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
@@ -145,7 +142,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
     // Serial.print(F("[DB] CC110x_RXBYTES                  ")); Serial.println(Chip_readReg(CC110x_RXBYTES, READ_BURST), HEX);        // RXBYTES - Underflow and Number of Bytes
     // Serial.print(F("[DB] CC110x_RCCTRL1_STATUS           ")); Serial.println(Chip_readReg(CC110x_RCCTRL1_STATUS, READ_BURST), HEX); // CC110x_RCCTRL1_STATUS - Last RC Oscillator Calibration Result
     // Serial.print(F("[DB] CC110x_RCCTRL0_STATUS           ")); Serial.println(Chip_readReg(CC110x_RCCTRL0_STATUS, READ_BURST), HEX); // CC110x_RCCTRL0_STATUS - Last RC Oscillator Calibration Result
-    Serial.print(F("[DB] CC110x_available_modes          ")); Serial.println(RegistersMaxCnt);                                        // Number of compiled register modes
+    Serial.print(F("[DB] CC110x_available_modes          ")); Serial.println(NUMBER_OF_MODES);                                        // Number of compiled register modes
     Serial.print(F("[DB] Prog_Ident Firmware1            ")); Serial.println(Prog_Ident1);
     Serial.print(F("[DB] Prog_Ident Firmware2            ")); Serial.println(Prog_Ident2);
 #endif
@@ -153,7 +150,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
     /* wenn Registerwerte geändert wurden beim compilieren */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
-    for (byte i = 0; i < RegistersMaxCnt; i++) {
+    for (byte i = 0; i < NUMBER_OF_MODES; i++) {
       chk += Registers[i].PKTLEN;
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
@@ -192,46 +189,46 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Freq.Offset              ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
 #endif
-
-      if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
+      if (ReceiveModeNr < NUMBER_OF_MODES) {
+        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
 #ifdef debug_chip
-        ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
+          ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
+          ReceiveModeName = Registers[ReceiveModeNr].name;
+          Serial.println(F("[DB] CC110x use config from EEPROM"));
+          Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
+          Serial.print(F(", ")); Serial.println(ReceiveModeName);
+#endif
+          /* CC110x - configure CC110x registers from flash addresses */
+          for (byte i = 0; i < 41; i++) {
+#ifdef debug_chip
+            Serial.print(F("[DB] CC110x_init, EEPROM   0x")); SerialPrintDecToHex(i); Serial.println("");
+#endif
+            Chip_writeReg(i, EEPROMread(i));
+          }
+        }
+
+        if (ToggleCnt > 0) { // normaler Start
+          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
+        }
+
+#ifdef debug_chip
+        Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
+#endif
         ReceiveModeName = Registers[ReceiveModeNr].name;
-        Serial.println(F("[DB] CC110x use config from EEPROM"));
-        Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
-        Serial.print(F(", ")); Serial.println(ReceiveModeName);
-#endif
-        /* CC110x - configure CC110x registers from flash addresses */
-        for (byte i = 0; i < 41; i++) {
-#ifdef debug_chip
-          Serial.print(F("[DB] CC110x_init, EEPROM   0x")); SerialPrintDecToHex(i); Serial.println("");
-#endif
-          Chip_writeReg(i, EEPROMread(i));
+        ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        uint8_t MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
+        if (ReceiveModeName[0] == 'W') { // WMBUS
+          FSK_RAW = 2;
+        } else {
+          FSK_RAW = 0;
+          if (MOD_FORMAT != 3) { // FSK
+            attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+          } else { // OOK
+            attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
+          }
         }
+        Chip_setReceiveMode(); /* enable RX */
       }
-
-      if (ToggleCnt > 0) { // normaler Start
-        Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
-      }
-
-#ifdef debug_chip
-      Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
-#endif
-      ReceiveModeName = Registers[ReceiveModeNr].name;
-      ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-      uint8_t MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-      if (ReceiveModeName[0] == 'W') { // WMBUS
-        FSK_RAW = 2;
-      } else {
-        FSK_RAW = 0;
-        if (MOD_FORMAT != 3) { // FSK
-          attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-        } else { // OOK
-          attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-        }
-      }
-      Chip_setReceiveMode(); /* enable RX */
-
     } else { /* Ende normaler Start */
       /* ERROR EEPROM oder Registeranzahl geändert */
       EEPROMwrite(EEPROM_ADDR_Prot, 0);  // reset
@@ -350,13 +347,13 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
 #ifdef debug_mbus
       Serial.println(reg_modus);
 #endif
-      mbus_init(11);
+      mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
     }
     if (reg_modus.endsWith("T")) { // WMBUS_T
 #ifdef debug_mbus
       Serial.println(reg_modus);
 #endif
-      mbus_init(12);
+      mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
   }
 #endif
@@ -525,6 +522,14 @@ int Chip_readRSSI() {                                        /* Read RSSI value 
 #endif
 }
 
+void CC110x_readFreqErr() {                                        /* Read RSSI value from Register */
+  freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
+  if (freqAfc == 1) {
+    freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung
+    freqOffAcc += round(freqErrAvg);
+    Chip_writeReg(CC110x_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
+  }
+}
 
 void Chip_sendFIFO(char *data) {
   CC110x_setTransmitMode();     // enable TX

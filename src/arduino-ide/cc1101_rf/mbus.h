@@ -39,6 +39,7 @@ extern uint8_t rssi;
 extern uint32_t msgCountMode[NUMBER_OF_MODES];      // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 extern uint8_t ToggleTimeMode[NUMBER_OF_MODES];     // Toggle, Zeit in Sekunden
 extern void WebSocket_raw(const String & html_raw); /* RAW,Lacrosse_mode1,9203816AB3,-98,-22 */
+extern void CC110x_readFreqErr();
 
 #ifdef SIGNALduino_comp
 #define MSG_BUILD_Data          F("MN;D=")
@@ -50,7 +51,7 @@ extern void WebSocket_raw(const String & html_raw); /* RAW,Lacrosse_mode1,920381
 #define MSG_BUILD_AFC           F("; FREQAFC=")
 #endif  // END - SIGNALduino_comp || no compatible
 
-void mbus_init(uint8_t ccN);
+void mbus_init(uint8_t wmBusMode);
 void mbus_task();
 void mbus_send(int8_t startdata);
 
@@ -76,7 +77,7 @@ typedef struct RXinfoDescr {
   uint16_t bytesLeft;           // Bytes left to to be read from the RX FIFO
   uint8_t *pByteIndex;          // Pointer to current position in the byte array
   uint8_t format;               // Infinite or fixed packet mode
-  uint8_t complete;             // Packet received complete
+//  uint8_t complete;             // Packet received complete
   uint8_t mode;                 // S-mode or T-mode
   uint8_t framemode;            // C-mode or T-mode frame
   uint8_t frametype;            // Frame type A or B when in C-mode

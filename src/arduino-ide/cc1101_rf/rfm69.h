@@ -6,8 +6,8 @@
 #include <digitalWriteFast.h>             // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
-//#define FXOSC_28 // SX1231 FXOSC 28,375 MHz, sonst RFM69 FXOSC 32,000 MHz
-#define fxOsc 32000000                             // Crystal oscillator frequency
+//#define fxOsc 28375000                             // Crystal oscillator frequency SX1231
+#define fxOsc 32000000                             // Crystal oscillator frequency RFM69
 const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CHIP_NAME             "RFM69"              // name Chip
 #define CHIP_RFNAME           "rfm69_rf_Gateway"   // name web interface
@@ -16,9 +16,9 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES       8                    // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       8                    // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES       6                    // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       6                    // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -68,7 +68,6 @@ extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 extern float Freq_offset;
 extern int16_t RSSI_dez;
 extern struct Data Registers[];
-extern uint8_t RegistersMaxCnt;
 extern uint8_t freqAfc;
 
 struct Data {
@@ -105,7 +104,7 @@ const uint8_t Config_Default[] PROGMEM = {
   0xB0, // Address 0x15 - Reserved15 (-)
   0x7B, // Address 0x16 - Reserved16 (-)
   0x9B, // Address 0x17 - Reserved17 (-)
-  0x88, // Address 0x18 - RegLna (LNA settings)
+  0x89, // Address 0x18 - RegLna (LNA settings)
   0x55, // Address 0x19 - RegRxBw (Channel Filter BW Control)
   0x8B, // Address 0x1A - RegAfcBw (Channel Filter BW control during the AFC routine)
   0x40, // Address 0x1B - RegOokPeak (OOK demodulator selection and control in peak mode)
@@ -195,7 +194,7 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0xB0, // Address 0x15 - Reserved15
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
-  0x09, // Address 0x18 - RegLna
+  0x89, // Address 0x18 - RegLna
   0x4A, // Address 0x19 - RegRxBw
   0x82, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
@@ -468,7 +467,7 @@ const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   0xB0, // Address 0x15 - Reserved15
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
-  0x88, // Address 0x18 - RegLna
+  0x89, // Address 0x18 - RegLna
   0x4A, // Address 0x19 - RegRxBw
   0x91, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
@@ -627,23 +626,23 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
 #ifdef WMBus_S
 const uint8_t Config_WMBus_S[] PROGMEM = {
   // SX1231 register values for WMBus_S
-  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
-  0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
+  0x00, // Address 0x00 - RegFifo
+  0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
-  0x01, // Address 0x03 - RegBitrateMsb
-  0x37, // Address 0x04 - RegBitrateLsb
-  0x02, // Address 0x05 - RegFdevMsb
-  0x6F, // Address 0x06 - RegFdevLsb
-  0xD9, // Address 0x07 - RegFrfMsb
-  0x3C, // Address 0x08 - RegFrfMid
-  0xCD, // Address 0x09 - RegFrfLsb
+  0x03, // Address 0x03 - RegBitrateMsb  - 32.720 bps
+  0xD2, // Address 0x04 - RegBitrateLsb  - 32.720 bps
+  0x03, // Address 0x05 - RegFdevMsb     - 49.988 Hz
+  0x33, // Address 0x06 - RegFdevLsb     - 49.988 Hz
+  0xD9, // Address 0x07 - RegFrfMsb - 868.299.988 Hz
+  0x13, // Address 0x08 - RegFrfMid - 868.299.988 Hz
+  0x33, // Address 0x09 - RegFrfLsb - 868.299.988 Hz
   0x41, // Address 0x0A - RegOsc1
   0x00, // Address 0x0B - RegAfcCtrl
   0x02, // Address 0x0C - RegLowBat
-  0x9A, // Address 0x0D - RegListen1
+  0x92, // Address 0x0D - RegListen1
   0xF5, // Address 0x0E - RegListen2
   0x20, // Address 0x0F - RegListen3
-  0x24, // Address 0x10 - RegVersion
+  0x23, // Address 0x10 - RegVersion - 0x23 = SX1231, 0x24 = SX1231H
   0x9F, // Address 0x11 - RegPaLevel
   0x09, // Address 0x12 - RegPaRamp
   0x1A, // Address 0x13 - RegOcp
@@ -651,13 +650,16 @@ const uint8_t Config_WMBus_S[] PROGMEM = {
   0xB0, // Address 0x15 - Reserved15
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
-  0x09, // Address 0x18 - RegLna
-  0x91, // Address 0x19 - RegRxBw
-  0x8A, // Address 0x1A - RegAfcBw
+  //  0x09, // Address 0x18 - RegLna - LNA’s input impedance 50 ohms, LNA gain setting: G1 = highest gain
+  0x89, // Address 0x18 - RegLna - LNA’s input impedance 200 ohms, LNA gain setting: G1 = highest gain
+  //  0x49, // Address 0x19 - RegRxBw - 200.000 Hz
+  0x51, // Address 0x19 - RegRxBw - 166.667 Hz
+  //  0x42, // Address 0x19 - RegRxBw - 125.000 Hz
+  0x82, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
   0x80, // Address 0x1C - RegOokAvg
   0x06, // Address 0x1D - RegOokFix
-  0x14, // Address 0x1E - RegAfcFei
+  0x10, // Address 0x1E - RegAfcFei
   0x00, // Address 0x1F - RegAfcMsb
   0x00, // Address 0x20 - RegAfcLsb
   0x00, // Address 0x21 - RegFeiMsb
@@ -672,22 +674,24 @@ const uint8_t Config_WMBus_S[] PROGMEM = {
   0x00, // Address 0x2A - RegRxTimeout1
   0x00, // Address 0x2B - RegRxTimeout2
   0x00, // Address 0x2C - RegPreambleMsb
-  0x04, // Address 0x2D - RegPreambleLsb
-  0x90, // Address 0x2E - RegSyncConfig
-  0x54, // Address 0x2F - RegSyncValue1
-  0x3D, // Address 0x30 - RegSyncValue2
-  0xD4, // Address 0x31 - RegSyncValue3
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x88, // Address 0x2E - RegSyncConfig
+  0x76, // Address 0x2F - RegSyncValue1
+  0x96, // Address 0x30 - RegSyncValue2
+  0x00, // Address 0x31 - RegSyncValue3
   0x00, // Address 0x32 - RegSyncValue4
   0x00, // Address 0x33 - RegSyncValue5
   0x00, // Address 0x34 - RegSyncValue6
   0x00, // Address 0x35 - RegSyncValue7
   0x00, // Address 0x36 - RegSyncValue8
   0x00, // Address 0x37 - RegPacketConfig1
-  0x42, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x38 - RegPayloadLength - unlimited
+  //  0x21, // Address 0x38 - RegPayloadLength - 33 Byte
+  //  0x39, // Address 0x38 - RegPayloadLength - 57 Byte
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
-  0x02, // Address 0x3B - RegAutoModes
-  0x19, // Address 0x3C - RegFifoThresh
+  0x00, // Address 0x3B - RegAutoModes
+  0xB8, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -707,9 +711,10 @@ const uint8_t Config_WMBus_S[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  //  0x1B, // Address 0x58 - RegTestLna - 0x1B  Normal mode
+  0x2D, // Address 0x58 - RegTestLna - 0x2D  High sensitivity mode
   0x09, // Address 0x59 - RegTestTcxo
-  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x08, // Address 0x5F - RegTestllBw
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 WMBus_S register values
@@ -721,12 +726,28 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x00, // Address 0x00 - RegFifo
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
-  0x01, // Address 0x03 - RegBitrateMsb - 103.226 bps
-  0x36, // Address 0x04 - RegBitrateLsb - 103.226 bps
+  0x01, // Address 0x03 - RegBitrateMsb - 100.000 bps
+  0x40, // Address 0x04 - RegBitrateLsb - 100.000 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 102.894 bps
+  //  0x37, // Address 0x04 - RegBitrateLsb - 102.894 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 103.226 bps
+  //  0x36, // Address 0x04 - RegBitrateLsb - 103.226 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 103.560 bps
+  //  0x35, // Address 0x04 - RegBitrateLsb - 103.560 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 103.896 bps
+  //  0x34, // Address 0x04 - RegBitrateLsb - 103.896 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 104.235 bps
+  //  0x33, // Address 0x04 - RegBitrateLsb - 104.235 bps
+  //  0x01, // Address 0x03 - RegBitrateMsb - 105.263 bps
+  //  0x30, // Address 0x04 - RegBitrateLsb - 105.263 bps
+  //  0x01, // Address 0x05 - RegFdevMsb     - 18.982 Hz
+  //  0x37, // Address 0x06 - RegFdevLsb     - 18.982 Hz
+  //  0x01, // Address 0x05 - RegFdevMsb     - 30.334 Hz
+  //  0xF1, // Address 0x06 - RegFdevLsb     - 30.334 Hz
   0x02, // Address 0x05 - RegFdevMsb     - 38.086 Hz
   0x70, // Address 0x06 - RegFdevLsb     - 38.086 Hz
-  0xD9, // Address 0x07 - RegFrfMsb - 868.949.951 Hz
-  0x3C, // Address 0x08 - RegFrfMid - 868.949.951 Hz
+  0xD9, // Address 0x07 - RegFrfMsb - 868.950.012 Hz
+  0x3C, // Address 0x08 - RegFrfMid - 868.950.012 Hz
   0xCD, // Address 0x09 - RegFrfLsb - 868.950.012 Hz
   0x41, // Address 0x0A - RegOsc1
   0x00, // Address 0x0B - RegAfcCtrl
@@ -742,8 +763,11 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0xB0, // Address 0x15 - Reserved15
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
-  0x89, // Address 0x18 - RegLna
-  0x42, // Address 0x19 - RegRxBw - 125.000 Hz
+  //  0x09, // Address 0x18 - RegLna - LNA’s input impedance 50 ohms, LNA gain setting: G1 = highest gain
+  0x89, // Address 0x18 - RegLna - LNA’s input impedance 200 ohms, LNA gain setting: G1 = highest gain
+  //  0x49, // Address 0x19 - RegRxBw - 200.000 Hz
+  //  0x42, // Address 0x19 - RegRxBw - 125.000 Hz
+  0x51, // Address 0x19 - RegRxBw - 166.667 Hz
   0x82, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
   0x80, // Address 0x1C - RegOokAvg
@@ -775,6 +799,8 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x00, // Address 0x36 - RegSyncValue8
   0x00, // Address 0x37 - RegPacketConfig1
   0x00, // Address 0x38 - RegPayloadLength - unlimited
+  //  0x21, // Address 0x38 - RegPayloadLength - 33 Byte
+  //  0x39, // Address 0x38 - RegPayloadLength - 57 Byte
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes

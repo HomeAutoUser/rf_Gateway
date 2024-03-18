@@ -23,6 +23,7 @@ uint8_t rssi;
 #include "functions.h"
 
 /* Settings for OOK messages without Sync Pulse (MU) */
+#ifdef OOK_MU_433
 #define MsgLenMin               24            // message minimum length
 #define MsgLenMax               254           // message maximum length
 #define PatMaxCnt               8             // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
@@ -30,6 +31,7 @@ uint8_t rssi;
 #define FIFO_LENGTH             90            // 90 from SIGNALduino FW
 #include "SimpleFIFO.h"
 SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;        // store FIFO_LENGTH # ints
+#endif
 
 /* varible´s for output */
 extern const char compile_date[];
@@ -72,6 +74,7 @@ uint8_t ToggleTimeMode[NUMBER_OF_MODES];      // Toggle, Zeit pro Mode in Sekund
 byte ToggleCnt = 0;                           // Toggle, Anzahl aktiver Modi
 
 /* Settings for OOK messages without Sync Pulse (MU) */
+#ifdef OOK_MU_433
 #define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
 #define t_minP 75                             // Zeitdauer minimum für gültigen Puls in µs
 unsigned long lastTime = 0;                   // Zeit, letzte Aktion
@@ -82,12 +85,15 @@ byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
 byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
 int16_t first;                                // Zeiger auf den ersten Puffereintrag
 int16_t last;                                 // Zeiger auf den letzten Puffereintrag
-String msg;                                   // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
 byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
 byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
+bool valid;
+#endif
+
+String msg;                                   // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
 byte MOD_FORMAT;                              // Marker - Modulation
 byte FSK_RAW;                                 // Marker - FSK Modulation RAW interrupt
-bool valid;
+
 
 /* predefinitions of the functions */
 inline void doDetect();
@@ -200,6 +206,7 @@ void Interupt() {
   if (MOD_FORMAT != 3) {  /* not OOK */
     FSK_RAW = 1;
   } else {                /* OOK */
+#ifdef OOK_MU_433
     const unsigned long Time = micros();
     const signed long duration = Time - lastTime;
     lastTime = Time;
@@ -215,6 +222,7 @@ void Interupt() {
       }
       FiFo.enqueue(sDuration);      // add an sDuration
     }                               // sonst => Müll
+#endif
   }
 }
 #endif
@@ -223,6 +231,7 @@ void Interupt() {
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
 #ifdef CC110x
+  detachInterrupt(digitalPinToInterrupt(GDO2));
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 #endif
   Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
@@ -238,9 +247,12 @@ void Interupt_Variant(byte nr) {
   delay(10);
 #endif
 
+  ReceiveModeName = Registers[ReceiveModeNr].name;
+  ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+
 #ifdef CC110x
   MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-  if (Registers[ReceiveModeNr].name[0] == 'W') { // WMBUS
+  if (ReceiveModeName[0] == 'W') { // WMBUS
     FSK_RAW = 2;
   } else {
     FSK_RAW = 0;
@@ -251,7 +263,7 @@ void Interupt_Variant(byte nr) {
     }
   }
 #elif RFM69
-  if (Registers[ReceiveModeNr].name[0] == 'W') { // WMBUS
+  if (ReceiveModeName[0] == 'W') { // WMBUS
     FSK_RAW = 2;
   } else {
     FSK_RAW = 0;
@@ -452,18 +464,19 @@ void setup() {
 #endif  // END - BOARDS
 #endif  // END debug
 
+  ReceiveModeNr = 255;
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
     ToggleTimeMode[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleTime + modeNr); // scan time all modes
     ToggleArray[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleMode + modeNr); // read all modes if enabled/disabled
     if (ToggleArray[modeNr] > 1) { // reset after flash is cleared
-      ToggleArray[modeNr] = 0;
+      ToggleArray[modeNr] = 0; // disable mode
       EEPROM.write(EEPROM_ADDR_ToggleMode + modeNr, 0);
 #ifdef Code_ESP
       EEPROM.commit();
 #endif
     }
     ToggleCnt += ToggleArray[modeNr]; // count enabled modes
-    if (ReceiveModeNr == 0 && ToggleArray[modeNr] == 1) { // found first enbabled mode
+    if (ReceiveModeNr == 255 && ToggleArray[modeNr] == 1) { // found first enbabled mode
       ReceiveModeNr = modeNr;
       toggleTick = ToggleTimeMode[modeNr]; // set toggle time
     }
@@ -473,8 +486,7 @@ void setup() {
   Serial.print(F("[DB] ReceiveModeNr: ")); Serial.println(ReceiveModeNr);
 #endif
   ChipInit();
-  if (ToggleCnt == 1) {                // wechseln in den zuletzt aktivierten Empfangsmodus
-    ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+  if (ToggleCnt == 1) {                 // wechseln in den zuletzt aktivierten Empfangsmodus
     Interupt_Variant(ReceiveModeNr);    // Empfangsvariante & Register einstellen
   }
 }
@@ -509,7 +521,7 @@ void loop() {
     WebSocket_index();                  // Dauer: ohne connect ca. 100 µS, 1 Client ca. 1700 µS, 2 Clients ca. 2300 µS
 #endif
     if (ToggleCnt > 1) {                // Toggle Option
-      if (millis() - toggleTick > ToggleTimeMode[ReceiveModeNr] * 1000) { // Abfragen, ob Zeit zum einschalten erreicht
+      if (millis() - toggleTick > (uint32_t)ToggleTimeMode[ReceiveModeNr] * 1000 ) { // Abfragen, ob Zeit zum einschalten erreicht
         toggleTick = millis();                  // Zeit merken, an der eingeschaltet wurde
         ToggleOnOff();
       }
@@ -568,17 +580,12 @@ void loop() {
     msgCount++;
     msgCountMode[ReceiveModeNr]++;
 #ifdef CC110x
-    freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
-    if (freqAfc == 1) {
-      freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung
-      freqOffAcc += round(freqErrAvg);
-      Chip_writeReg(CC110x_FSCTRL0, freqOffAcc);          // 0x0C: FSCTRL0 – Frequency Synthesizer Control
-    }
+    CC110x_readFreqErr();
 #endif
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     String html_raw = "";   // für die Ausgabe auf dem Webserver
-    html_raw.reserve(128);
+    html_raw.reserve(256);
 #endif
 
 #if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
@@ -632,11 +639,13 @@ void loop() {
     Chip_setReceiveMode();      // start receive mode
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
+#ifdef OOK_MU_433
     /* OOK */
     while (FiFo.count() > 0 ) {       // Puffer auslesen und an Dekoder uebergeben
       int aktVal = FiFo.dequeue();    // get next element
       decode(aktVal);
     }
+#endif
   }
 
   /* only for send data from webfronted -> ESP devices */
@@ -681,9 +690,9 @@ void loop() {
 
 /* #### ab hier, Funktionen mit Makroabhängigkeit #### */
 void ToggleOnOff() {
-#ifdef CC110x
-  detachInterrupt(digitalPinToInterrupt(GDO2));
-#endif
+  //#ifdef CC110x
+  //  detachInterrupt(digitalPinToInterrupt(GDO2));
+  //#endif
 #ifdef CODE_ESP
   String tmp = "";    // for temp outputs print
   tmp.reserve(256);
@@ -719,7 +728,6 @@ void ToggleOnOff() {
   MSG_OUTPUT(tmp);
 #endif
 #endif  // END - debug
-  ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
   Interupt_Variant(ReceiveModeNr);    // set receive variant & register
 }
 /* ----------------------------------------------------------------- void ToggleOnOff end */
@@ -745,10 +753,10 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
 #endif  // END - debug
 
-  switch (buf_input[0]) { /* integrated ? m t tob tos x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
+  switch (buf_input[0]) { /* integrated ? t tob tot x C C<n><n> C99 CG C3E C0DnF I M P R V W<n><n><n><n> WS<n><n> */
     case '?':             /* command ? */
       if (!buf_input[1]) {
-        MSG_BUILD(F("e, foff, ft, m, t, tob, tos, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS\n"));
+        MSG_BUILD(F("e, foff, ft, t, tob, tot, x, C, C3E, CG, CEA, CDA, E, I, M, P, R, SN, V, W, WS\n"));
 #ifdef CODE_ESP
         MSG_OUTPUT(tmp);
 #endif
@@ -796,7 +804,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (ChipFound == false) {
         NO_Chip();
       } else {
-        for (byte i = 0; i < RegistersMaxCnt; i++) {
+        for (byte i = 0; i < NUMBER_OF_MODES; i++) {
 #ifdef CC110x
           if (strcmp(Registers[i].name, "OOK_MU_433") == 0) {
             Interupt_Variant(i);
@@ -812,61 +820,6 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
 
-    case 'm': /* command m - activates a mode */
-      if (buf_input[1]) {
-        /* command m<n>, check of decimal */
-        if (isNumeric(input.substring(1)) == 1) {
-          if (ChipFound == false) {
-            NO_Chip();
-          } else {
-#ifdef CC110x
-            detachInterrupt(digitalPinToInterrupt(GDO2));
-#endif  // END - CC110x
-            ToggleCnt = 1; // beendet Toggle, sonst Absturz nach tob88 und anschließend m2 wenn ToggleCnt > 3
-            byte int_substr1_serial = input.substring(1).toInt(); /* everything after m to byte (old String) */
-            if (int_substr1_serial <= RegistersMaxCnt) {
-              /* "Normal Option" - set all Register value´s */
-              if (int_substr1_serial <= (RegistersMaxCnt - 1)) {
-                if (int_substr1_serial == 0) {
-                  Freq_offset = 0;  // reset FrequencOffset
-                }
-                MSG_BUILD(F("Set register to ")); MSG_BUILD_LF(Registers[int_substr1_serial].name);
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
-#endif
-                ReceiveModeName = Registers[int_substr1_serial].name;
-                ReceiveModeNr = int_substr1_serial;
-                ReceiveModePKTLEN = Registers[int_substr1_serial].PKTLEN;
-                Interupt_Variant(int_substr1_serial);
-#if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
-#ifdef CODE_AVR
-                Serial.print(F("[DB] CC110x_MARCSTATE ")); Serial.println(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
-#elif CODE_ESP
-                MSG_OUTPUTALL(F("[DB] CC110x_MARCSTATE ")); MSG_OUTPUTALLLN(Chip_readReg(CC110x_MARCSTATE, READ_BURST), HEX);
-#endif  // END - CODE_AVR || CODE_ESP
-#endif  // END - #if defined(debug_cc110x_ms) &&  defined(CC110x)
-#ifdef debug
-                MSG_BUILD(F("[DB] Input, writes all current values to EEPROM\n"));
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
-#endif
-#endif  // END - debug
-                for (byte i = 0; i < Registers[int_substr1_serial].length; i++) { /* write register values ​​to flash */
-                  EEPROMwrite(i, pgm_read_byte_near(Registers[int_substr1_serial].reg_val + i));
-                }
-                EEPROMwrite(EEPROM_ADDR_Prot, int_substr1_serial); /* write enabled protocoll */
-              } else if (int_substr1_serial >= RegistersMaxCnt) { /* "Special Option" */
-                MSG_BUILD(F("Mode not available.\n"));
-#ifdef CODE_ESP
-                MSG_OUTPUT(tmp);
-#endif
-              }
-            }
-          }
-        }
-      }
-      break; /* -#-#-#-#- - - next case - - - #-#-#-#- */
-
     case 't':
       if (!buf_input[1]) { /* command t - get uptime*/
         MSG_BUILD_LF(uptime);
@@ -875,24 +828,24 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
       } else {
 
-        if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<n><m> & tos<mm><nnn> */
+        if (buf_input[1] && buf_input[1] == 'o' && buf_input[2]) { /* command tob<mm><n> & tot<mm><nnn> */
           if (ChipFound == false) {
             NO_Chip();
           } else {
-            if (buf_input[2] == 's') { // command tos<mm><nnn> - toggletime
-              if (isNumeric(input.substring(3)) && input.length() < 9) { // command tos<mm><nnn> (00-99,0-999) OK
+            if (buf_input[2] == 't') { // command tot<mm><nnn> - toggletime
+              if (isNumeric(input.substring(3)) && input.length() < 9) { // command tot<mm><nnn> (00-99,0-999) OK
                 uint8_t modeNr = input.substring(3, 5).toInt();
                 uint16_t intTime = input.substring(5).toInt();
-                if (modeNr >= NUMBER_OF_MODES) { // command tos<mm><nnn> mode NOT OK
+                if (modeNr >= NUMBER_OF_MODES) { // command tot<mm><nnn> mode NOT OK
 #ifdef debug
                   MSG_BUILD(F("[DB] Input, Toggle mode not available [0-")); MSG_BUILD(NUMBER_OF_MODES - 1); MSG_BUILD_LF(F("]\n"));
 #endif
-                } else if (intTime < TOGGLE_TIME_MIN || intTime > TOGGLE_TIME_MAX) { // command tos<mm><nnn> time NOT OK
+                } else if (intTime < TOGGLE_TIME_MIN || intTime > TOGGLE_TIME_MAX) { // command tot<mm><nnn> time NOT OK
 #ifdef debug
                   MSG_BUILD(F("[DB] Input, Toggle time not in range [")); MSG_BUILD(TOGGLE_TIME_MIN);
                   MSG_BUILD('-'); MSG_BUILD(TOGGLE_TIME_MAX); MSG_BUILD(F(" seconds]\n"));
 #endif
-                } else { // command tos<mm><nnn> OK
+                } else { // command tot<mm><nnn> OK
 #ifdef debug
                   MSG_BUILD(F("[DB] Input, Toggle time mode ")); MSG_BUILD(modeNr);
                   MSG_BUILD(F(" set to ")); MSG_BUILD(intTime); MSG_BUILD(F(" seconds\n"));
@@ -928,7 +881,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CODE_ESP
               MSG_OUTPUT(tmp);
 #endif
-            } else if (buf_input[2] == 'b') { // command tob 88, tob99 or tob<0|1><nr>
+            } else if (buf_input[2] == 'b') { // command tob 88, tob99 or tob<nr><0|1>
               if (isNumeric(input.substring(3))) { // check command tob<0|1><nr> or tob99 or tob88
 #ifdef debug
                 MSG_BUILD(F("[DB] Input, cmd tob ")); MSG_BUILD(input.substring(3)); MSG_BUILD(F(" accepted\n"));
@@ -943,39 +896,57 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                   }
                   ToggleCnt = NUMBER_OF_MODES - 1; // enable toggle
                   ReceiveModeNr = NUMBER_OF_MODES - 1;
+                  toggleTick = millis();
                 } else if (buf_input[3] == '9' && buf_input[4] == '9') { // command tob99 -> reset togglebank
 #ifdef debug
                   MSG_BUILD(F("[DB] Input, toggleBank reset and STOP Toggle\n"));
 #endif  // END - debug
                   for (byte i = 0; i < NUMBER_OF_MODES; i++) {
                     ToggleArray[i] = 0; // disable mode
+                    EEPROMwrite(i + EEPROM_ADDR_ToggleMode, 0);
                   }
                   ToggleCnt = 0; // stop toggle
-                } else {                                                 // command tob<0|1><nr> -> enable/disable toggle mode
-                  uint8_t enable = input.substring(3, 4).toInt();
-                  if (enable > 1) { // command tob<0|1><nr> enable|disable NOT OK
+                } else {                                                 // command tob<nr><0|1> -> enable/disable toggle mode
+                  uint8_t enable = input.substring(5, 6).toInt(); // tob130
+                  if (enable > 1) { // command tob<nr><0|1> enable|disable NOT OK
 #ifdef debug
-                    MSG_BUILD(F("[DB] Input, first digit after tob incorrect, must be 0 or 1")); MSG_BUILD(F("\n"));
+                    MSG_BUILD(F("[DB] Input, last digit incorrect [0|1]")); MSG_BUILD(F("\n"));
 #endif
-                  } else if (input.substring(4).toInt() >= RegistersMaxCnt) { // command tob<0|1><nr> mode NOT OK
+                  } else if (input.substring(3, 5).toInt() >= NUMBER_OF_MODES) { // command tob<nr><0|1> mode NOT OK
 #ifdef debug
-                    MSG_BUILD(F("[DB] Input, Mode number greater RegistersMaxCnt [")); MSG_BUILD(RegistersMaxCnt - 1); MSG_BUILD(F("]\n"));
+                    MSG_BUILD(F("[DB] Input, mode number greater available modes [")); MSG_BUILD(NUMBER_OF_MODES - 1); MSG_BUILD(F("]\n"));
 #endif
-                  } else { // command tob<0|1><nr> enable|disable and mode OK
-                    ReceiveModeNr = input.substring(4).toInt();
+                  } else { // command tob<nr><0|1> enable|disable and mode OK
+                    ReceiveModeNr = input.substring(3, 5).toInt();
                     ToggleArray[ReceiveModeNr] = enable; // set mode enable/disable
                     EEPROMwrite(ReceiveModeNr + EEPROM_ADDR_ToggleMode, enable);
                     ToggleCnt = 0;
-                    for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
-                      ToggleCnt += ToggleArray[modeNr];
-                    }
 #ifdef debug
                     MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(Registers[ReceiveModeNr].name);
                     MSG_BUILD(F(" set to ")); MSG_BUILD(enable); MSG_BUILD(F("\n"));
 #endif
+                    for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+                      ToggleCnt += ToggleArray[modeNr];
+                      if (ToggleArray[modeNr] == 1) {
+                        ReceiveModeNr = modeNr;
+                      }
+                    }
+                    if (ToggleCnt == 0) {
+                      ReceiveModeNr = 255;
+#ifdef CC110x
+                      CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
+#elif RFM69
+                      SX1231_setIdleMode();           // SX1231 start idle mode
+#endif
+                    } else if (ToggleCnt == 1) {
+                      Interupt_Variant(ReceiveModeNr);
+                    } else if (ToggleCnt > 1) {
+                      toggleTick = millis();
+                      Interupt_Variant(ReceiveModeNr);
+                    }
                   }
                 }
-              } else { // command tob<m><nn> (00-99, 0-999) or tob88 or tob NOT OK
+              } else { // command tob<nn><m> (00-99, 0-999) or tob88 or tob NOT OK
 #ifdef debug
                 MSG_BUILD(F("[DB] Input, Command tob incorrect, must be tob<m><nn> (m=0|1 n=0-99), tob88 or tob99\n"));
 #endif
@@ -1206,7 +1177,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case 'M': /* command M */
       if (!buf_input[1]) {
         MSG_BUILD_LF(F("available register modes:"));
-        for (uint8_t i = 0; i < RegistersMaxCnt; i++) {
+        for (uint8_t i = 0; i < NUMBER_OF_MODES; i++) {
           if (i < 10) {
             MSG_BUILD('0');
           }
@@ -1575,6 +1546,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 
 
 /* for OOK modulation */
+#ifdef OOK_MU_433
 void decode(const int pulse) {  /* Pulsübernahme und Weitergabe */
   if (MsgLen > 0) {
     last = first;
@@ -1723,6 +1695,9 @@ void PatReset() { /* Zurücksetzen nach Nachrichtenbau oder max. Länge */
     ArPaT[i] = 0;
   }
 }
+
+
+#endif  // END - #ifndef OOK_MU_433
 
 
 void NO_Chip() {

@@ -8,9 +8,9 @@
 #include <SPI.h>
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES  19 // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  19 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  6  // Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -23,6 +23,7 @@ const uint8_t CC110x_PATABLE_868[8] PROGMEM = {0xC2, 0xCB, 0x81, 0x50, 0x27, 0x1
 const int8_t CC110x_PATABLE_POW[8] PROGMEM = {10, 7, 5, 0, -10, -15, -20, -30};
 
 int Chip_readRSSI();
+void CC110x_readFreqErr();
 uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);
 uint8_t CC110x_CmdStrobe(uint8_t cmd);
 uint8_t CC110x_cmdStrobeTo(const uint8_t cmd); // wait MISO and send command strobe to the CC1101 IC via SPI
@@ -58,13 +59,13 @@ extern byte FSK_RAW;                        // Marker - FSK Modulation RAW inter
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 
+extern int8_t freqErr;
 extern float Freq_offset;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern uint8_t freqAfc;
 extern int16_t RSSI_dez;
 extern struct Data Registers[];
-extern uint8_t RegistersMaxCnt;
 extern unsigned long uptime;
 
 struct Data {
@@ -1776,62 +1777,6 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 };
 #endif
 
-#ifdef WMBus_LINK_B
-const uint8_t WMBUS_Link_B[] PROGMEM = {
-  // from swra234a.pdf, Appendix D, CC1101 Register Settings for Radio Link B
-  // 0x06, // IOCFG2 - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
-  0x01,  // IOCFG2 - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold or the end of packet is reached. De-asserts when the RX FIFO is empty.
-  0x2E, // IOCFG1 - High impedance (3-state)
-  // 0x02, // IOCFG0 (TX) or 0x00 (RX) -
-  0x2E, // IOCFG0 - High impedance (3-state)
-  0x07, // FIFOTHR - TX 33 Bytes, RX 32 Bytes
-  0x54, // SYNC1
-  0x3D, // SYNC0
-  0xFF, // PKTLEN
-  0x04, // PKTCTRL1
-  0x00, // PKTCTRL0
-  0x00, // ADDR
-  0x00, // CHANNR
-  0x08, // FSCTRL1
-  0x00, // FSCTRL0
-  0x21, // FREQ2
-  0x6B, // FREQ1
-  0xD0, // FREQ0
-  0x5C, // MDMCFG4 (RX:103 kbaud) or 0x5B (TX:100 kbaud)
-  0x04, // MDMCFG3 (RX:103 kbaud) or 0xF8 (TX:100 kbaud)
-  // 0x05, // MDMCFG2 - Manchester disabled, 15/16 + carrier-sense above threshold
-  0x06, // MDMCFG2 - Manchester disabled, 16/16 + carrier-sense above threshold
-  // 0x07, // MDMCFG2 - Manchester disabled, 30/32 + carrier-sense above threshold - 0 Empfang
-  0x22, // MDMCFG1
-  0xF8, // MDMCFG0
-  0x44, // DEVIATN (RX: 38 kHz) or 0x50 (TX: 50 kHz)
-  0x07, // MCSM2
-  0x00, // MCSM1
-  0x18, // MCSM0
-  0x2E, // FOCCFG
-  0xBF, // BSCFG
-  0x43, // AGCCTRL2
-  0x09, // AGCCTRL1
-  0xB5, // AGCCTRL0
-  0x87, // WOREVT1
-  0x6B, // WOREVT0
-  0xFB, // WORCTRL
-  0xB6, // FREND1
-  0x10, // FREND0
-  0xEA, // FSCAL3
-  0x2A, // FSCAL2
-  0x00, // FSCAL1
-  0x1F, // FSCAL0
-  0x41, // RCCTRL1
-  0x00, // RCCTRL0
-  0x59, // FSTEST
-  0x7F, // PTEST
-  0x3F, // AGCTEST
-  0x81, // TEST2
-  0x35, // TEST1
-  0x09, // TEST0
-};
-#endif
 
 #define CHIP_NAME                 "CC110x"              // name Chip
 #ifdef SIGNALduino_comp

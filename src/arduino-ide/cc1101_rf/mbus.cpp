@@ -20,13 +20,8 @@ uint8_t mbus_mode = WMBUS_NONE;
 RXinfoDescr RXinfo;
 TXinfoDescr TXinfo;
 
-void mbus_init(uint8_t ccN) {
-  if (ccN == 11) {
-    mbus_mode = WMBUS_SMODE;
-  }
-  else if (ccN == 12) {
-    mbus_mode = WMBUS_TMODE;
-  }
+void mbus_init(uint8_t wmBusMode) {
+  mbus_mode = wmBusMode;
 #ifdef CC110x
   Chip_writeReg(CC1100_TEST2, 0x81);
   Chip_writeReg(CC1100_TEST1, 0x35);
@@ -112,7 +107,7 @@ static uint8_t mbus_on(uint8_t force) {
   RXinfo.bytesLeft   = 0;           // Bytes left to to be read from the RX FIFO
   RXinfo.pByteIndex  = MBbytes;     // Pointer to current position in the byte array
   RXinfo.format      = INFINITE;    // Infinite or fixed packet mode
-  RXinfo.complete    = FALSE;       // Packet Received
+  //  RXinfo.complete    = FALSE;       // Packet Received
   RXinfo.mode        = mbus_mode;   // Wireless MBUS radio mode
   RXinfo.framemode   = WMBUS_NONE;  // Received frame mode (Distinguish between C- and T-mode)
   RXinfo.frametype   = 0;           // Frame A or B in C-mode
@@ -323,7 +318,9 @@ void mbus_task() {
       // END OF PAKET
       if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
         Chip_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
-        RXinfo.complete = TRUE;
+#ifdef CC110x
+        CC110x_readFreqErr();
+#endif
         RXinfo.state = 4; // decode!
 #ifdef debug_mbus
         Serial.println(F("mbt3 END OF PAKET"));
@@ -336,7 +333,7 @@ void mbus_task() {
         RXinfo.bytesLeft--;
         RXinfo.pByteIndex ++;
         if (RXinfo.bytesLeft == 0) {
-          RXinfo.complete = TRUE;
+          // RXinfo.complete = TRUE;
           RXinfo.state = 4; // decode!
           rssi = Chip_readRSSI();
 #ifdef debug_mbus
@@ -449,7 +446,9 @@ DECODE:
   }
 #ifdef RFM69
   if (Chip_readReg(0x28, 0) & 0b00010000) { // RegIrqFlags2, FifoOverrun - Set when FIFO overrun occurs.
+#ifdef debug_mbus
     Serial.println(F("mbt FifoOverrun"));
+#endif
     RXinfo.state = 0;
     mbus_on( TRUE );
     return;

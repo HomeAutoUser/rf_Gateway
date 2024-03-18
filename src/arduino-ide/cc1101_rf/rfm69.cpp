@@ -36,7 +36,6 @@ struct Data Registers[] = {
 #endif
 };
 
-uint8_t RegistersMaxCnt = sizeof(Registers) / sizeof(Registers[0]);   // size of -> struct Data Registers array
 
 void ChipInit() { /* Init RFM69 - Set default´s */
 #ifdef debug_chip
@@ -55,7 +54,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
     Serial.print(F("[DB] Chip VERSION SX1231           ")); Serial.println(chipVersion, HEX); // VERSION – Chip ID
     Serial.print(F("[DB] Crystal oscillator frequency  ")); Serial.println(fxOsc);
     Serial.print(F("[DB] Frequency synthesizer step    ")); Serial.println(fStep, 8);
-    Serial.print(F("[DB] Chip_available_modes          ")); Serial.println(RegistersMaxCnt);  // Number of compiled register modes
+    Serial.print(F("[DB] Chip_available_modes          ")); Serial.println(NUMBER_OF_MODES);  // Number of compiled register modes
     Serial.print(F("[DB] Prog_Ident Firmware1          ")); Serial.println(Prog_Ident1, HEX); // 0xDE
     Serial.print(F("[DB] Prog_Ident Firmware2          ")); Serial.println(Prog_Ident2, HEX); // 0x22
     Serial.println(F("[DB] SX1231 read all 112 register before load new settings"));
@@ -65,7 +64,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
     /* wenn Registerwerte geändert wurden beim compilieren */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
-    for (byte i = 0; i < RegistersMaxCnt; i++) {
+    for (byte i = 0; i < NUMBER_OF_MODES; i++) {
       chk += Registers[i].PKTLEN;
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
@@ -93,53 +92,55 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       Serial.print(F("[DB] Freq_offset                   ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
       Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
 #endif
-
-      if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
-        // if (ReceiveModeNr == 0 && ToggleTime == 0) { // für Test
+      if (ReceiveModeNr < NUMBER_OF_MODES) {
+        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
+          // if (ReceiveModeNr == 0 && ToggleTime == 0) { // für Test
 #ifdef debug_chip
-        ReceiveModeName = Registers[ReceiveModeNr].name;
-        Serial.println(F("[DB] SX1231 use config from EEPROM"));
-        Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
-        Serial.print(F(", ")); Serial.println(ReceiveModeName);
+          ReceiveModeName = Registers[ReceiveModeNr].name;
+          Serial.println(F("[DB] SX1231 use config from EEPROM"));
+          Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
+          Serial.print(F(", ")); Serial.println(ReceiveModeName);
 #endif
-        // configure SX1231 registers from EEPROM
-        for (byte i = 1; i < REGISTER_MAX; i++) { // ACHTUNG! Register müssen immer 84 Einträge umfassen!
-          uint8_t addr = i;
-          if (i >= 80) {
-            addr = SX1231_RegAddrTranslate[i - 80];
+          // configure SX1231 registers from EEPROM
+          for (byte i = 1; i < REGISTER_MAX; i++) { // ACHTUNG! Register müssen immer 84 Einträge umfassen!
+            uint8_t addr = i;
+            if (i >= 80) {
+              addr = SX1231_RegAddrTranslate[i - 80];
+            }
+#ifdef debug_chip
+            Serial.print(F("[DB] write mode value 0x"));
+            SerialPrintDecToHex(EEPROMread(i)); //
+            Serial.print(F(" to SX1231 register 0x"));
+            SerialPrintDecToHex(addr);
+            Serial.print(F(" count "));
+            Serial.println(i);
+#endif
+            Chip_writeReg(addr, EEPROMread(i));
           }
-#ifdef debug_chip
-          Serial.print(F("[DB] write mode value 0x"));
-          SerialPrintDecToHex(EEPROMread(i)); //
-          Serial.print(F(" to SX1231 register 0x"));
-          SerialPrintDecToHex(addr);
-          Serial.print(F(" count "));
-          Serial.println(i);
-#endif
-          Chip_writeReg(addr, EEPROMread(i));
         }
-      }
 
-      if (ToggleCnt > 0) { // normaler Start
-        Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
-      }
-      ReceiveModeName = Registers[ReceiveModeNr].name;
-      ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-      if (ReceiveModeName[0] == 'W') { // WMBUS
-        FSK_RAW = 2;
+        if (ToggleCnt > 0) { // normaler Start
+          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
+        }
+        ReceiveModeName = Registers[ReceiveModeNr].name;
+        ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        if (ReceiveModeName[0] == 'W') { // WMBUS
+          FSK_RAW = 2;
+        } else {
+          FSK_RAW = 0;
+        }
+#ifdef debug_chip
+        Serial.print(F("[DB] RFM69_Frequency               ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
+#endif
+        Chip_setReceiveMode();     // SX1231 start receive mode
+        Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
+#ifdef debug_chip
+        Serial.println(F("[DB] SX1231 read all 112 register after load new settings"));
+        SX1231_read_reg_all();      // SX1231 read all 112 register
+#endif
       } else {
-        FSK_RAW = 0;
+        SX1231_setIdleMode();        // SX1231 start idle mode
       }
-#ifdef debug_chip
-      Serial.print(F("[DB] RFM69_Frequency               ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
-#endif
-      Chip_setReceiveMode();     // SX1231 start receive mode
-      Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
-#ifdef debug_chip
-      Serial.println(F("[DB] SX1231 read all 112 register after load new settings"));
-      SX1231_read_reg_all();      // SX1231 read all 112 register
-#endif
-
     } else { /* Ende normaler Start */
       /* ERROR EEPROM oder Registeranzahl geändert */
       EEPROMwrite(EEPROM_ADDR_Prot, 0);  // reset
@@ -175,10 +176,12 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         }
       }  // Ende EEPROM wurde gelöscht
 
-      /* set RFM69 to factory settings */
-      Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
-      ReceiveModeName = Registers[0].name;
-      ReceiveModePKTLEN = Registers[0].PKTLEN;
+      if (ReceiveModeNr < NUMBER_OF_MODES) {
+        /* set RFM69 to factory settings */
+        Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
+        ReceiveModeName = Registers[0].name;
+        ReceiveModePKTLEN = Registers[0].PKTLEN;
+      }
 #ifdef debug_chip
       Serial.println(F("[DB] set cc110x to factory settings"));
       Serial.print(F("[DB] ReceiveModeNr = "));
@@ -241,13 +244,14 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
 #ifdef debug_mbus
       Serial.println(reg_modus);
 #endif
-      mbus_init(11);
+      //mbus_init(11);
+      mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
     }
     if (reg_modus.endsWith("T")) { // WMBUS_T
 #ifdef debug_mbus
       Serial.println(reg_modus);
 #endif
-      mbus_init(12);
+      mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
   }
 #endif
@@ -339,16 +343,16 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
   }
   ChipDeselect();                   // Deselect Chip
   // Optionally
-  if (rssi) {
-    *rssi = Chip_readRSSI();
-    if (lqi) {
-#ifdef CC110x
-      *lqi = SPI.transfer(0); // only CC110x
-#elif RFM69
-      *lqi = 0; // gibt es beim SX1231 nicht
-#endif
-    }
-  }
+//  if (rssi) {
+//    *rssi = Chip_readRSSI();
+//    if (lqi) {
+//#ifdef CC110x
+//      *lqi = SPI.transfer(0); // only CC110x
+//#elif RFM69
+//      *lqi = 0; // gibt es beim SX1231 nicht
+//#endif
+//    }
+//  }
 }
 
 int Chip_readRSSI() {   /* Read RSSI value from Register */
@@ -476,7 +480,7 @@ void Chip_Datarate_Set(long datarate, byte * arr) { // calculate register values
   arr[1] = uBitrate & 0x00FF; // RegBitrateLsb
 }
 
-void SX1231_Deviation_Set(float deviation, byte * arr) { // calculate register values (RegFdevMsb 0x5, RegFdevLsb 0x06) for frequency deviation
+void SX1231_Deviation_Set(float deviation, byte * arr) { // calculate register values (RegFdevMsb 0x05, RegFdevLsb 0x06) for frequency deviation
   deviation *= 1000.0;
   if (deviation < 61) {
     deviation = 61;
@@ -510,4 +514,4 @@ void Chip_sendFIFO(char *data) {
   SX1231_setIdleMode();     // SX1231 start idle mode
 }
 
-#endif
+#endif // RFM69

@@ -7,7 +7,7 @@ void web_index() {
   String submit = HttpServer.arg("submit");               // welcher Button wurde betätigt
   if (submit == "MSG0") {
     msgCount = 0;
-    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
+    for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
       msgCountMode[c] = 0;
     }
     uptimeReset = uptime;
@@ -161,11 +161,11 @@ void web_modes() { // ########## modes ##########
         String argument = "c"; argument += modeNr; // build argument for checkboxes
         if (HttpServer.hasArg(argument)) {
           ToggleCnt++;
-          if (ToggleCnt == 1) { // save first mode
+          if (ToggleCnt == 1) { // save last active mode
             ReceiveModeNr = modeNr;
           }
         }
-        ToggleArray[modeNr] = HttpServer.hasArg(argument);
+        ToggleArray[modeNr] = HttpServer.hasArg(argument); // set mode active/deactive
         EEPROM.write(EEPROM_ADDR_ToggleMode + modeNr, HttpServer.hasArg(argument));
         EEPROM.commit();
 #ifdef debug_html
@@ -175,7 +175,7 @@ void web_modes() { // ########## modes ##########
 #endif
         argument = "t"; argument += modeNr; // build argument for time
         uint8_t setTimeMode = HttpServer.arg(argument).toInt();
-        ToggleTimeMode[modeNr] = setTimeMode;
+        ToggleTimeMode[modeNr] = setTimeMode; // set mode toggletime
         EEPROM.write(EEPROM_ADDR_ToggleTime + modeNr, setTimeMode);
         EEPROM.commit();
 #ifdef debug_html
@@ -187,18 +187,21 @@ void web_modes() { // ########## modes ##########
 #endif
       if (ToggleCnt == 0) {
         web_status = F("<tr><td class=\"ac red\">no mode enabled!</td>");
+        ReceiveModeNr = 255;
+#ifdef CC110x
+        CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
+#elif RFM69
+        SX1231_setIdleMode();           // SX1231 start idle mode
+#endif
       } else if (ToggleCnt == 1) {
         web_status = F("<tr><td class=\"ac grn\">");
         web_status += Registers[ReceiveModeNr].name;
         web_status += F(" &#10004; | toggle &#128721;</td>");
-        String InputCmd = "m";
-        InputCmd += ReceiveModeNr;
-        InputCommand(InputCmd);
+        Interupt_Variant(ReceiveModeNr);
       } else if (ToggleCnt > 1) {
         web_status = F("<tr><td class=\"ac grn\"><span id=\"stat\">toggle started &#10004;</span></td>");
         toggleTick = millis();
-        ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
-        Interupt_Variant(ReceiveModeNr);
+        Interupt_Variant(ReceiveModeNr); // start toggle
       }
     }
   }
@@ -1144,8 +1147,11 @@ void WebSocket_chip() {
 #endif
   if (ChipFound) {
     if (webSocket.connectedClients() > 0) {
-      String website = ReceiveModeName;
+      String website = "";
       website.reserve(55);
+      if (ReceiveModeNr < NUMBER_OF_MODES) {
+        website += ReceiveModeName;
+      }
       website += ',';
 #ifdef CC110x
       website += Chip_readReg(CC110x_MARCSTATE, READ_BURST);
@@ -1218,25 +1224,23 @@ void WebSocket_modes() {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = F("MODE,");
-    website.reserve(35);
-    website += ReceiveModeName;
+    website.reserve(128);
+    if (ReceiveModeNr < NUMBER_OF_MODES) {
+      website += ReceiveModeName;
+    }
     website += ',';
     website += ReceiveModeNr;
     website += ',';
     for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
-      //    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += ToggleTimeMode[c];
       if (c < NUMBER_OF_MODES - 1) {
-        //      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }
     website += ',';
     for (uint8_t c = 0; c < NUMBER_OF_MODES; c++) {
-      //    for (uint8_t c = 0; c < RegistersMaxCnt; c++) {
       website += msgCountMode[c];
       if (c < NUMBER_OF_MODES - 1) {
-        //      if (c < RegistersMaxCnt - 1) {
         website += '_';
       }
     }

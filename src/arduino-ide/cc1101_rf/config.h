@@ -24,8 +24,8 @@
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?)
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS ca. 5800
 
-#define FWVer             "V 2.1.1pre"
-#define FWVerDate         "2024-03-13"
+#define FWVer             "V 2.1.2pre"
+#define FWVerDate         "2024-03-18"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -35,27 +35,22 @@
 
 /* Pins and other specific controller settings */
 #if defined(ARDUINO_ARCH_ESP8266) && defined(CC110x)
-#define EEPROM_SIZE   512
 #define GDO0          4           // GDO0     => ESP8266 (Pin TX out - PIN_SEND)
 #define GDO2          5           // GDO2     => ESP8266 (Pin RX in  - PIN_RECEIVE)
 #define LED           16          // LED      => ESP8266 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_ARCH_ESP8266) && defined(RFM69)
-#define EEPROM_SIZE   512
 #define LED           16          // LED      => ESP8266 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_ARCH_ESP32) && defined(CC110x)
-#define EEPROM_SIZE   512
 #define GDO0          4           // GDO0     => ESP32 (Pin TX out - PIN_SEND)
 #define GDO2          13          // GDO2     => ESP32 (Pin RX in  - PIN_RECEIVE)
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_ARCH_ESP32) && defined(RFM69)
-#define EEPROM_SIZE   512
 #define LED           2           // LED      => ESP32 (OK msg & WIFI)
 #define CODE_ESP      1           // https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#progmem
 #elif defined(ARDUINO_RADINOCC1101) && defined(CC110x)
-#define EEPROM_SIZE   512
 #define GDO0          9           // GDO0     => Radino (Pin TX out - PIN_SEND)
 #define GDO2          7           // GDO2     => Radino (Pin RX in  - PIN_RECEIVE)
 #define LED           13          // LED      => Radino (OK msg)
@@ -64,36 +59,35 @@
 #define SS            8
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_PRO) && defined(CC110x)
-#define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Pro Mini (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Pro Mini (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_PRO) && defined(RFM69)
-#define EEPROM_SIZE   512
 #define LED           9           // LED      => Arduino Pro Mini (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_NANO) && defined(CC110x)
-#define EEPROM_SIZE   512
 #define GDO0          3           // GDO0     => Arduino Nano (Pin TX out - PIN_SEND)
 #define GDO2          2           // GDO2     => Arduino Nano (Pin RX in  - PIN_RECEIVE)
 #define LED           9           // LED      => Arduino Nano (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #elif defined(ARDUINO_AVR_NANO) && defined(RFM69)
-#define EEPROM_SIZE   512
 #define LED           9           // LED      => Arduino Nano (OK msg)
 #define CODE_AVR      1           // https://www.tutorialspoint.com/how-to-use-progmem-in-arduino-to-store-large-immutable-data & other code behave
 #else
 
 #endif
 
+/* EEPROM size | all AVR board = fix SIZE | other variable size */
+#define EEPROM_SIZE   512
 
 /* Definitions for flexible cc1101 configuration */
 #define TOGGLE_TIME_MIN   1     // seconds
 #define TOGGLE_TIME_MAX   255   // seconds
 
 /* Selection of available registers to compile into firmware
-    Note: Please comment in or out to select !!!
+    NOTE 1: Please comment in or out to select !!!
+    NOTE 2: Don't forget to adjust variable NUMBER_OF_MODES manually in cc110x.h or rfm69.h !!!
 */
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define Avantek                 1
@@ -119,7 +113,6 @@
 //#define HomeMatic               1   // only CC110x inside
 //#define Lacrosse_mode3          1   // only CC110x inside
 //#define MAX                     1   // only CC110x inside
-//#define WMBus_LINK_B            1   // only CC110x inside
 
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
@@ -134,14 +127,17 @@
 #define WLAN_hostname           "rf-Gateway"            // Hostname !!! maximum-length of 25 !!!
 #endif
 
-#else /* all other devices without WLAN */
+#else
+/* all other devices without WLAN
+    NOTE: Don't forget to adjust variable NUMBER_OF_MODES manually in cc110x.h or rfm69.h !!!
+*/
 #define Bresser_5in1            1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
-#define OOK_MU_433              1
-//#define WMBus_S                 1
-//#define WMBus_T                 1
-#define X_Sense                 1
+//#define OOK_MU_433              1     // OOK_MU_433 or WMBus, both is not enough RAM
+//#define WMBus_S                 1     // OOK_MU_433 or WMBus, both is not enough RAM | Minimum requirement unknown - only test
+#define WMBus_T                 1     // OOK_MU_433 or WMBus, both is not enough RAM | Minimum requirement unknown - only test
+//#define X_Sense                 1
 #endif
 
 /* varible´s for Serial & TelNet TimeOut´s | sets the maximum milliseconds to wait for data. */
