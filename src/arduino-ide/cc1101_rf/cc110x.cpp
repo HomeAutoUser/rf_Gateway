@@ -31,6 +31,7 @@ boolean ChipFound = false;    // against not clearly defined entrances (if flick
 
 struct Data Registers[] = {
   { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "CC110x Factory Default", 32  },
+  { Config_User, 41, "CC110x User setting", 0 },
 #ifdef OOK_MU_433
   { Config_OOK_MU_433,  sizeof(Config_OOK_MU_433) / sizeof(Config_OOK_MU_433[0]), "OOK_MU_433", 5  },
 #endif
@@ -190,9 +191,14 @@ void ChipInit() { /* Init CC110x - Set default´s */
       Serial.print(F("[DB] CC110x_Freq.Offset              ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
+        // TODO print entfernen
+        Serial.println(F("-------------------------------------------------------------------"));
+        if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
+          //        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
+          // TODO print entfernen , wann tritt der Fall auf? abändern ??
+          Serial.println(F("###################################################################"));
 #ifdef debug_chip
-          ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
+          //ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
           ReceiveModeName = Registers[ReceiveModeNr].name;
           Serial.println(F("[DB] CC110x use config from EEPROM"));
           Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
@@ -215,7 +221,11 @@ void ChipInit() { /* Init CC110x - Set default´s */
         Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
         ReceiveModeName = Registers[ReceiveModeNr].name;
-        ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        if (Registers[ReceiveModeNr].PKTLEN >0) { // not by  User setting
+          ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        } else {
+          ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register
+        }
         uint8_t MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
         if (ReceiveModeName[0] == 'W') { // WMBUS
           FSK_RAW = 2;
@@ -318,7 +328,11 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
 #endif
 
   for (byte i = 0; i < reg_length; i++) {
-    Chip_writeReg(i, pgm_read_byte_near(reg_name + i)); /* write value to cc110x */
+    if (ReceiveModeNr == 1) { // CC110x User setting
+      Chip_writeReg(i, EEPROM.read(i)); /* write value to cc110x */
+    } else {
+      Chip_writeReg(i, pgm_read_byte_near(reg_name + i)); /* write value to cc110x */
+    }
 #ifdef debug_chip
     Serial.print(F("[DB] Chip_writeRegFor, i=")); Serial.print(i);
     Serial.print(F(" read ")); Serial.print(Chip_readReg(i, READ_BURST));

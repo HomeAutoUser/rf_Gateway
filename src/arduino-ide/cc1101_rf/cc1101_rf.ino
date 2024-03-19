@@ -137,6 +137,8 @@ ADC_MODE(ADC_VCC);                  // vcc read
 #include <esp_wps.h>
 WebServer HttpServer(80);
 int wifiEventId;
+#include "soc/soc.h"           // for disable brownout
+#include "soc/rtc_cntl_reg.h"  // for disable brownout
 #endif
 /* --- END - all SETTINGS for the ESP32-- ----------------------------------------------------------------------------------------------------- */
 
@@ -244,11 +246,15 @@ void Interupt_Variant(byte nr) {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   WebSocket_modes();
 #else
-  delay(10);
+  delay(10); // TODO - wozu ist das gut???
 #endif
 
   ReceiveModeName = Registers[ReceiveModeNr].name;
-  ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+  if (Registers[ReceiveModeNr].PKTLEN > 0) { // not by  User setting
+    ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+  } else {
+    ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register
+  }
 
 #ifdef CC110x
   MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
@@ -279,6 +285,9 @@ void Interupt_Variant(byte nr) {
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
+#ifdef ESP32
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  //disable brownout detector
+#endif
   msg.reserve(255);
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */

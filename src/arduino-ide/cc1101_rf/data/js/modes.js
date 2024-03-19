@@ -50,7 +50,7 @@ function onMessage(event) {
   */
   const cell = document.getElementById("rec_mod").getElementsByTagName("td");
   for (var i = 0; i < cell.length; i++) {
-   if (cell[i].innerHTML.indexOf(' - ' + obj[1]) >= 0) {
+   if (cell[i].innerHTML.indexOf(' - ' + obj[1]) >=0 && obj[2] < msgcnt.length) {
     cell[i].style.backgroundColor = color1;
     cell[i+1].style.backgroundColor = color1;
     cell[i+2].style.backgroundColor = color1;

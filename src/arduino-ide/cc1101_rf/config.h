@@ -20,12 +20,12 @@
 //#define debug_wifi        1     // to debug wifi
 //#define debug_mbus        1     // to debug mbus
 
-//#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 145000)
+//#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850, ESP32 CC1101 ca. 500, Nano CC1101 ca. 14500)
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?)
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS ca. 5800
 
 #define FWVer             "V 2.1.2pre"
-#define FWVerDate         "2024-03-18"
+#define FWVerDate         "2024-03-19"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -171,11 +171,9 @@
 #define EEPROM_ADDR_CHK         183     /* FW – Prüfsumme über PKTLEN 183–184 */
 #define EEPROM_ADDR_FOFFSET     185     /* cc110x freq offset | 185 - 188 */
 #define EEPROM_ADDR_AFC         189     /* cc110x afc */
-#define EEPROM_ADDR_Prot        200     // mit command 'm' gesetzter Modus für start ohne toggle
-#define EEPROM_ADDR_ProtTo      201     /* ToggleProtocolls 49 - 52 TODO wird nicht mehr gebraucht */
+#define EEPROM_ADDR_Prot        200     // mit command 'm' gesetzter Modus für start ohne toggle | TODO prüfen
 #define EEPROM_ADDR_FW1         209
 #define EEPROM_ADDR_FW2         210
-#define EEPROM_ADDR_Toggle      212      /* ToggleTime 56 - 59 TODO wird nicht mehr gebraucht */
 #define EEPROM_ADDR_SSID        256     /* Strings (max 32)*/
 #define EEPROM_ADDR_PASS        288     /* Strings (max 32)*/
 #define EEPROM_ADDR_ToggleTime  384     /* Byte ToggleTimeMode (max 64 free in EEPROM, size set in NUMBER_OF_MODES cc110x.h / rfm69.h) */

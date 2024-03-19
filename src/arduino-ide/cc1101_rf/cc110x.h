@@ -8,7 +8,7 @@
 #include <SPI.h>
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES  19 // ESP - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  20 // ESP - Anzahl Datensätze in struct Data
 #else
 #define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
 #endif
@@ -76,6 +76,10 @@ struct Data {
 };
 
 // ############################## all available CC110x registers ##############################
+const uint8_t Config_User[] PROGMEM = {
+  
+};
+
 const uint8_t Config_Default[] PROGMEM = {
   /*
     Address Config = No address check

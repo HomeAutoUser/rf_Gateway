@@ -336,7 +336,6 @@ void web_detail_cc110x_import() {
       detachInterrupt(digitalPinToInterrupt(GDO2));
       CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
       CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
-      Chip_writeRegFor(Registers[1].reg_val, Registers[1].length, Registers[1].name); // load default OOK_MU_433 from SIGNALduino TODO: auch in EEPROM schreiben!
       for (uint16_t i = 2; i < imp.length(); i += 7) {
         Adr = hexToDec(imp.substring(i, i + 2));
         Val = hexToDec(imp.substring(i + 2, i + 4));
@@ -568,26 +567,27 @@ void web_detail() {
           }
 #endif
           BrowserArgsReg[i] = hexToDec(HttpServer.arg(strArg));
-          byte regVal = Chip_readReg(addr, READ_BURST);
-          if (BrowserArgsReg[i] != regVal) {
+          //          byte regVal = Chip_readReg(addr, READ_BURST);
+          //          if (BrowserArgsReg[i] != regVal) {
 #ifdef debug_html
-            /* i > 34 && <= 40    | CC110x automatic control register */
-            /* i > 40             | CC110x test register */
-            Serial.print(F("[DB] web_detail, regData[")); Serial.print(i);
-            Serial.print(F("] value has changed 0x")); Serial.print(onlyDecToHex2Digit(regVal));
-            Serial.print(F(" -> 0x")); Serial.println(onlyDecToHex2Digit(BrowserArgsReg[i]));
+          /* i > 34 && <= 40    | CC110x automatic control register */
+          /* i > 40             | CC110x test register */
+          Serial.print(F("[DB] web_detail, regData[")); Serial.print(i);
+          Serial.print(F("] value has changed 0x")); Serial.print(onlyDecToHex2Digit(regVal));
+          Serial.print(F(" -> 0x")); Serial.println(onlyDecToHex2Digit(BrowserArgsReg[i]));
 #endif
-            if (i == CHIP_PKTLEN) { /* ToDo - CHIP_PKTLEN probably not optimal -> if register 6 is changed (dependencies) ??? */
-              ReceiveModePKTLEN = BrowserArgsReg[i];
-            }
-            /* write value to register */
-            Chip_writeReg(addr, BrowserArgsReg[i]);   // write in chip
-            EEPROMwrite(addr, BrowserArgsReg[i]);       // write in flash
+          if (i == CHIP_PKTLEN) { /* ToDo - CHIP_PKTLEN probably not optimal -> if register 6 is changed (dependencies) ??? */
+            ReceiveModePKTLEN = BrowserArgsReg[i];
           }
+          /* write value to register */
+          Chip_writeReg(addr, BrowserArgsReg[i]);   // write in chip
+          EEPROMwrite(addr, BrowserArgsReg[i]);     // write in flash
+          //          }
         }
       }
     }
     ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
+    ReceiveModeNr = 1;
   }
 
   String website = FPSTR(html_meta);
