@@ -965,8 +965,8 @@ void web_wlan() {
   /* Tabelle WLAN - available networks, letzte Zeile für SSID-Eingabe */
   website += F("<tr>"
                "<td class=\"ra1\"><input aria-label=\"n2\" name=\"setssid\" type=\"radio\" value=\"hidden\"></td>"
-               "<td class=\"inp\" colspan=\"2\"><input name=\"hiddenssid\" type=\"text\" size=\"36\"></td>"
-               "<td class=\"inp\" colspan=\"3\"><input name=\"pw\" type=\"password\" size=\"28\"></td>"
+               "<td class=\"inp\" colspan=\"2\"><input name=\"hiddenssid\" type=\"text\" size=\"36\" placeholder=\"hidden ssid\"></td>"
+               "<td class=\"inp\" colspan=\"3\"><input name=\"pw\" type=\"password\" size=\"28\" placeholder=\"current password\"></td>"
                "</tr>"
                "<tr>"
                "<td class=\"zcb\"></td><td class=\"inp\" colspan=\"2\"><button class=\"btn\" onclick=\"wlan_wps()\" type=\"submit\" name=\"submit\" value=\"wps\">Wi-Fi Protected (WPS)</button></td>"

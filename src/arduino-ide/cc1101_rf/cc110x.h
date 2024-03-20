@@ -68,16 +68,8 @@ extern int16_t RSSI_dez;
 extern struct Data Registers[];
 extern unsigned long uptime;
 
-struct Data {
-  const uint8_t* reg_val;
-  byte length;
-  const char* name;
-  byte PKTLEN;
-};
-
 // ############################## all available CC110x registers ##############################
 const uint8_t Config_User[] PROGMEM = {
-  
 };
 
 const uint8_t Config_Default[] PROGMEM = {
@@ -1547,7 +1539,7 @@ const uint8_t Config_Lacrosse_mode3[] PROGMEM = {
 };
 #endif
 
-#ifdef MAX
+#ifdef Max
 const uint8_t Config_MAX[] PROGMEM = {
   /*
     Address Config = No address check

@@ -177,7 +177,7 @@ void start_WLAN_AP(String ssid_ap, String password_ap) {
 
 
 void start_WLAN_STATION(String qssid, String qpass) {
-#ifdef debug_html
+#ifdef debug_wifi
   Serial.print(F("[DB] start_WLAN_STATION, EEPROM DHCP       ")); Serial.println(EEPROMread(EEPROM_ADDR_DHCP) == 1 ? F("1 (on)") : F("0 (off)"));
   Serial.print(F("[DB] start_WLAN_STATION, EEPROM IP         ")); Serial.println(eip);
   Serial.print(F("[DB] start_WLAN_STATION, EEPROM Gateway    ")); Serial.println(esgw);
@@ -191,7 +191,10 @@ void start_WLAN_STATION(String qssid, String qpass) {
 #elif ARDUINO_ARCH_ESP32
   WiFi.mode(WIFI_MODE_STA);
 #endif
-
+  if (qssid == "" && qpass == "") {
+    start_WLAN_AP(OwnStationHostname, WLAN_password_ap);
+    return;
+  }
 #ifdef debug_wifi
   if (EEPROMread(EEPROM_ADDR_DHCP) == 0) { /* WIFI config static IP */
     if (!WiFi.config(eip, esnm, esgw, edns)) {

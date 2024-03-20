@@ -132,7 +132,6 @@ static uint8_t mbus_on(uint8_t force) {
 void mbus_task() {
   uint8_t bytesDecoded[2];
   uint8_t fixedLength;
-  //uint8_t rssi = 0;
   uint8_t lqi = 0;
   if (mbus_mode == WMBUS_NONE) {
 #ifdef debug_mbus
@@ -162,6 +161,7 @@ void mbus_task() {
       if (digitalReadFast(GDO0) == 1) { // PIN_SEND, Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
 #elif RFM69
       if (Chip_readReg(0x28, 0) & 0b00100000) { // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+        rssi = Chip_readRSSI();
 #endif
         // Read the 3 first bytes
         Chip_readRXFIFO(RXinfo.pByteIndex, 3, NULL, NULL);
@@ -329,16 +329,17 @@ void mbus_task() {
       }
 #elif RFM69 // Ende CC110x
       if (Chip_readReg(0x28, 0) & 0b01000000) { // RegIrqFlags2, FifoNotEmpty - Set when FIFO contains at least one byte, else cleared.
-        Chip_readRXFIFO(RXinfo.pByteIndex, 1, NULL, NULL);        // read result from FIFO
-        RXinfo.bytesLeft--;
-        RXinfo.pByteIndex ++;
-        if (RXinfo.bytesLeft == 0) {
-          // RXinfo.complete = TRUE;
-          RXinfo.state = 4; // decode!
-          rssi = Chip_readRSSI();
+        while (Chip_readReg(0x28, 0) & 0b01000000) { // RegIrqFlags2, FifoNotEmpty - Set when FIFO contains at least one byte, else cleared.
+          Chip_readRXFIFO(RXinfo.pByteIndex, 1, NULL, NULL); // read result from FIFO
+          RXinfo.bytesLeft--;
+          RXinfo.pByteIndex ++;
+          if (RXinfo.bytesLeft == 0) {
+            RXinfo.state = 4;
 #ifdef debug_mbus
-          Serial.println(F("mbt3 END OF PAKET"));
+            Serial.println(F("mbt END OF PAKET"));
 #endif
+            break;
+          }
         }
       }
 #endif
@@ -393,14 +394,16 @@ DECODE:
         Serial.println(F("mbt PACKET_OK"));
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-        String html_raw = "";   // für die Ausgabe auf dem Webserver
+        String html_raw = "";                  // für die Ausgabe auf dem Webserver
         html_raw.reserve(255);
+#ifdef CC110x
         int16_t rssiTmp = rssi;
         if (rssi >= 128) {
-          RSSI_dez = (rssiTmp - 256) / 2 - 74;
+          RSSI_dez = (rssiTmp - 256) / 2 - 74; // für die Ausgabe auf dem Webserver
         } else if (rssiTmp < 128) {
-          RSSI_dez = (rssiTmp / 2) - 74;
+          RSSI_dez = (rssiTmp / 2) - 74;       // für die Ausgabe auf dem Webserver
         }
+#endif
 #endif
 #ifdef CC110x
         freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
@@ -409,11 +412,14 @@ DECODE:
         MSG_BUILD_MN(char(2));        // STX
         MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
         if (RXinfo.framemode == WMBUS_CMODE) {
-          if (RXinfo.frametype == WMBUS_FRAMEA) {
-            MSG_BUILD_MN('X'); // special marker for frame type A
-          } else {
+          if (RXinfo.frametype == WMBUS_FRAMEB) {
             MSG_BUILD_MN('Y'); // special marker for frame type B
           }
+          //          if (RXinfo.frametype == WMBUS_FRAMEA) {
+          //             MSG_BUILD_MN('X'); // special marker for frame type A
+          //          } else {
+          //            MSG_BUILD_MN('Y'); // special marker for frame type B
+          //          }
         }
         for (uint8_t i = 0; i < rxLength; i++) {
           MSG_BUILD_MN(onlyDecToHex2Digit(MBpacket[i]));

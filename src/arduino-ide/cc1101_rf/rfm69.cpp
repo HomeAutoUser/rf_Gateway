@@ -11,32 +11,6 @@ boolean ChipFound = false;        // against not clearly defined entrances (if f
 byte ReceiveModePKTLEN;
 
 /********************* functions *********************/
-struct Data Registers[] = {
-  { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "RFM69 Factory Default", 64 },
-#ifdef Bresser_5in1
-  { Config_Bresser_5in1,  sizeof(Config_Bresser_5in1) / sizeof(Config_Bresser_5in1[0]), "Bresser_5in1", 26  },
-#endif
-#ifdef Fine_Offset_WH57_868
-  { Config_Fine_Offset_WH57_868,  sizeof(Config_Fine_Offset_WH57_868) / sizeof(Config_Fine_Offset_WH57_868[0]), "Fine_Offset_WH57_868", 9  },
-#endif
-#ifdef Inkbird_IBS_P01R
-  { Config_Inkbird_IBS_P01R,  sizeof(Config_Inkbird_IBS_P01R) / sizeof(Config_Inkbird_IBS_P01R[0]), "Inkbird_IBS_P01R", 18  },
-#endif
-#ifdef Lacrosse_mode1
-  { Config_Lacrosse_mode1,  sizeof(Config_Lacrosse_mode1) / sizeof(Config_Lacrosse_mode1[0]), "Lacrosse_mode1", 5   },
-#endif
-#ifdef Lacrosse_mode2
-  { Config_Lacrosse_mode2,  sizeof(Config_Lacrosse_mode2) / sizeof(Config_Lacrosse_mode2[0]), "Lacrosse_mode2", 5   },
-#endif
-#ifdef WMBus_S
-  { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "WMBus_S", 58  },
-#endif
-#ifdef WMBus_T
-  { Config_WMBus_T,  sizeof(Config_WMBus_T) / sizeof(Config_WMBus_T[0]), "WMBus_T", 58  },
-#endif
-};
-
-
 void ChipInit() { /* Init RFM69 - Set default´s */
 #ifdef debug_chip
   Serial.println(F("[DB] RFM69 init starting"));
@@ -46,7 +20,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
   SPI.begin();
   SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0)); // SCLK frequency, burst access max. 10 MHz
   uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
-  if (chipVersion == 0x23 || chipVersion == 0x24) {                 // found SX1231
+  if (chipVersion >= 0x21 && chipVersion <= 0x24) {                 // found SX1231/SX1231H
     SX1231_setIdleMode();
     ChipFound = true;
 #ifdef debug_chip

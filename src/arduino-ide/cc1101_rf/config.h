@@ -6,7 +6,7 @@
 /* **********************************************************
    Receiving hardware and some Definitions for program code */
 
-//#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
+#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
 //#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
 
 //#define debug             1     // to debug other
@@ -25,7 +25,7 @@
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS ca. 5800
 
 #define FWVer             "V 2.1.2pre"
-#define FWVerDate         "2024-03-19"
+#define FWVerDate         "2024-03-20"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1     // for compatibility in FHEM
@@ -90,29 +90,32 @@
     NOTE 2: Don't forget to adjust variable NUMBER_OF_MODES manually in cc110x.h or rfm69.h !!!
 */
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define Avantek                 1
 #define Bresser_5in1            1
+#define Fine_Offset_WH57_868    1
+#define Inkbird_IBS_P01R        1
+#define Lacrosse_mode1          1
+#define Lacrosse_mode2          1
+#define WMBus_S                 1
+#define WMBus_T                 1
+
+#ifdef CC110x
+#define Avantek                 1
 #define Bresser_6in1            1
 #define Bresser_7in1            1
 #define Fine_Offset_WH51_434    1
 #define Fine_Offset_WH51_868    1
 #define Fine_Offset_WH57_434    1
-#define Fine_Offset_WH57_868    1
-#define Inkbird_IBS_P01R        1
 #define KOPP_FC                 1
-#define Lacrosse_mode1          1
-#define Lacrosse_mode2          1
 #define OOK_MU_433              1
 #define PCA301                  1
 #define Rojaflex                1
-#define WMBus_S                 1
-#define WMBus_T                 1
 #define X_Sense                 1
+#endif
 
 /* under development */
 //#define HomeMatic               1   // only CC110x inside
 //#define Lacrosse_mode3          1   // only CC110x inside
-//#define MAX                     1   // only CC110x inside
+//#define Max                     1   // only CC110x inside
 
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
@@ -178,5 +181,12 @@
 #define EEPROM_ADDR_PASS        288     /* Strings (max 32)*/
 #define EEPROM_ADDR_ToggleTime  384     /* Byte ToggleTimeMode (max 64 free in EEPROM, size set in NUMBER_OF_MODES cc110x.h / rfm69.h) */
 #define EEPROM_ADDR_ToggleMode  448     /* Byte ToggleArray (max 64 free in EEPROM, size set in NUMBER_OF_MODES cc110x.h / rfm69.h) */
+
+struct Data {
+  const uint8_t* reg_val;
+  byte length;
+  const char* name;
+  byte PKTLEN;
+};
 
 #endif  // END - #ifndef CONFIG_H

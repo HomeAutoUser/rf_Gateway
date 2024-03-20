@@ -11,13 +11,11 @@
   document.getElementsByName('gw')[0].title = t;
   document.getElementsByName('hiddenssid')[0].maxLength = "32";
   document.getElementsByName('hiddenssid')[0].pattern =   "^[_-\\da-zA-Z]{1,32}$";
-  document.getElementsByName('hiddenssid')[0].placeholder = "hidden ssid";
   document.getElementsByName('hiddenssid')[0].title = "Input: only [a-zA-Z] [\d] [_-] {1,32}";
   document.getElementsByName('ip')[0].maxLength = "15";
   document.getElementsByName('ip')[0].pattern = p;
   document.getElementsByName('ip')[0].title = t;
   document.getElementsByName('pw')[0].maxLength = "64";
-  document.getElementsByName('pw')[0].placeholder = "current password";
   document.getElementsByName('pw')[0].setAttribute('autocomplete', 'current-password');
   document.getElementsByName('sn')[0].maxLength = "15";
   document.getElementsByName('sn')[0].pattern = p;

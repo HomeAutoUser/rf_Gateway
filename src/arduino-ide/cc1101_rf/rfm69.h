@@ -16,7 +16,7 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES       8                    // ESP - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       9                    // ESP - Anzahl Datensätze in struct Data
 #else
 #define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data
 #endif
@@ -70,14 +70,10 @@ extern int16_t RSSI_dez;
 extern struct Data Registers[];
 extern uint8_t freqAfc;
 
-struct Data {
-  const uint8_t* reg_val;
-  byte length;
-  const char* name;
-  byte PKTLEN;
+// ############################## all available SX1231 registers ##############################
+const uint8_t Config_User[] PROGMEM = {
 };
 
-// ############################## all available SX1231 registers ##############################
 const uint8_t Config_Default[] PROGMEM = {
   // SX1231 default register values
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
