@@ -1213,9 +1213,9 @@ void WebSocket_detail(byte variant) {
 #ifdef debug_websocket
   Serial.print(F("[DB] WebSocket_detail running with variant "));
   if (variant == 0) {
-    Serial.println(F(" old settings"));
+    Serial.println(F("old settings"));
   } else {
-    Serial.println(F(" new settings"));
+    Serial.println(F("new settings"));
   }
 #endif
   if (webSocket.connectedClients() > 0) {
