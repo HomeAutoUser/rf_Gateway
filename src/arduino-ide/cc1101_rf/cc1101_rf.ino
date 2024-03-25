@@ -235,6 +235,9 @@ void Interupt() {
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
+#ifdef debug_chip
+  Serial.print(F("[DB] Interupt_Variant called with nr: ")); Serial.println(nr);
+#endif
 #ifdef CC110x
   detachInterrupt(digitalPinToInterrupt(GDO2));
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
