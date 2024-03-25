@@ -187,15 +187,8 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     if (i >= 80) {
       addr = SX1231_RegAddrTranslate[i - 80];
     }
-    Chip_writeReg(addr, pgm_read_byte_near(reg_name + i)); /* write value to cc110x */
-#ifdef debug_chip
-    Serial.print(F("[DB] write mode value 0x"));
-    SerialPrintDecToHex(pgm_read_byte_near(Registers[0].reg_val + i)); //
-    Serial.print(F(" to SX1231 register 0x"));
-    SerialPrintDecToHex(addr);
-    Serial.print(F(" count "));
-    Serial.println(i);
-#endif
+    Chip_writeReg(addr, pgm_read_byte_near(reg_name + i)); /* write value to SX1231 */
+
     if (i == 9 && Freq_offset != 0.00) { // Register 0x07 0x08 0x09 - attention to the frequency offset !!!
       byte value[3];
       Chip_setFreq(Chip_readFreq(), value); // add offset to frequency
@@ -242,8 +235,8 @@ uint8_t Chip_readReg(uint8_t addr, uint8_t regType) {   // SX1231 read register 
 
 void Chip_writeReg(uint8_t regAddr, uint8_t value) {
 #ifdef debug_chip
-  Serial.print(F("[DB] Chip_writeReg regAddr 0x")); SerialPrintDecToHex(regAddr);
-  Serial.print(F(" value 0x")); SerialPrintDecToHex(value); Serial.println("");
+  Serial.print(F("[DB] Chip_writeReg, write mode value 0x")); SerialPrintDecToHex(value);
+  Serial.print(F(" to SX1231 register 0x")); SerialPrintDecToHex(regAddr); Serial.println("");
 #endif
   ChipSelect();                                 // Select RFM69
   SPI.transfer(regAddr | 0x80);                 // Send register address
