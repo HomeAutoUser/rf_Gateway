@@ -235,7 +235,7 @@ uint8_t Chip_readReg(uint8_t addr, uint8_t regType) {   // SX1231 read register 
 
 void Chip_writeReg(uint8_t regAddr, uint8_t value) {
 #ifdef debug_chip
-  Serial.print(F("[DB] Chip_writeReg, write mode value 0x")); SerialPrintDecToHex(value);
+  Serial.print(F("[DB] Chip_writeReg, write value 0x")); SerialPrintDecToHex(value);
   Serial.print(F(" to SX1231 register 0x")); SerialPrintDecToHex(regAddr); Serial.println("");
 #endif
   ChipSelect();                                 // Select RFM69
