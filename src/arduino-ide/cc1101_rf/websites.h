@@ -53,6 +53,7 @@ void WebSocket_chip();                        /* CC110x Factory Default,1,{ - - 
 void WebSocket_detail(byte variant);          /* 07,2E,2E,47,D3,91,FF,04,45,00,00,0F,00,1E,C4,EC,8C,22,02,22,F8,47,07,30,04,36,6C,03,40,91,87,6B,F8,56,10,EA,2A,00,1F,41,00,59,7F,3F,88,31,0B,detail,CC110x Factory Default,0.000 */
 void WebSocket_help();                        /* ??? */
 void WebSocket_index();                       /* CC110x,229556,277,0,0,-32 */
+void WebSocket_imp(const String values);      /* ... */
 void WebSocket_modes();                       /* MODE,Lacrosse_mode1,11 */
 void WebSocket_raw(const String & html_raw);  /* RAW,Lacrosse_mode1,9203816AB3,-98,-22 */
 void routing_websites();
@@ -61,6 +62,7 @@ void web_detail_cc110x_export();
 void web_detail_cc110x_import();
 #elif RFM69
 void web_detail_SX1231_export();
+void web_detail_SX1231_import();
 #endif
 void web_chip();
 void web_detail();

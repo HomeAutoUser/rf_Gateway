@@ -107,12 +107,8 @@ void ChipInit() { /* Init CC110x - Set default´s */
       Serial.print(F("[DB] CC110x_Freq.Offset              ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        // TODO print entfernen
-        Serial.println(F("-------------------------------------------------------------------"));
         if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
-          //        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
-          // TODO print entfernen , wann tritt der Fall auf? abändern ??
-          Serial.println(F("###################################################################"));
+          //        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM TODO - testen
 #ifdef debug_chip
           //ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
           ReceiveModeName = Registers[ReceiveModeNr].name;
@@ -137,7 +133,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
         Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
 #endif
         ReceiveModeName = Registers[ReceiveModeNr].name;
-        if (Registers[ReceiveModeNr].PKTLEN >0) { // not by  User setting
+        if (Registers[ReceiveModeNr].PKTLEN > 0) { // not by  User setting
           ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
         } else {
           ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register

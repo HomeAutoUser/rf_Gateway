@@ -48,7 +48,10 @@ uint32_t countLoop;
     2) output xFSK RAW msg must have format MN;D=9004806AA3;R=52;
 */
 
-byte Chip_writeReg_offset = 2;    // for compatibility with SIGNALduino
+byte Chip_writeReg_offset = 2;
+/* compatibility with SIGNALduino Firmware
+   - for FHEM raw cmd W --> write register manually | W0444 write to adr 0x02 value 44
+   - there is no offset when operated via the web interface */
 #define FWtxtPart1              " SIGNALduino compatible "
 #define MSG_BUILD_Data          F("MN;D=")
 #define MSG_BUILD_RSSI          F(";R=")
@@ -126,7 +129,7 @@ unsigned long uptime = 0;
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 ESP8266WebServer HttpServer(80);
-ADC_MODE(ADC_VCC);                  // vcc read
+ADC_MODE(ADC_VCC);              // vcc read
 #endif
 /* --- END - all SETTINGS for the ESP8266 ----------------------------------------------------------------------------------------------------- */
 
@@ -137,8 +140,8 @@ ADC_MODE(ADC_VCC);                  // vcc read
 #include <esp_wps.h>
 WebServer HttpServer(80);
 int wifiEventId;
-#include "soc/soc.h"           // for disable brownout
-#include "soc/rtc_cntl_reg.h"  // for disable brownout
+#include "soc/soc.h"            // for disable brownout
+#include "soc/rtc_cntl_reg.h"   // for disable brownout
 #endif
 /* --- END - all SETTINGS for the ESP32-- ----------------------------------------------------------------------------------------------------- */
 
@@ -201,13 +204,13 @@ void Telnet();
 #ifdef CC110x
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt */
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
-IRAM_ATTR void Interupt() {     /* Pulseauswertung */
+IRAM_ATTR void Interupt() { /* Pulseauswertung */
 #else
 void Interupt() {
 #endif
-  if (MOD_FORMAT != 3) {  /* not OOK */
+  if (MOD_FORMAT != 3) {    /* not OOK */
     FSK_RAW = 1;
-  } else {                /* OOK */
+  } else {                  /* OOK */
 #ifdef OOK_MU_433
     const unsigned long Time = micros();
     const signed long duration = Time - lastTime;
@@ -236,7 +239,19 @@ void Interupt_Variant(byte nr) {
   detachInterrupt(digitalPinToInterrupt(GDO2));
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 #endif
-  Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+  if (nr != 1) {  // all other Modes
+    Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+  } else {        // only Chip user setting
+    for (byte i = 1; i < REGISTER_MAX; i++) {
+      uint8_t addr = i;
+#ifdef RFM69
+      if (i >= 80) {
+        addr = SX1231_RegAddrTranslate[i - 80];
+      }
+#endif
+      Chip_writeReg(addr, EEPROMread(i));
+    }
+  }
 #ifdef CC110x
   CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
 #elif RFM69
@@ -250,32 +265,32 @@ void Interupt_Variant(byte nr) {
 #endif
 
   ReceiveModeName = Registers[ReceiveModeNr].name;
-  if (Registers[ReceiveModeNr].PKTLEN > 0) { // not by  User setting
+  if (Registers[ReceiveModeNr].PKTLEN > 0) {                    // not by User setting
     ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
   } else {
-    ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register
+    ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
   }
 
 #ifdef CC110x
   MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-  if (ReceiveModeName[0] == 'W') { // WMBUS
+  if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
   } else {
     FSK_RAW = 0;
-    if (MOD_FORMAT != 3) { // FSK
+    if (MOD_FORMAT != 3) {          // FSK
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-    } else { // OOK
+    } else {                        // OOK
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
     }
   }
 #elif RFM69
-  if (ReceiveModeName[0] == 'W') { // WMBUS
+  if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
   } else {
     FSK_RAW = 0;
   }
 #endif
-  Chip_setReceiveMode();  // start receive mode
+  Chip_setReceiveMode();            // start receive mode
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   WebSocket_chip();
   WebSocket_detail(1);
@@ -297,8 +312,8 @@ void setup() {
   }
 #ifdef CC110x
   pinMode(GDO0, INPUT); // for WMBUS
-  //  pinMode(GDO0, OUTPUT);
-  //  digitalWriteFast(GDO0, LOW);
+  //  pinMode(GDO0, OUTPUT);        // TODO wird evtl. für Senden MU gebraucht
+  //  digitalWriteFast(GDO0, LOW);  // TODO wird evtl. für Senden MU gebraucht
   pinMode(GDO2, INPUT);
 #endif
   pinMode(LED, OUTPUT);
@@ -368,11 +383,11 @@ void setup() {
     }
 #endif  // END - ARDUINO_ARCH_ESP32
     logText += ')';
-    logFile.close(); /* Schließen der Datei */
+    logFile.close();          // Schließen der Datei
     appendLogFile(logText);
   }
 
-  EEPROM.begin(EEPROM_SIZE); /* Puffergröße die verwendet werden soll */
+  EEPROM.begin(EEPROM_SIZE);  // Puffergröße die verwendet werden soll
   eip = EEPROMread_ipaddress(EEPROM_ADDR_IP);
   esnm = EEPROMread_ipaddress(EEPROM_ADDR_NETMASK);
   esgw = EEPROMread_ipaddress(EEPROM_ADDR_GATEWAY);
@@ -406,12 +421,12 @@ void setup() {
 
   WiFi.disconnect();
   //  WiFi.setOutputPower(0);
-  OwnStationHostname.replace("_", "-"); /* Unterstrich ersetzen, nicht zulässig im Hostnamen */
+  OwnStationHostname.replace("_", "-");         // Unterstrich ersetzen, nicht zulässig im Hostnamen
   OwnStationHostname += '-';
   OwnStationHostname += String(chipID, HEX);
-  WiFi.setHostname(OwnStationHostname.c_str()); /* WIFI set hostname */
+  WiFi.setHostname(OwnStationHostname.c_str()); // WIFI set hostname
 #ifdef ARDUINO_ARCH_ESP32
-  WiFi.onEvent(ESP32_WiFiEvent);                /* all WiFi-Events */
+  WiFi.onEvent(ESP32_WiFiEvent);                // all WiFi-Events
 #endif
 
   if (EEPROMread(EEPROM_ADDR_AP) == 255 || EEPROMread(EEPROM_ADDR_AP) == 1) {
@@ -468,17 +483,17 @@ void setup() {
   Serial.println(F("[DB] -> found board without WLAN"));
 #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)                          // ARDUINO_ARCH_ESP8266 || ARDUINO_ARCH_ESP32
   Serial.println(F("[DB] -> found board with WLAN"));
-#else // unknown board
+#else   // unknown board
   Serial.println(F("[DB] -> found unknown board"));
 #endif  // END - BOARDS
 #endif  // END debug
 
   ReceiveModeNr = 255;
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
-    ToggleTimeMode[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleTime + modeNr); // scan time all modes
-    ToggleArray[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleMode + modeNr); // read all modes if enabled/disabled
-    if (ToggleArray[modeNr] > 1) { // reset after flash is cleared
-      ToggleArray[modeNr] = 0; // disable mode
+    ToggleTimeMode[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleTime + modeNr);  // scan time all modes
+    ToggleArray[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleMode + modeNr);     // read all modes if enabled/disabled
+    if (ToggleArray[modeNr] > 1) {  // reset after flash is cleared
+      ToggleArray[modeNr] = 0;      // disable mode
       EEPROM.write(EEPROM_ADDR_ToggleMode + modeNr, 0);
 #ifdef Code_ESP
       EEPROM.commit();
@@ -1536,6 +1551,8 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 #endif  // END - debug_chip
         } else if (payloadString == "modes") {
           WebSocket_modes();
+        } else if (payloadString.substring(0, 4) == "imp,") {
+          WebSocket_imp(payloadString);
         }
       }
       break;

@@ -259,7 +259,7 @@ void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   }
 }
 
-void SX1231_setTransmitMode() {   // start transmit mode
+void SX1231_setTransmitMode() { // start transmit mode
   uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(3, Mode, RegOpMode); // 3 = Transmitter
@@ -268,7 +268,7 @@ void SX1231_setTransmitMode() {   // start transmit mode
 #endif
 }
 
-void Chip_setReceiveMode() {   // start receive mode
+void Chip_setReceiveMode() {    // start receive mode
   uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(4, Mode, RegOpMode); // 4 = Receiver
@@ -277,7 +277,7 @@ void Chip_setReceiveMode() {   // start receive mode
 #endif
 }
 
-void SX1231_setIdleMode () {     // set idle mode
+void SX1231_setIdleMode() {     // set idle mode
   uint8_t RegOpMode = Chip_readReg(0x01, READ_BURST); // Operating modes of the transceiver
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(1, Mode, RegOpMode); // 1 = Standby mode (STDBY)
@@ -290,8 +290,13 @@ uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode
   if (ModeNew != Mode) {
     RegOpMode = (RegOpMode & 0b11100011) | (ModeNew << 2);
     Chip_writeReg(0x01, RegOpMode);                           // SX1231 write register (High-Byte = address, low-Byte = value)
+    uint8_t wait = 0;
     while ((Chip_readReg(0x27, READ_BURST) & 0x80) != 0x80) { // ModeReady - Set when the operation mode requested in Mode, is ready, cleared when changing operating mode.
       delay(1);
+      wait++;
+      if (wait > 250) {
+        break;
+      }
     }
     Mode = ModeNew;
 #ifdef debug_chip
@@ -317,16 +322,16 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
   }
   ChipDeselect();                   // Deselect Chip
   // Optionally
-//  if (rssi) {
-//    *rssi = Chip_readRSSI();
-//    if (lqi) {
-//#ifdef CC110x
-//      *lqi = SPI.transfer(0); // only CC110x
-//#elif RFM69
-//      *lqi = 0; // gibt es beim SX1231 nicht
-//#endif
-//    }
-//  }
+  //  if (rssi) {
+  //    *rssi = Chip_readRSSI();
+  //    if (lqi) {
+  //#ifdef CC110x
+  //      *lqi = SPI.transfer(0); // only CC110x
+  //#elif RFM69
+  //      *lqi = 0; // gibt es beim SX1231 nicht
+  //#endif
+  //    }
+  //  }
 }
 
 int Chip_readRSSI() {   /* Read RSSI value from Register */

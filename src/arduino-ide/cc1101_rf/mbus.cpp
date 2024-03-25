@@ -433,8 +433,6 @@ DECODE:
         MSG_BUILD_MN(rssi);
         MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
         MSG_BUILD_MN(freqErr);
-        //MSG_BUILD_MN(F(";L=")); // LQI - nur bei CC110x - TODO - Parse_MN, faulty msg
-        //MSG_BUILD_MN(lqi);            // LQI
         MSG_BUILD_MN(';');
         MSG_BUILD_MN(char(3));        // ETX
         MSG_BUILD_MN(char(10));       // LF

@@ -77,7 +77,7 @@ typedef struct RXinfoDescr {
   uint16_t bytesLeft;           // Bytes left to to be read from the RX FIFO
   uint8_t *pByteIndex;          // Pointer to current position in the byte array
   uint8_t format;               // Infinite or fixed packet mode
-//  uint8_t complete;             // Packet received complete
+  //  uint8_t complete;             // Packet received complete
   uint8_t mode;                 // S-mode or T-mode
   uint8_t framemode;            // C-mode or T-mode frame
   uint8_t frametype;            // Frame type A or B when in C-mode

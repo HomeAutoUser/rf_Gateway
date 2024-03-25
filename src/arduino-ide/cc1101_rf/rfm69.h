@@ -16,7 +16,7 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES       9                    // ESP - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       19                   // ESP - Anzahl Datensätze in struct Data
 #else
 #define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data
 #endif
@@ -163,6 +163,97 @@ const uint8_t Config_Default[] PROGMEM = {
   0x00, // Address 0x71 - RegTestAfc (AFC offset for low modulation index AFC)
 }; // END SX1231 default register values
 
+#ifdef Avantek
+const uint8_t Config_Avantek[] PROGMEM = {
+  // SX1231 register values for Avantek
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
+  0x00, // Address 0x02 - RegDataModul
+  0x02, // Address 0x03 - RegBitrateMsb
+  0x80, // Address 0x04 - RegBitrateLsb
+  0x03, // Address 0x05 - RegFdevMsb
+  0xA8, // Address 0x06 - RegFdevLsb
+  0x6C, // Address 0x07 - RegFrfMsb
+  0x53, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x4A, // Address 0x19 - RegRxBw
+  0x82, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x04, // Address 0x2D - RegPreambleLsb
+  0x88, // Address 0x2E - RegSyncConfig
+  0x08, // Address 0x2F - RegSyncValue1
+  0x69, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x1A, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x19, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Config_Avantek register values
+#endif
+
 #ifdef Bresser_5in1
 const uint8_t Config_Bresser_5in1[] PROGMEM = {
   // SX1231 register values for Bresser 5-in-1
@@ -252,6 +343,461 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 Bresser_5in1 register values
+#endif
+
+#ifdef Bresser_6in1
+const uint8_t Config_Bresser_6in1[] PROGMEM = {
+  // SX1231 register values for Bresser 6-in-1
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
+  0x00, // Address 0x02 - RegDataModul
+  0x0F, // Address 0x03 - RegBitrateMsb
+  0x2F, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEC, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x4A, // Address 0x19 - RegRxBw
+  0x82, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x12, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x19, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Bresser_6in1 register values
+#endif
+
+#ifdef Bresser_7in1
+const uint8_t Config_Bresser_7in1[] PROGMEM = {
+  // SX1231 register values for Bresser 6-in-1
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
+  0x00, // Address 0x02 - RegDataModul
+  0x0F, // Address 0x03 - RegBitrateMsb
+  0x2F, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEC, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x4A, // Address 0x19 - RegRxBw
+  0x82, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x17, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x19, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Bresser_7in1 register values
+#endif
+
+#ifdef Fine_Offset_WH51_434
+const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
+  // SX1231 register values for Fine_Offset_WH51_434
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x07, // Address 0x03 - RegBitrateMsb
+  0x3E, // Address 0x04 - RegBitrateLsb
+  0x02, // Address 0x05 - RegFdevMsb
+  0x3E, // Address 0x06 - RegFdevLsb
+  0x6C, // Address 0x07 - RegFrfMsb
+  0x7A, // Address 0x08 - RegFrfMid
+  0xE1, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw
+  0x92, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x0E, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x08, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Fine_Offset_WH51_434 register values
+#endif
+
+#ifdef Fine_Offset_WH51_868
+const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
+  // SX1231 register values for Fine_Offset_WH51_868
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x07, // Address 0x03 - RegBitrateMsb
+  0x3E, // Address 0x04 - RegBitrateLsb
+  0x02, // Address 0x05 - RegFdevMsb
+  0x3E, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x16, // Address 0x08 - RegFrfMid
+  0x66, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw
+  0x92, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x0E, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x08, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Fine_Offset_WH51_868 register values
+#endif
+
+#ifdef Fine_Offset_WH57_434
+const uint8_t Config_Fine_Offset_WH57_434[] PROGMEM = {
+  // SX1231 register values for FineOffset_WH57
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x07, // Address 0x03 - RegBitrateMsb
+  0x3E, // Address 0x04 - RegBitrateLsb
+  0x02, // Address 0x05 - RegFdevMsb
+  0x3E, // Address 0x06 - RegFdevLsb
+  0x6C, // Address 0x07 - RegFrfMsb
+  0x7A, // Address 0x08 - RegFrfMid
+  0xE1, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw
+  0x92, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x09, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x08, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 FineOffset_WH57 register values
 #endif
 
 #ifdef Fine_Offset_WH57_868
@@ -436,6 +982,97 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
 }; // END SX1231  Inkbird_IBS-P01R register values
 #endif
 
+#ifdef KOPP_FC
+const uint8_t Config_KOPP_FC[] PROGMEM = {
+  // SX1231 register values for KOPP_FC
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x0D, // Address 0x03 - RegBitrateMsb
+  0x06, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEB, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw (62.500 kHz)
+  0x53, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x05, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x04, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 KOPP_FC register values
+#endif
+
 #ifdef Lacrosse_mode1
 const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   // SX1231 register values for LaCrosse Mode 1
@@ -617,6 +1254,188 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 Lacrosse_mode2 register values
+#endif
+
+#ifdef PCA301
+const uint8_t Config_PCA301[] PROGMEM = {
+  // SX1231 register values for PCA301
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x0D, // Address 0x03 - RegBitrateMsb
+  0x06, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEB, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw (62.500 kHz)
+  0x53, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x05, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x04, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 PCA301 register values
+#endif
+
+#ifdef Rojaflex
+const uint8_t Config_Rojaflex[] PROGMEM = {
+  // SX1231 register values for Rojaflex
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x0D, // Address 0x03 - RegBitrateMsb
+  0x06, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEB, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw (62.500 kHz)
+  0x53, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x05, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x04, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 Rojaflex register values
 #endif
 
 #ifdef WMBus_S
@@ -827,6 +1646,97 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 };
+#endif
+
+#ifdef X_Sense
+const uint8_t Config_X_Sense[] PROGMEM = {
+  // SX1231 register values for X_Sense
+  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  0x04, // Address 0x01 - RegOpMode
+  0x00, // Address 0x02 - RegDataModul
+  0x0D, // Address 0x03 - RegBitrateMsb
+  0x06, // Address 0x04 - RegBitrateLsb
+  0x01, // Address 0x05 - RegFdevMsb
+  0xEB, // Address 0x06 - RegFdevLsb
+  0xD9, // Address 0x07 - RegFrfMsb
+  0x13, // Address 0x08 - RegFrfMid
+  0x33, // Address 0x09 - RegFrfLsb
+  0x41, // Address 0x0A - RegOsc1
+  0x00, // Address 0x0B - RegAfcCtrl
+  0x02, // Address 0x0C - RegLowBat
+  0x92, // Address 0x0D - RegListen1
+  0xF5, // Address 0x0E - RegListen2
+  0x20, // Address 0x0F - RegListen3
+  0x24, // Address 0x10 - RegVersion
+  0x9F, // Address 0x11 - RegPaLevel
+  0x09, // Address 0x12 - RegPaRamp
+  0x1A, // Address 0x13 - RegOcp
+  0x40, // Address 0x14 - Reserved14
+  0xB0, // Address 0x15 - Reserved15
+  0x7B, // Address 0x16 - Reserved16
+  0x9B, // Address 0x17 - Reserved17
+  0x89, // Address 0x18 - RegLna
+  0x43, // Address 0x19 - RegRxBw (62.500 kHz)
+  0x53, // Address 0x1A - RegAfcBw
+  0x40, // Address 0x1B - RegOokPeak
+  0x80, // Address 0x1C - RegOokAvg
+  0x06, // Address 0x1D - RegOokFix
+  0x10, // Address 0x1E - RegAfcFei
+  0x00, // Address 0x1F - RegAfcMsb
+  0x00, // Address 0x20 - RegAfcLsb
+  0x00, // Address 0x21 - RegFeiMsb
+  0x00, // Address 0x22 - RegFeiLsb
+  0x02, // Address 0x23 - RegRssiConfig
+  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x25 - RegDioMapping1
+  0x07, // Address 0x26 - RegDioMapping2
+  0x80, // Address 0x27 - RegIrqFlags1
+  0x00, // Address 0x28 - RegIrqFlags2
+  0xE4, // Address 0x29 - RegRssiThresh
+  0x00, // Address 0x2A - RegRxTimeout1
+  0x00, // Address 0x2B - RegRxTimeout2
+  0x00, // Address 0x2C - RegPreambleMsb
+  0x03, // Address 0x2D - RegPreambleLsb
+  0x90, // Address 0x2E - RegSyncConfig
+  0xAA, // Address 0x2F - RegSyncValue1
+  0x2D, // Address 0x30 - RegSyncValue2
+  0xD4, // Address 0x31 - RegSyncValue3
+  0x00, // Address 0x32 - RegSyncValue4
+  0x00, // Address 0x33 - RegSyncValue5
+  0x00, // Address 0x34 - RegSyncValue6
+  0x00, // Address 0x35 - RegSyncValue7
+  0x00, // Address 0x36 - RegSyncValue8
+  0x00, // Address 0x37 - RegPacketConfig1
+  0x05, // Address 0x38 - RegPayloadLength
+  0x00, // Address 0x39 - RegNodeAdrs
+  0x00, // Address 0x3A - RegBroadcastAdrs
+  0x00, // Address 0x3B - RegAutoModes
+  0x04, // Address 0x3C - RegFifoThresh
+  0x02, // Address 0x3D - RegPacketConfig2
+  0x00, // Address 0x3E - RegAesKey1
+  0x00, // Address 0x3F - RegAesKey2
+  0x00, // Address 0x40 - RegAesKey3
+  0x00, // Address 0x41 - RegAesKey4
+  0x00, // Address 0x42 - RegAesKey5
+  0x00, // Address 0x43 - RegAesKey6
+  0x00, // Address 0x44 - RegAesKey7
+  0x00, // Address 0x45 - RegAesKey8
+  0x00, // Address 0x46 - RegAesKey9
+  0x00, // Address 0x47 - RegAesKey10
+  0x00, // Address 0x48 - RegAesKey11
+  0x00, // Address 0x49 - RegAesKey12
+  0x00, // Address 0x4A - RegAesKey13
+  0x00, // Address 0x4B - RegAesKey14
+  0x00, // Address 0x4C - RegAesKey15
+  0x00, // Address 0x4D - RegAesKey16
+  0x01, // Address 0x4E - RegTemp1
+  0x00, // Address 0x4F - RegTemp2
+  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x09, // Address 0x59 - RegTestTcxo
+  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x30, // Address 0x6F - RegTestDagc
+  0x00, // Address 0x71 - RegTestAfc
+}; // END SX1231 X_Sense register values
 #endif
 
 #endif  // END - #ifdef RFM69

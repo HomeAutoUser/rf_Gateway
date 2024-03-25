@@ -156,12 +156,11 @@
   fafc<n>           - frequency automatic control | valid value 0 (off) or 1 (on)
   foff<n>           - frequency offset
   ft                - frequency testsignal SN;R=99;D=FF;
-  m<0-6>            - register´s in Firmware (Avantek, Lacrosse, Bresser ...)
   t                 - get uptime
   tob<0-3><0-6>     - set togglebank (0-3) to value | <n> bank , <n> mode or 99 | 99 reset togglebank n (set to -)
   tob88             - scan all modes
   tob99             - reset togglebank              | set to { - | - | - | - }
-  tos<n>            - toggletime in milliseconds (min defined in config.h)
+  tot<n>            - toggletime in milliseconds (min defined in config.h)
   x                 - write cc110x_patable
   C                 - reads complete CC110x register
   C<n>              - reads one register adress (0-61)
@@ -187,6 +186,14 @@
 
   https://www.ti.com/lit/ds/symlink/cc1101.pdf
   https://www.shotech.de/Datasheet/semtech/sx1231.pdf
+
+  #######
+
+  mod MR
+  - cc1101_rf.ino | void Interupt_Variant(byte nr) angepasst auf RFM69, war nur CC1101 ReceiveModePKTLEN + Chip user setting extra Behandlung
+  - websites.cpp  | web_detail_SX1231_import erweitert
+  - register RFM69 ergänzt Avantek | Bresser_6in1 | Bresser_7in1 | ... (teilweise noch ungeprüft)
+  - websites.cpp  | web_detail_cc110x_export erweitert und detail_cc110x_exp.js erzeugt
 
 */
 
