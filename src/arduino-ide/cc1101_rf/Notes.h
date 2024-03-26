@@ -194,6 +194,7 @@
   - websites.cpp  | web_detail_SX1231_import erweitert
   - register RFM69 ergänzt Avantek | Bresser_6in1 | Bresser_7in1 | ... (teilweise noch ungeprüft)
   - websites.cpp  | web_detail_cc110x_export erweitert und detail_cc110x_exp.js erzeugt
+  - websites.cpp  | optimiert ... _cc110x_export _rfm69_export _cc110x_import _rfm69_import aufgelöst zu _export _import
 
 */
 

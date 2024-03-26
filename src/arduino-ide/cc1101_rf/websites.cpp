@@ -3,7 +3,7 @@
 #ifdef CODE_ESP
 #include "websites.h"
 
-void web_index() {
+void web_index() {          // ########## web_index ##########
   String submit = HttpServer.arg("submit");               // welcher Button wurde betätigt
   if (submit == "MSG0") {
     msgCount = 0;
@@ -63,7 +63,7 @@ void web_index() {
 }
 
 
-void web_chip() { // ########## web_chip ##########
+void web_chip() {           // ########## web_chip ##########
   String website;
   website.reserve(2000);
   website += FPSTR(html_meta);
@@ -121,7 +121,7 @@ void web_chip() { // ########## web_chip ##########
 }
 
 
-void web_modes() { // ########## modes ##########
+void web_modes() {          // ########## web_modes ##########
   if (!ChipFound) {
     web_chip();
   }
@@ -274,13 +274,14 @@ void web_modes() { // ########## modes ##########
   sendHtml(website);
 }
 
-#ifdef CC110x
-void web_detail_cc110x_export() { // ########## detail_cc110x_export ##########
+
+void web_detail_export() {  // ########## web_detail_export ##########
   if (!ChipFound) {
     web_chip();
   }
-
   String website = FPSTR(html_meta);
+
+#ifdef CC110x                 // #### web_detail_export - CC110x #### //
   website.reserve(1400);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
                "<script src=\"/js/detail_cc110x_exp.js\"></script></head>"
@@ -310,13 +311,30 @@ void web_detail_cc110x_export() { // ########## detail_cc110x_export ##########
   website += F("]<br><br>File to import on program SmartRF Studio 7<br>[development]<br>"
                "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
                "</body></html>");
-  sendHtml(website);
-}
 
-void web_detail_cc110x_import() {
+#elif RFM69                   // #### web_detail_export - RFM69 #### //
+  website.reserve(950);
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
+               "<script src=\"/js/detail_rfm69_exp.js\"></script></head>"
+               "Export all current register values<br>Just copy and paste string into your application<br>"
+               "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =>"
+               "<br>[<span id=\"REGs\"></span>]<br>"
+               "<br>File to import on program SX1231SKB"
+               "<br><button id=\"save-btn\" onclick=\"saveFile('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
+               "<br>File to import on program SmartRF Studio 7"
+               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>"
+               "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
+               "</body></html>");
+#endif
+  sendHtml(website);
+}                             // #### web_detail_export - END #### //
+
+
+void web_detail_import() {  // ########## web_detail_import ##########
   if (!ChipFound) {
     web_chip();
   }
+#ifdef CC110x                 // #### web_detail_import - CC110x #### //
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
@@ -327,9 +345,9 @@ void web_detail_cc110x_import() {
 
   if (countargs != 0) {
 #ifdef debug_html
-    Serial.print(F("[DB] web_detail_cc110x_import, submit:    ")); Serial.println(submit);
-    Serial.print(F("[DB] web_detail_cc110x_import, countargs: ")); Serial.println(countargs);
-    Serial.print(F("[DB] web_detail_cc110x_import, import:    ")); Serial.println(imp);
+    Serial.print(F("[DB] web_detail_import, submit:    ")); Serial.println(submit);
+    Serial.print(F("[DB] web_detail_import, countargs: ")); Serial.println(countargs);
+    Serial.print(F("[DB] web_detail_import, import:    ")); Serial.println(imp);
 #endif
     if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
       ToggleCnt = 1; // stop toggle
@@ -342,7 +360,7 @@ void web_detail_cc110x_import() {
         Adr = hexToDec(imp.substring(i, i + 2));
         Val = hexToDec(imp.substring(i + 2, i + 4));
 #ifdef debug_html
-        Serial.print(F("[DB] web_detail_cc110x_import, cc110x adr: 0x")); Serial.print(onlyDecToHex2Digit(Adr));
+        Serial.print(F("[DB] web_detail_import, cc110x adr: 0x")); Serial.print(onlyDecToHex2Digit(Adr));
         Serial.print(F(" | val: 0x")); Serial.println(onlyDecToHex2Digit(Val));
 #endif
         if (Adr > 0x2E) {
@@ -378,50 +396,26 @@ void web_detail_cc110x_import() {
   }
   website += F("<br><br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
                "</form></body></html>");
-  sendHtml(website);
-}
-#elif RFM69 // SX1231
-void web_detail_SX1231_export() {
-  if (!ChipFound) {
-    web_chip();
-  }
 
-  String website = FPSTR(html_meta);
-  website.reserve(900);  // real now 755
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
-               "<script src=\"/js/detail_rfm69_exp.js\"></script></head>"
-               "Export all current register values<br>Just copy and paste string into your application<br>"
-               "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =>"
-               "<br>[<span id=\"REGs\"></span>]<br>"
-               "<br>File to import on program SX1231SKB"
-               "<br><button id=\"save-btn\" onclick=\"saveFile()\">save current register in \"SX1231 Starter Kit\" format</button><br>"
-               "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
-               "</body></html>");
-  sendHtml(website);
-};
-
-void web_detail_SX1231_import() {
-  if (!ChipFound) {
-    web_chip();
-  }
+#elif RFM69                 // #### web_detail_import - RFM69 #### //
   String website = FPSTR(html_meta);
   website.reserve(1024);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
                "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
                "Import current register values<br>"
                "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
-               "(Please paste the string in SIGNALduino format)<br>"
-               "[development]<br>"
+               "<input size=\"100\" maxlength=\"288\" value=\"example ['0104','2FAA']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
+               "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button><br>"
                "<br>File to import from program SX1231SKB<br>"
                "<button onclick=\"document.getElementById('inputfile').click()\">Choose a file</button>"
                "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">"
-               "<br><br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>");
+               "<br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>");
+#endif
   sendHtml(website);
-}
-#endif  // SX1231 - END
+}                           // #### web_detail_import - END #### //
 
 
-void web_detail() {
+void web_detail() {         // ########## web_detail ##########
   if (!ChipFound) {
     web_chip();
   }
@@ -524,8 +518,8 @@ void web_detail() {
       byte value[2];
       Chip_Datarate_Set(datarate, value); // calculate register values for DataRate/BitRate
       for (byte i = 0; i < 2; i++) {
-        Chip_writeReg(CHIP_BitRate + i, value[i]); // write in receiver
-        EEPROMwrite(CHIP_BitRate + i, value[i]);  // write in flash
+        Chip_writeReg(CHIP_BitRate + i, value[i]);  // write in receiver
+        EEPROMwrite(CHIP_BitRate + i, value[i]);    // write in flash
       }
       // Deviation
     } else if (submit == "bdev") {
@@ -566,7 +560,7 @@ void web_detail() {
       }
 
       Chip_writeReg(18, web_Mod_set(value));      // write in cc110x
-      EEPROMwrite(18, web_Mod_set(value));          // write in flash
+      EEPROMwrite(18, web_Mod_set(value));        // write in flash
 #endif
       // Register
     } else if (submit == "breg") {
@@ -684,20 +678,8 @@ void web_detail() {
                "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
                // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
-               "<button class=\"btn\" type=\"button\" onClick=\"location.href='"
-#ifdef CC110x
-               "detail_cc110x_export"
-#elif RFM69
-               "detail_rfm69_export"
-#endif
-               "'\">export all registers</button>&emsp;"
-               "<button class=\"btn\" type=\"button\" onClick=\"location.href='"
-#ifdef CC110x
-               "detail_cc110x_import"
-#elif RFM69
-               "detail_rfm69_import"
-#endif
-               "'\">import registers</button></td></tr>"
+               "<button class=\"btn\" type=\"button\" onClick=\"location.href='""detail_export""'\">export all registers</button>&emsp;"
+               "<button class=\"btn\" type=\"button\" onClick=\"location.href='""detail_import""'\">import registers</button></td></tr>"
                // status line
                "<tr><td class=\"in\" colspan=\"6\"><span id=\"state\">");
 
@@ -735,7 +717,7 @@ void web_detail() {
 }
 
 
-void web_log() {
+void web_log() {            // ########## web_log ##########
   String website = FPSTR(html_meta);
   website.reserve(10000);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/log.css\">"
@@ -770,7 +752,8 @@ void web_log() {
   sendHtml(website);
 }
 
-void web_raw() {
+
+void web_raw() {            // ########## web_raw ##########
   if (!ChipFound) {
     web_chip();
   }
@@ -779,8 +762,8 @@ void web_raw() {
   Chip_readBurstReg(CC110x_PATABLE_VAL, 0x3E, 8);
   uint8_t OutputPower = CC110x_PATABLE_VAL[1];
 #elif RFM69
-  uint8_t RegPaLevel = Chip_readReg(0x11, READ_BURST); // PA selection and Output Power control
-  uint8_t OutputPower = RegPaLevel & 0b00011111; // Output power setting with 1 dB steps, Pout = -18 + OutputPower [dBm] with PA0 or PA1, Pout = -14 + OutputPower [dBm] with PA1 and PA2, (limited to the 16 upper values of OutputPower)
+  uint8_t RegPaLevel = Chip_readReg(0x11, READ_BURST);  // PA selection and Output Power control
+  uint8_t OutputPower = RegPaLevel & 0b00011111;        // Output power setting with 1 dB steps, Pout = -18 + OutputPower [dBm] with PA0 or PA1, Pout = -14 + OutputPower [dBm] with PA1 and PA2, (limited to the 16 upper values of OutputPower)
 #endif
   uint8_t countargs = HttpServer.args();
 
@@ -847,7 +830,7 @@ void web_raw() {
                "Output Power&ensp;<select id=\"pow\" name=\"pow\">");
 #ifdef CC110x
   float freq = Chip_readFreq(); // kHz
-  if (freq < 615000) { // Half between 433 and 868 MHz
+  if (freq < 615000) {          // Half between 433 and 868 MHz
     memcpy_P(CC110x_PATABLE_VAL, CC110x_PATABLE_433, 8);
   } else {
     memcpy_P(CC110x_PATABLE_VAL, CC110x_PATABLE_868, 8);
@@ -886,11 +869,11 @@ void web_raw() {
 }
 
 
-void web_wlan() {
+void web_wlan() {           // ########## web_wlan ##########
   /* https://arduino-esp8266.readthedocs.io/en/latest/esp8266wifi/scan-class.html
      https://links2004.github.io/Arduino/d4/d52/wl__definitions_8h_source.html
      https://blog.robberg.net/wifi-scanner-with-esp32/ */
-  IPAddress ipadr;  // IP addresse
+  IPAddress ipadr;                              // IP addresse
   char ipbuffer[16];
   String WifiEncryptionType;
   String WifiMAC;
@@ -1243,12 +1226,13 @@ void WebSocket_detail(byte variant) {
     website += String(Freq_offset, 3);
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
-      if (webSocketSite[num] == "/detail" || webSocketSite[num] == "/detail_rfm69_export" || webSocketSite[num] == "/detail_cc110x_export") {
+      if (webSocketSite[num] == "/detail" || webSocketSite[num] == "/detail_export") {
         webSocket.sendTXT(num, website);
       }
     }
   }
 }
+
 
 void WebSocket_modes() {
 #ifdef debug_websocket
@@ -1448,13 +1432,8 @@ void routing_websites() {
   HttpServer.on("/", web_index);
   HttpServer.on("/chip", web_chip);
   HttpServer.on("/detail", web_detail);
-#ifdef CC110x
-  HttpServer.on("/detail_cc110x_export", web_detail_cc110x_export);
-  HttpServer.on("/detail_cc110x_import", web_detail_cc110x_import);
-#elif RFM69
-  HttpServer.on("/detail_rfm69_export", web_detail_SX1231_export);
-  HttpServer.on("/detail_rfm69_import", web_detail_SX1231_import);
-#endif
+  HttpServer.on("/detail_export", web_detail_export);
+  HttpServer.on("/detail_import", web_detail_import);
   HttpServer.on("/modes", web_modes);
   HttpServer.on("/index.htm", web_index);
   HttpServer.on("/index.html", web_index);

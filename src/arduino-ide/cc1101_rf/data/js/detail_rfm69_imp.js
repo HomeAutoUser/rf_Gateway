@@ -27,14 +27,11 @@ function inputfile() {
 
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].match(/REG/g)) {
-          //console.log(lines[i]);
           regPosAdr = lines[i].search("0x");
           regAdr = lines[i].substr(regPosAdr+2,2);
           regValTxt = lines[i].substr(regPosAdr+4);
-          //console.log(regAdr);
           regVal = regValTxt.search("0x");
           regVal = regValTxt.substr(regVal+2,2)
-          //console.log(regVal);
           regTxt += regAdr;
           regTxt += regVal;
         }

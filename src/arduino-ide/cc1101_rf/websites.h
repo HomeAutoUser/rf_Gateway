@@ -57,15 +57,10 @@ void WebSocket_imp(const String values);      /* ... */
 void WebSocket_modes();                       /* MODE,Lacrosse_mode1,11 */
 void WebSocket_raw(const String & html_raw);  /* RAW,Lacrosse_mode1,9203816AB3,-98,-22 */
 void routing_websites();
-#ifdef CC110x
-void web_detail_cc110x_export();
-void web_detail_cc110x_import();
-#elif RFM69
-void web_detail_SX1231_export();
-void web_detail_SX1231_import();
-#endif
 void web_chip();
 void web_detail();
+void web_detail_export();
+void web_detail_import();
 void web_index();
 void web_log();
 void web_modes();

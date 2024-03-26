@@ -3,10 +3,12 @@ js.src = '/js/all.js';
 document.head.appendChild(js);
 
 let SX1231SKB_file;
+let CC110x_file;
 const tab = '	';
 const txt_hex = '0x';
 const txt_ln = '\n';
-var FileName;
+var FileSX1231;
+var FileCC110x;
 const FXOSC = 32000000;
 const Fstep = FXOSC / 524288;
 
@@ -22,6 +24,7 @@ function onMessage(event) {
   const obj=event.data.split(',');
 
   SX1231SKB_file = '#Type	Register Name	Address[Hex]	Value[Hex]\n';
+  CC110x_file = 'development\n';
 
   for (i=0; i<= 84; i++) {
    if (i==80) {
@@ -39,7 +42,8 @@ function onMessage(event) {
    }
   }
   SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
-  FileName = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';	   // The file to save the data.
+  FileSX1231 = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';
+  FileCC110x = 'SRF_' + obj[obj.length - 2] + '.xml';
 
   let element = document.getElementById("REGs");
   var txt = "'0001','012E','022E',";
@@ -204,15 +208,21 @@ function onMessage(event) {
  }
 }
 
-let saveFile = () => {
- // This variable stores all the data.
- let data = SX1231SKB_file;
+function saveFile(variant) {
+ let data;
+ if (variant == 'SX') {
+  data = SX1231SKB_file;
+ } else {
+  data = CC110x_file;
+  alert('development');
+  return;
+ }
 
  // Convert the text to BLOB.
  const textToBLOB = new Blob([data], { type: 'text/plain' });
 
  let newLink = document.createElement("a");
- newLink.download = FileName;
+ newLink.download = FileSX1231;
 
  if (window.webkitURL != null) {
   newLink.href = window.webkitURL.createObjectURL(textToBLOB);
@@ -222,7 +232,7 @@ let saveFile = () => {
   document.body.appendChild(newLink);
  }
 
- newLink.click(); 
+ newLink.click();
 }
 
 function dec2hex(i) {  // fix two places

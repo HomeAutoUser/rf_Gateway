@@ -13,12 +13,12 @@
 //#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
 //#define debug_cc110x_ms   1     // to debug CC110x Marcstate
 //#define debug_chip        1     // to debug chip routines
-//#define debug_eeprom      1     // to debug all EEPROM
+//#define debug_eeprom      1     // to debug EEPROM
 //#define debug_html        1     // to debug HTML handling
-//#define debug_telnet      1     // to debug telnet
-//#define debug_websocket   1     // to debug websocket handling
-//#define debug_wifi        1     // to debug wifi
-//#define debug_mbus        1     // to debug mbus
+//#define debug_mbus        1     // to debug Wireless-M-Bus
+//#define debug_telnet      1     // to debug Telnet
+//#define debug_websocket   1     // to debug Websocket handling
+//#define debug_wifi        1     // to debug WiFi
 
 //#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850 ESP32 CC1101 ca. 500, Nano CC1101 ca. 1450
 //                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?
@@ -26,7 +26,7 @@
 //                                   loop-benchmark (höher=besser, yield    = ProMini CC1101 LaCrosse 74200, WMBUS ca. 26500
 
 #define FWVer             "V 2.1.3pre"
-#define FWVerDate         "2024-03-25"
+#define FWVerDate         "2024-03-26"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
