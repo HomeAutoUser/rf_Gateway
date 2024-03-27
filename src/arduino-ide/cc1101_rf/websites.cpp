@@ -393,23 +393,24 @@ void web_detail_import() {  // ########## web_detail_import ##########
                  "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button><br>"
                  "<br>File to import from program SmartRF Studio 7<br>[development]");
   }
-  website += F("<br><br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
-               "</form></body></html>");
 
 #elif RFM69                 // #### web_detail_import - RFM69 #### //
   String website = FPSTR(html_meta);
   website.reserve(1024);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
                "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
+               "<body><form method=\"post\">"   /* form method wichtig für Daten von Button´s !!! */
                "Import current register values<br>"
                "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
                "<input size=\"100\" maxlength=\"288\" value=\"example ['0104','2FAA']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
                "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button><br>"
                "<br>File to import from program SX1231SKB<br>"
                "<button onclick=\"document.getElementById('inputfile').click()\">Choose a file</button>"
-               "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">"
-               "<br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>");
+               "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">");
 #endif
+
+  website += F("<br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
+               "</form></body></html>");
   sendHtml(website);
 }                           // #### web_detail_import - END #### //
 
