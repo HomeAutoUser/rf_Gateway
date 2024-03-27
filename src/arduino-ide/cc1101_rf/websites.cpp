@@ -641,13 +641,11 @@ void web_detail() {         // ########## web_detail ##########
   website += String(Freq_offset, 3);
   website += F("\"><div class=\"txt\">&ensp;MHz</div></td></tr>"
                // Bandwidth
-               "<tr><td colspan=\"2\">"
+               "<tr><td colspan=\"2\">Bandwidth"
 #ifdef CC110x
-               "Bandwidth (double side)"
+               " (double side)"
 #elif RFM69
-               "Bandwidth (single side)"
-#else
-               "Bandwidth"
+               " (single side)"
 #endif
                "</td>"
                "<td class=\"ce\" colspan=\"2\"><span id=\"CHANBW\"></span></td>"
