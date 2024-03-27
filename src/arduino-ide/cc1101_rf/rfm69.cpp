@@ -329,7 +329,7 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
 
 int Chip_readRSSI() {   /* Read RSSI value from Register */
   uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST); // not converted
-#if defined(Code_ESP) || !defined(SIGNALduino_comp)
+#if defined(CODE_ESP) || !defined(SIGNALduino_comp)
   RSSI_dez = rssiRaw / -2;                          // SX1231 RSSI for website
 #endif
   int16_t RSSI_raw = 0;
