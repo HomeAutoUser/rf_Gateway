@@ -333,11 +333,11 @@ void web_detail_import() {  // ########## web_detail_import ##########
   if (!ChipFound) {
     web_chip();
   }
-#ifdef CC110x                 // #### web_detail_import - CC110x #### //
   String submit = HttpServer.arg("submit");   // welcher Button wurde betätigt
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String website = FPSTR(html_meta);
+#ifdef CC110x                 // #### web_detail_import - CC110x #### //
   website.reserve(1024);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\"></head>"
                "<body><form method=\"post\">"); /* form method wichtig für Daten von Button´s !!! */
@@ -395,7 +395,6 @@ void web_detail_import() {  // ########## web_detail_import ##########
   }
 
 #elif RFM69                 // #### web_detail_import - RFM69 #### //
-  String website = FPSTR(html_meta);
   website.reserve(1024);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
                "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
