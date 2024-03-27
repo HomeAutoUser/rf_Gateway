@@ -329,7 +329,9 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
 
 int Chip_readRSSI() {   /* Read RSSI value from Register */
   uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST); // not converted
+#if defined(CODE_ESP) || !defined(SIGNALduino_comp)
   RSSI_dez = rssiRaw / -2;                          // SX1231 RSSI for website
+#endif
   int16_t RSSI_raw = 0;
   if (rssiRaw >= 21 && rssiRaw < 149) {
     RSSI_raw = rssiRaw - 148;
@@ -339,9 +341,9 @@ int Chip_readRSSI() {   /* Read RSSI value from Register */
   RSSI_raw *= -1;       // SX1231 RSSI for FHEM
 
 #ifdef SIGNALduino_comp /* for FHEM */
-  return RSSI_raw;      // not converted
+  return RSSI_raw;      // not converted for FHEM
 #else
-  return RSSI_dez;      // calculated - Telnet ???
+  return RSSI_dez;      // calculated for output on WebSocket_raw and msg
 #endif
 }
 

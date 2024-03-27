@@ -11,7 +11,7 @@ boolean isNumeric(String str);
 boolean str2ip(char *string, byte * IP);
 byte hex2int(byte hex);
 int freeRam();
-uint16_t hexToDec(String hexString);
+uint8_t hexToDec(String hexString);
 uint32_t EEPROMread_long(int address);
 uint8_t * EEPROMread_ipaddress(int address);
 uint8_t EEPROMread(int adr);

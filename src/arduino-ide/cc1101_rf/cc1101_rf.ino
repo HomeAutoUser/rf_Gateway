@@ -498,7 +498,7 @@ void setup() {
     if (ToggleArray[modeNr] > 1) {  // reset after flash is cleared
       ToggleArray[modeNr] = 0;      // disable mode
       EEPROM.write(EEPROM_ADDR_ToggleMode + modeNr, 0);
-#ifdef Code_ESP
+#ifdef CODE_ESP
       EEPROM.commit();
 #endif
     }
