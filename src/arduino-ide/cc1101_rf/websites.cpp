@@ -320,7 +320,7 @@ void web_detail_export() {  // ########## web_detail_export ##########
                "<br>File to import on program SX1231SKB"
                "<br><button id=\"save-btn\" onclick=\"saveFile('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
                "<br>File to import on program SmartRF Studio 7"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>)");
+               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>");
 #endif
 
   website += F("<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
