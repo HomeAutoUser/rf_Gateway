@@ -7,30 +7,26 @@
 #endif
 
 
-uint16_t hexToDec(String hexString) {       /* Passes the HEX value to Dec */
+uint8_t hexToDec(String hexString) {           // convert 2 hexdigits to 1 byte
   byte ret = 0;
   char ch;
-
-  for (byte i = 0, n = hexString.length(); i != n; ++i) {
+  for (byte i = 0; i < 2; ++i) {
     ch = hexString[i];
-    int val = 0;
+    byte val = 0;
     if ('0' <= ch && ch <= '9')      val = ch - '0';
     else if ('a' <= ch && ch <= 'f') val = ch - 'a' + 10;
     else if ('A' <= ch && ch <= 'F') val = ch - 'A' + 10;
-    else return 999;
     ret = ret * 16 + val;
   }
   return ret;
 }
 
-
-byte hex2int(byte hex) {                      /* convert a hexdigit to int (smallest variant, sketch is bigger with printf or scanf) */
+byte hex2int(byte hex) {                      // convert 1 (char) hexdigit to 1 byte
   if (hex >= '0' && hex <= '9') hex = hex - '0';
   else if (hex >= 'a' && hex <= 'f') hex = hex - 'a' + 10;
   else if (hex >= 'A' && hex <= 'F') hex = hex - 'A' + 10;
   return hex;
 }
-
 
 String onlyDecToHex2Digit(byte Dec) {
   char ret[3];
