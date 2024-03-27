@@ -308,9 +308,7 @@ void web_detail_export() {  // ########## web_detail_export ##########
   }
   website += F("<br>");
   website += website_p2;
-  website += F("]<br><br>File to import on program SmartRF Studio 7<br>[development]<br>"
-               "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
-               "</body></html>");
+  website += F("]<br><br>File to import on program SmartRF Studio 7<br>[development]<br>");
 
 #elif RFM69                   // #### web_detail_export - RFM69 #### //
   website.reserve(950);
@@ -322,10 +320,11 @@ void web_detail_export() {  // ########## web_detail_export ##########
                "<br>File to import on program SX1231SKB"
                "<br><button id=\"save-btn\" onclick=\"saveFile('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
                "<br>File to import on program SmartRF Studio 7"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>"
-               "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
-               "</body></html>");
+               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>)");
 #endif
+
+  website += F("<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
+               "</body></html>");
   sendHtml(website);
 }                             // #### web_detail_export - END #### //
 
