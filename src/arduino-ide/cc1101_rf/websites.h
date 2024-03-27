@@ -66,7 +66,7 @@ void web_log();
 void web_modes();
 void web_raw();
 void web_wlan();
-String HTML_mod(String txt);
+void HTML_mod(String & str);
 void sendHtml(String & str);
 
 /* Display of all websites from the web server

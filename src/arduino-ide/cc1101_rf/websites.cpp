@@ -21,7 +21,7 @@ void web_index() {          // ########## web_index ##########
                "<script src=\"/js/index.js\"></script>" // The type attribute is unnecessary for JavaScript resources.
                "</head>");
   website += FPSTR(html_head_table);
-  website = HTML_mod(website);
+  HTML_mod(website);  // replace "RAW data" when no chip found
   website += F("<body>"
                "<form method=\"post\">" /* form method wichtig für Daten von Button´s !!! https://www.w3schools.com/tags/ref_httpmethods.asp */
                "<table><tr><th colspan=\"2\">Device - Information</th></tr>"
@@ -71,7 +71,7 @@ void web_chip() {           // ########## web_chip ##########
                "<script src=\"/js/chip.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
-  website = HTML_mod(website);
+  HTML_mod(website);  // replace "RAW data" when no chip found
   website += F("<body>"
                "<table>"
                "<tr>");
@@ -724,7 +724,7 @@ void web_log() {            // ########## web_log ##########
                "<script src=\"/js/log.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
-  website = HTML_mod(website);
+  HTML_mod(website);  // replace "RAW data" when no chip found
 
   File logfile = LittleFS.open("/files/log.txt", "r");
   if (!logfile) {
@@ -910,7 +910,7 @@ void web_wlan() {           // ########## web_wlan ##########
                "<script src=\"/js/wlan.js\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
-  website = HTML_mod(website);
+  HTML_mod(website);  // replace "RAW data" when no chip found
   website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
                "<table>"                      /* START Tabelle gesamt */
                "<tr><th colspan=\"6\">WLAN - Device status</th></tr>"
@@ -1443,12 +1443,10 @@ void routing_websites() {
   HttpServer.onNotFound(handleUnknown);
 }
 
-
-String HTML_mod(String txt) {
+void HTML_mod(String & str) { // replace "RAW data" when no chip found
   if (ChipFound != true) {
-    txt.replace(F("<a href=\"raw\" class=\"RAW\">RAW data</a>"), F(""));
+    str.replace(F("<a href=\"raw\" class=\"RAW\">RAW data</a>"), F(""));
   }
-  return txt;
 }
 
 #endif  // END - CODE_ESP
