@@ -50,3 +50,21 @@ function inputfile() {
   });
 }
 
+
+function SXimpFromCC() {
+  var input = document.getElementsByName("imp")[0].value;
+  var checked = "TEST ";
+  input = input.slice(1);     // cut first [
+  input = input.slice(0, -1); // cut last ]
+
+  const reg = input.split(',');
+  for ( let i=0; i<reg.length; i++ ) {
+    // Examination of specific registers
+    checked += reg[i];
+  }
+
+  //alert("return value: " + input);
+  document.getElementsByName("imp")[0].value = checked;
+  return true;
+};
+

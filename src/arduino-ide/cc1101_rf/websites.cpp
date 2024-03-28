@@ -390,7 +390,7 @@ void web_detail_import() {  // ########## web_detail_import ##########
                  "FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
                  "(Please paste the string in SIGNALduino format)<br><br>"
                  "<input size=\"100\" maxlength=\"288\" value=\"example ['01AB','11FB']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
-                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button><br>"
+                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button></form>"
                  "<br>File to import from program SmartRF Studio 7<br>[development]");
   }
 
@@ -398,18 +398,30 @@ void web_detail_import() {  // ########## web_detail_import ##########
   website.reserve(1024);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
                "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
-               "<body><form method=\"post\">"   /* form method wichtig für Daten von Button´s !!! */
-               "Import current register values<br>"
-               "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
-               "<input size=\"100\" maxlength=\"288\" value=\"example ['0104','2FAA']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
-               "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button><br>"
-               "<br>File to import from program SX1231SKB<br>"
-               "<button onclick=\"document.getElementById('inputfile').click()\">Choose a file</button>"
-               "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">");
+               "<body><form method=\"post\" onsubmit=\"return SXimpFromCC()\">"   /* form method wichtig für Daten von Button´s !!! */
+               "Import current register values<br>");
+
+  if (countargs != 0) {
+#ifdef debug_html
+    Serial.print(F("[DB] web_detail_import, submit:    ")); Serial.println(submit);
+    Serial.print(F("[DB] web_detail_import, countargs: ")); Serial.println(countargs);
+    Serial.print(F("[DB] web_detail_import, import:    ")); Serial.println(imp);
+#endif
+    if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
+      website += F("<br>- read all actionable registers -");
+    }
+  } else {
+    website += F("<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
+                 "<input size=\"100\" maxlength=\"288\" value=\"example ['0104','2FAA']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
+                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button></form>"
+                 "<br>File to import from program SX1231SKB<br>"
+                 "<button onclick=\"document.getElementById('inputfile').click()\">Choose a file</button>"
+                 "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">");
+  }
 #endif
 
   website += F("<br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
-               "</form></body></html>");
+               "</body></html>");
   sendHtml(website);
 }                           // #### web_detail_import - END #### //
 
