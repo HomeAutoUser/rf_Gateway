@@ -38,8 +38,9 @@ extern int8_t freqErr;                              // CC110x automatic Frequenc
 extern uint8_t rssi;
 extern uint32_t msgCountMode[NUMBER_OF_MODES];      // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 extern uint8_t ToggleTimeMode[NUMBER_OF_MODES];     // Toggle, Zeit in Sekunden
-extern void WebSocket_raw(const String & html_raw); /* RAW,Lacrosse_mode1,9203816AB3,-98,-22 */
+extern void WebSocket_raw(const String & html_raw); // RAW,Lacrosse_mode1,9203816AB3,-98,-22
 extern void CC110x_readFreqErr();
+extern void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeA, uint8_t lqi, uint8_t rssi, int8_t freqErr);
 
 #ifdef SIGNALduino_comp
 #define MSG_BUILD_Data          F("MN;D=")

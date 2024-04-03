@@ -307,26 +307,6 @@ void SX1231_afc(uint8_t freqAfc) {                      // AfcAutoOn, 0  AFC 
   Chip_writeReg(0x1E, RegAfcFei);                       // SX1231 write register (High-Byte = address, low-Byte = value)
 }
 
-void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi) {  // WMBus
-  ChipSelect();                     // Select Chip
-  SPI.transfer(0x00 & 0x7F);        // read address
-  for (uint8_t i = 0; i < length; i++) {
-    data[i] = SPI.transfer(0);      // read result
-  }
-  ChipDeselect();                   // Deselect Chip
-  // Optionally
-  //  if (rssi) {
-  //    *rssi = Chip_readRSSI();
-  //    if (lqi) {
-  //#ifdef CC110x
-  //      *lqi = SPI.transfer(0); // only CC110x
-  //#elif RFM69
-  //      *lqi = 0; // gibt es beim SX1231 nicht
-  //#endif
-  //    }
-  //  }
-}
-
 int Chip_readRSSI() {   /* Read RSSI value from Register */
   uint8_t rssiRaw = Chip_readReg(0x24, READ_BURST); // not converted
 #if defined(CODE_ESP) || !defined(SIGNALduino_comp)

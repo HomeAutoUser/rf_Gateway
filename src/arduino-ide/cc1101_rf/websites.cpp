@@ -86,13 +86,16 @@ void web_chip() {           // ########## web_chip ##########
   ChipFound ? website += F("yes") : website += F("no");
   website += F("</td></tr>");
   if (ChipFound) {
+    char chHex[3]; // for hex output
 #ifdef CC110x
     website += F("<tr><td>chip PARTNUM</td><td colspan=\"2\">");
-    website += onlyDecToHex2Digit(Chip_readReg(CC110x_PARTNUM, READ_BURST));
+    onlyDecToHex2Digit(Chip_readReg(CC110x_PARTNUM, READ_BURST), chHex); // convert 1 byte to 2 hex char
+    website += chHex;
     website += F("</td></tr>");
 #endif
     website += F("<tr><td>chip VERSION</td><td colspan=\"2\">");
-    website += onlyDecToHex2Digit(Chip_readReg(CHIP_VERSION, READ_BURST));
+    onlyDecToHex2Digit(Chip_readReg(CHIP_VERSION, READ_BURST), chHex); // convert 1 byte to 2 hex char
+    website += chHex;
     website += F("</td></tr><tr><td>chip STATE</td><td colspan=\"2\"><span id=\"MS\">");
 #ifdef CC110x
     website += Chip_readReg(CC110x_MARCSTATE, READ_BURST);
@@ -282,6 +285,7 @@ void web_detail_export() {  // ########## web_detail_export ##########
   String website = FPSTR(html_meta);
 
 #ifdef CC110x                 // #### web_detail_export - CC110x #### //
+  char chHex[3]; // for hex output
   website.reserve(1400);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
                "<script src=\"/js/detail_cc110x_exp.js\"></script></head>"
@@ -294,16 +298,18 @@ void web_detail_export() {  // ########## web_detail_export ##########
       website_p2 += '[';
     }
     if (i < 41) {
-      website += onlyDecToHex2Digit(i);
-      website += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
-      website += ' ';
+      onlyDecToHex2Digit(i, chHex); // convert 1 byte to 2 hex char
+      website += chHex;
       website_p2 += '\'';
-      website_p2 += onlyDecToHex2Digit(i);
-      website_p2 += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
+      website_p2 += chHex;
+      onlyDecToHex2Digit(Chip_readReg(i, READ_BURST), chHex); // convert 1 byte to 2 hex char
+      website += chHex;
+      website_p2 += chHex;
       website_p2 += '\'';
       if (i != 40) {
         website_p2 += ',';
       }
+      website += ' ';
     }
   }
   website += F("<br>");
@@ -370,7 +376,9 @@ void web_detail_import() {  // ########## web_detail_import ##########
       }
       if (Adr > 0x2E) {
         website += F("ERROR: wrong cc110x adress, writing aborted! - ");
-        website += onlyDecToHex2Digit(Adr);
+        char chHex[3]; // for hex output
+        onlyDecToHex2Digit(Adr, chHex); // convert 1 byte to 2 hex char
+        website += chHex;
       } else {
         website += F("Import of the register values closed​​");
       }
@@ -694,7 +702,7 @@ void web_detail() {         // ########## web_detail ##########
 
   website += web_stat;
   website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
-
+  char chHex[3]; // for hex output
   for (byte i = 0; i <= REGISTER_MAX; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
@@ -709,10 +717,12 @@ void web_detail() {         // ########## web_detail ##########
       if (i >= 80) {
         addr = SX1231_RegAddrTranslate[i - 80];
       }
-      website += onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST));
+      onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST), chHex); // convert 1 byte to 2 hex char
+      website += chHex;
     }
 #else
-    website += onlyDecToHex2Digit(Chip_readReg(i, READ_BURST));
+    onlyDecToHex2Digit(Chip_readReg(i, READ_BURST), chHex); // convert 1 byte to 2 hex char
+    website += chHex;
 #endif
     website += F("\" type=\"text\"></td><td colspan=\"3\"><span id=\"n");
     website += i;
@@ -1213,6 +1223,7 @@ void WebSocket_detail(byte variant) {
   if (webSocket.connectedClients() > 0) {
     String website = "";
     website.reserve(200);
+    char chHex[3]; // for hex output
     for (byte i = 0; i <= REGISTER_MAX; i++) { /* all registers | fastest variant */
 #ifdef RFM69
       if (i == 0) { // SX1231 Register 0x00 FIFO nicht lesen
@@ -1222,10 +1233,12 @@ void WebSocket_detail(byte variant) {
         if (i >= 80) {
           addr = SX1231_RegAddrTranslate[i - 80];
         }
-        website += (variant == 0 ? onlyDecToHex2Digit(RegBeforeChange[i]) : onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST)));
+        variant == 0 ? onlyDecToHex2Digit(RegBeforeChange[i], chHex) : onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST), chHex); // convert 1 byte to 2 hex char
+        website += chHex;
       }
 #else // CC110x
-      website += (variant == 0 ? onlyDecToHex2Digit(RegBeforeChange[i]) : onlyDecToHex2Digit(Chip_readReg(i, READ_BURST)));
+      variant == 0 ? onlyDecToHex2Digit(RegBeforeChange[i], chHex) : onlyDecToHex2Digit(Chip_readReg(i, READ_BURST), chHex); // convert 1 byte to 2 hex char
+      website += chHex;
 #endif
       website += ',';
     }

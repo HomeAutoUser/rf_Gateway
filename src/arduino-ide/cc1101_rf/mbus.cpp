@@ -159,12 +159,12 @@ void mbus_task() {
     case 2:
 #ifdef CC110x
       if (digitalReadFast(GDO0) == 1) { // PIN_SEND, Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+        Chip_readRXFIFO(RXinfo.pByteIndex, 3, NULL, NULL); // Read the 3 first bytes from FIFO
 #elif RFM69
       if (Chip_readReg(0x28, 0) & 0b00100000) { // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+        Chip_readBurstReg(RXinfo.pByteIndex, CHIP_RXFIFO, 3); // // Read the 3 first bytes from FIFO
         rssi = Chip_readRSSI();
 #endif
-        // Read the 3 first bytes
-        Chip_readRXFIFO(RXinfo.pByteIndex, 3, NULL, NULL);
 #ifdef debug_mbus
         Serial.print(F("mbt2 RX "));
         for (uint8_t x = 0; x < 3; x++) {
@@ -318,9 +318,7 @@ void mbus_task() {
       // END OF PAKET
       if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
         Chip_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
-#ifdef CC110x
         CC110x_readFreqErr();
-#endif
         RXinfo.state = 4; // decode!
 #ifdef debug_mbus
         Serial.println(F("mbt3 END OF PAKET"));
@@ -330,7 +328,7 @@ void mbus_task() {
 #elif RFM69 // Ende CC110x
       if (Chip_readReg(0x28, 0) & 0b01000000) { // RegIrqFlags2, FifoNotEmpty - Set when FIFO contains at least one byte, else cleared.
         while (Chip_readReg(0x28, 0) & 0b01000000) { // RegIrqFlags2, FifoNotEmpty - Set when FIFO contains at least one byte, else cleared.
-          Chip_readRXFIFO(RXinfo.pByteIndex, 1, NULL, NULL); // read result from FIFO
+          Chip_readBurstReg(RXinfo.pByteIndex, CHIP_RXFIFO, 1); // // Read 1 byte from FIFO
           RXinfo.bytesLeft--;
           RXinfo.pByteIndex ++;
           if (RXinfo.bytesLeft == 0) {
@@ -388,14 +386,14 @@ DECODE:
       }
       if (rxStatus == PACKET_OK) { // rxStatus == 0
         digitalWriteFast(LED, HIGH);    // LED on
-        msgCount++;
-        msgCountMode[ReceiveModeNr]++;
+//        msgCount++;
+//        msgCountMode[ReceiveModeNr]++;
 #ifdef debug_mbus
         Serial.println(F("mbt PACKET_OK"));
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-        String html_raw = "";                  // für die Ausgabe auf dem Webserver
-        html_raw.reserve(255);
+        //        String html_raw = "";                  // für die Ausgabe auf dem Webserver
+        //        html_raw.reserve(255);
 #ifdef CC110x
         int16_t rssiTmp = rssi;
         if (rssi >= 128) {
@@ -408,41 +406,58 @@ DECODE:
 #ifdef CC110x
         freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
 #endif
-        msg = "";
-        MSG_BUILD_MN(char(2));        // STX
-        MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
+
+        uint8_t wmbusFrameTypeA = 0;
         if (RXinfo.framemode == WMBUS_CMODE) {
           if (RXinfo.frametype == WMBUS_FRAMEB) {
-            MSG_BUILD_MN('Y'); // special marker for frame type B
+            wmbusFrameTypeA = 1;
           }
-          //          if (RXinfo.frametype == WMBUS_FRAMEA) {
-          //             MSG_BUILD_MN('X'); // special marker for frame type A
-          //          } else {
-          //            MSG_BUILD_MN('Y'); // special marker for frame type B
-          //          }
         }
-        for (uint8_t i = 0; i < rxLength; i++) {
-          MSG_BUILD_MN(onlyDecToHex2Digit(MBpacket[i]));
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-          html_raw += onlyDecToHex2Digit(MBpacket[i]);
-#endif
-        }
-        MSG_BUILD_MN(onlyDecToHex2Digit(lqi));  // LQI
-        MSG_BUILD_MN(onlyDecToHex2Digit(rssi)); // RSSI
-        MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
-        MSG_BUILD_MN(rssi);
-        MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
-        MSG_BUILD_MN(freqErr);
-        MSG_BUILD_MN(';');
-        MSG_BUILD_MN(char(3));        // ETX
-        MSG_BUILD_MN(char(10));       // LF
-#ifdef CODE_ESP
-        MSG_OUTPUTALL(msg);   /* output msg to all */
-#endif
-        // END - MSG_BUILD_MN
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-        WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
-#endif
+        // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeA, uint8_t lqi, uint8_t rssi, int8_t freqErr);
+        msgOutput_MN (MBpacket, rxLength, wmbusFrameTypeA, lqi, rssi, freqErr);
+
+        /*
+                char chHex[3]; // for hex output
+                msg = "";
+                MSG_BUILD_MN(char(2));        // STX
+                MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
+                if (RXinfo.framemode == WMBUS_CMODE) {
+                  if (RXinfo.frametype == WMBUS_FRAMEB) {
+                    MSG_BUILD_MN('Y'); // special marker for frame type B
+                  }
+                  //          if (RXinfo.frametype == WMBUS_FRAMEA) {
+                  //             MSG_BUILD_MN('X'); // special marker for frame type A
+                  //          } else {
+                  //            MSG_BUILD_MN('Y'); // special marker for frame type B
+                  //          }
+                }
+                for (uint8_t i = 0; i < rxLength; i++) {
+                  onlyDecToHex2Digit(MBpacket[i], chHex); // convert 1 byte to 2 hex char
+                  MSG_BUILD_MN(chHex);
+          #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+                  html_raw += chHex;
+          #endif
+                }
+                onlyDecToHex2Digit(lqi, chHex); // convert 1 byte to 2 hex char
+                MSG_BUILD_MN(chHex);  // LQI
+                onlyDecToHex2Digit(rssi, chHex); // convert 1 byte to 2 hex char
+                MSG_BUILD_MN(chHex); // RSSI
+                MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
+                MSG_BUILD_MN(rssi);
+                MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
+                MSG_BUILD_MN(freqErr);
+                MSG_BUILD_MN(';');
+                MSG_BUILD_MN(char(3));        // ETX
+                MSG_BUILD_MN(char(10));       // LF
+          #ifdef CODE_ESP
+                MSG_OUTPUTALL(msg);   // output msg to all
+          #endif
+                // END - MSG_BUILD_MN
+          #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+                WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+          #endif
+        */
+
         digitalWriteFast(LED, LOW);    // LED off
       }
       RXinfo.state = 0;

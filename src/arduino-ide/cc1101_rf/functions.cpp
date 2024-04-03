@@ -28,7 +28,8 @@ byte hex2int(byte hex) {                      // convert 1 (char) hexdigit to 1 
   return hex;
 }
 
-String onlyDecToHex2Digit(byte Dec) {
+/*
+  String onlyDecToHex2Digit(byte Dec) {
   char ret[3];
   ret[0] = (Dec >> 4);
   ret[1] = (Dec & 0x0F);
@@ -36,8 +37,16 @@ String onlyDecToHex2Digit(byte Dec) {
   ret[1] = (ret[1] > 9 ? ret[1] + 55 : ret[1] + '0');
   ret[2] = '\0';
   return ret;
-}
+  }
+*/
 
+void onlyDecToHex2Digit(byte Dec, char *ret) {
+  ret[0] = Dec >> 4;
+  ret[1] = Dec & 0x0F;
+  ret[0] = (ret[0] > 9 ? ret[0] + 55 : ret[0] + '0');
+  ret[1] = (ret[1] > 9 ? ret[1] + 55 : ret[1] + '0');
+  ret[2] = '\0';
+}
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */
   unsigned int stringLength = str.length();
@@ -297,23 +306,28 @@ uint8_t * EEPROMread_ipaddress(int address) {             /* read IP-Address fro
    gibt einen Dump des Speicherinhalts in tabellarischer Form über den seriellen Port aus. */
 void EEPROMread_table() {
   uint8_t j = 0;
+  char chHex[3]; // for hex output
   Serial.println(F("-----------------------------------------------------"));
   Serial.println(F("EEPROM read all bytes"));
   Serial.print(F("Addr. "));
   for (uint8_t i = 0; i < 16; i++) {
-    Serial.print(onlyDecToHex2Digit(i));
+    onlyDecToHex2Digit(i, chHex); // convert 1 byte to 2 hex char
+    Serial.print(chHex);
     Serial.print(' ');
   }
   Serial.println();
   Serial.println(F("-----------------------------------------------------"));
   for (uint16_t i = 0; i < EEPROM_SIZE; i++) {
     if (j == 0) {
-      Serial.print(onlyDecToHex2Digit(i >> 8));
-      Serial.print(onlyDecToHex2Digit(i & 0x00FF));
+      onlyDecToHex2Digit(i >> 8, chHex); // convert 1 byte to 2 hex char
+      Serial.print(chHex);
+      onlyDecToHex2Digit(i & 0x00FF, chHex); // convert 1 byte to 2 hex char
+      Serial.print(chHex);
       Serial.print(": ");
     }
     uint8_t b = EEPROM.read(i);
-    String hex = onlyDecToHex2Digit(b);
+    onlyDecToHex2Digit(b, chHex); // convert 1 byte to 2 hex char
+    String hex = chHex;
     hex += ' ';
     j++;
     if (j == 16) {

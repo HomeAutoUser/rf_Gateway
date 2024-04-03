@@ -13,6 +13,7 @@ uint8_t rssi;
 #include "cc110x.h"
 #elif RFM69
 #include "rfm69.h"
+uint8_t SX1231_CrcOn;
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -102,7 +103,7 @@ byte FSK_RAW;                                 // Marker - FSK Modulation RAW int
 inline void doDetect();
 void NO_Chip();
 void Interupt_Variant(byte nr);
-void MSGBuild();
+//void msgOutput_MU();
 void PatReset();
 void decode(const int pulse);
 void findpatt(int val);
@@ -259,6 +260,7 @@ void Interupt_Variant(byte nr) {
   CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
 #elif RFM69
   Chip_writeReg(0x28, 0x10);      // FIFO are cleared when this bit is set.
+  SX1231_CrcOn = (Chip_readReg(0x37, READ_BURST) & 0b00010000) >> 4; // RegPacketConfig1, CrcOn - Enables CRC calculation/check (Tx/Rx).
 #endif
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -589,7 +591,11 @@ void loop() {
 
 #ifdef RFM69
   if (FSK_RAW != 2) { // no WMBUS
-    FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+    if (SX1231_CrcOn) { // CrcOn - 1  On
+      FSK_RAW = (Chip_readReg(0x28, 0) & 0b00000010) >> 1; // RegIrqFlags2, CrcOk - Set in Rx when the CRC of the payload is Ok. Cleared when FIFO is empty.
+    } else {
+      FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
+    }
   }
 #endif
 
@@ -604,15 +610,10 @@ void loop() {
     FSK_RAW = 0;
     digitalWriteFast(LED, HIGH);    /* LED on */
     rssi = Chip_readRSSI();
-    msgCount++;
-    msgCountMode[ReceiveModeNr]++;
+//    msgCount++;
+//    msgCountMode[ReceiveModeNr]++;
 #ifdef CC110x
     CC110x_readFreqErr();
-#endif
-
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    String html_raw = "";   // für die Ausgabe auf dem Webserver
-    html_raw.reserve(256);
 #endif
 
 #if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
@@ -626,17 +627,26 @@ void loop() {
     uint8_t uiBuffer[ReceiveModePKTLEN];                          // Array anlegen
     Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);  // Daten aus dem FIFO lesen
 
+//#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+//    String html_raw = "";   // für die Ausgabe auf dem Webserver
+//    html_raw.reserve(ReceiveModePKTLEN * 2 + 1);
+//#endif
+
+        // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr);
+    msgOutput_MN(uiBuffer, ReceiveModePKTLEN, 0, 0, rssi, freqErr);
+
+/*
+    char chHex[3]; // for hex output
     msg = "";
     MSG_BUILD_MN(char(2));        // STX
     MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
-
-    for (byte i = 0; i < ReceiveModePKTLEN; i++) { /* RawData */
-      MSG_BUILD_MN(onlyDecToHex2Digit(uiBuffer[i]));
+    for (byte i = 0; i < ReceiveModePKTLEN; i++) { // RawData
+      onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
+      MSG_BUILD_MN(chHex);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-      html_raw += onlyDecToHex2Digit(uiBuffer[i]);
+      html_raw += chHex;
 #endif
     }
-
     MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
     MSG_BUILD_MN(rssi);
     MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
@@ -648,9 +658,10 @@ void loop() {
 #endif
     MSG_BUILD_MN(char(10));       // LF
 #ifdef CODE_ESP
-    MSG_OUTPUTALL(msg);   /* output msg to all */
+    MSG_OUTPUTALL(msg);   // output msg to all
 #endif
     // END - MSG_BUILD_MN
+*/
 
 #if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
 #ifdef CODE_AVR
@@ -660,9 +671,9 @@ void loop() {
 #endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - if defined(debug_cc110x_ms) &&  defined(CC110x)
 
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
-#endif
+//#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    //WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+//#endif
     Chip_setReceiveMode();      // start receive mode
     digitalWriteFast(LED, LOW); /* LED off */
   } else {
@@ -714,6 +725,50 @@ void loop() {
 }
 /* --------------------------------------------------------------------------------------------------------------------------------- void loop end */
 
+void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr) {
+  char chHex[3]; // for hex output
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  String html_raw = "";   // für die Ausgabe auf dem Webserver
+  html_raw.reserve(lenData * 2 + 1);
+#endif
+        msgCount++;
+        msgCountMode[ReceiveModeNr]++;
+  msg = "";
+  MSG_BUILD_MN(char(2));        // STX
+  MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
+  if (frameTypeB) { 
+    MSG_BUILD_MN('Y'); // special marker for frame type B
+  }
+  for (uint16_t i = 0; i < lenData; i++) {
+    onlyDecToHex2Digit(data[i], chHex); // convert 1 byte to 2 hex char
+    MSG_BUILD_MN(chHex);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+    html_raw += chHex;
+#endif
+  }
+  if (FSK_RAW == 2) {
+    onlyDecToHex2Digit(lqi, chHex); // convert 1 byte to 2 hex char
+    MSG_BUILD_MN(chHex);  // LQI
+    onlyDecToHex2Digit(rssi, chHex); // convert 1 byte to 2 hex char
+    MSG_BUILD_MN(chHex); // RSSI
+  }
+  MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
+  MSG_BUILD_MN(rssi);
+  MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
+  MSG_BUILD_MN(freqErr);
+  MSG_BUILD_MN(';');
+  MSG_BUILD_MN(char(3));        // ETX
+#ifndef SIGNALduino_comp
+  MSG_BUILD_MN(char(13));       // CR
+#endif
+  MSG_BUILD_MN(char(10));       // LF
+#ifdef CODE_ESP
+  MSG_OUTPUTALL(msg);   /* output msg to all */
+#endif
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+#endif
+}
 
 /* #### ab hier, Funktionen mit Makroabhängigkeit #### */
 void ToggleOnOff() {
@@ -770,6 +825,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
   char buf_input[input.length() + 1];
   input.toCharArray(buf_input, input.length() + 1); /* String to char in buf */
+  char chHex[3]; // for hex output
 #ifdef debug
   for (byte i = 0; i < input.length(); i++) {
     MSG_BUILD(F("DB InputCommand [")); MSG_BUILD(i); MSG_BUILD(F("] = ")); MSG_BUILD_LF(buf_input[i]);
@@ -1034,19 +1090,23 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
               addr = SX1231_RegAddrTranslate[i - 80];
             }
 #endif
-            MSG_BUILD(onlyDecToHex2Digit(addr));
+            onlyDecToHex2Digit(addr, chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD(chHex);
             MSG_BUILD(F(" = 0x"));
 #ifdef RFM69
             if (i == 0) { // SX1231 Register 0x00 FIFO nicht lesen
               MSG_BUILD(F("00"));
             } else {
-              MSG_BUILD(onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST)));
+              onlyDecToHex2Digit((Chip_readReg(addr, READ_BURST)), chHex); // convert 1 byte to 2 hex char
+              MSG_BUILD(chHex);
             }
 #else
-            MSG_BUILD(onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST)));
+            onlyDecToHex2Digit((Chip_readReg(addr, READ_BURST)), chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD(chHex);
 #endif
             MSG_BUILD(F(" (0x"));
-            MSG_BUILD(onlyDecToHex2Digit(EEPROMread(i)));
+            onlyDecToHex2Digit(EEPROMread(i), chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD(chHex);
             MSG_BUILD(F(")\n"));
 #ifdef CODE_ESP
             MSG_OUTPUT(tmp);
@@ -1058,9 +1118,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           if (Cret <= REGISTER_STATUS_MAX) { // CC110x - inc. Status Registers, SX1231 - all Registers
 #ifdef SIGNALduino_comp
             MSG_BUILD('C');
-            MSG_BUILD(onlyDecToHex2Digit(Cret));
+            onlyDecToHex2Digit(Cret, chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD(chHex);
             MSG_BUILD(F(" = "));
-            MSG_BUILD_LF(onlyDecToHex2Digit(Chip_readReg(Cret, READ_BURST)));
+            onlyDecToHex2Digit((Chip_readReg(Cret, READ_BURST)), chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD_LF(chHex);
 #else
             MSG_BUILD(F("Reg. 0x"));
             MSG_BUILD(onlyDecToHex2Digit(Cret));
@@ -1080,10 +1142,12 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                   MSG_BUILD(' ');
                 }
                 MSG_BUILD(F("ccreg "));
-                MSG_BUILD(onlyDecToHex2Digit(i));
+                onlyDecToHex2Digit(i, chHex); // convert 1 byte to 2 hex char
+                MSG_BUILD(chHex);
                 MSG_BUILD(F(": "));
               }
-              MSG_BUILD(onlyDecToHex2Digit(uiBuffer[i]));
+              onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
+              MSG_BUILD(chHex);
               MSG_BUILD(' ');
             }
             MSG_BUILD("\n");
@@ -1096,7 +1160,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
             MSG_BUILD(F("C3E ="));
             for (byte i = 0; i < 8; i++) {
               MSG_BUILD(' ');
-              MSG_BUILD(onlyDecToHex2Digit(uiBuffer[i]));
+              onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
+              MSG_BUILD(chHex);
             }
             MSG_BUILD("\n");
 #ifdef CODE_ESP
@@ -1146,7 +1211,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
           Chip_readBurstReg(uiBuffer, 0x0D, 18);
           MSG_BUILD(F("C0Dn11="));
           for (byte i = 0; i <= 17; i++) {
-            MSG_BUILD(onlyDecToHex2Digit(uiBuffer[i]));
+            onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
+            MSG_BUILD(chHex);
           }
           MSG_BUILD("\n");
 #ifdef CODE_ESP
@@ -1175,9 +1241,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         }
         if (ChipFound == true) {
 #ifdef CC110x
-          MSG_BUILD(F("CC110x MARCSTATE:  ")); MSG_BUILD_LF(onlyDecToHex2Digit(Chip_readReg(CC110x_MARCSTATE, READ_BURST)));
+          onlyDecToHex2Digit((Chip_readReg(CC110x_MARCSTATE, READ_BURST)), chHex); // convert 1 byte to 2 hex char
+          MSG_BUILD(F("CC110x MARCSTATE:  ")); MSG_BUILD_LF(chHex);
 #elif RFM69
-          MSG_BUILD(F("SX1231 op mode:    ")); MSG_BUILD_LF(onlyDecToHex2Digit((Chip_readReg(0x01, READ_BURST) & 0b00011100) >> 2));
+          onlyDecToHex2Digit(((Chip_readReg(0x01, READ_BURST) & 0b00011100) >> 2), chHex); // convert 1 byte to 2 hex char
+          MSG_BUILD(F("SX1231 op mode:    ")); MSG_BUILD_LF(chHex);
 #endif  // END - CC110x || RFM69
           MSG_BUILD(F("Chip Freq. Afc:    ")); MSG_BUILD_LF(freqAfc == 1 ? F("on (1)") : F("off (0)"));
           MSG_BUILD(F("Chip Freq. offset: ")); MSG_BUILD_fl(Freq_offset, 3); MSG_BUILD(F(" MHz\n"));
@@ -1386,12 +1454,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         else if (buf_input[1] == 'S' && buf_input[2] == '3' && isHexadecimalDigit(buf_input[3]) && !buf_input[4]) {
           /* command WS34 ... | from 0x30 to 0x3D */
           uint8_t reg = hexToDec(input.substring(2, 4));
-          String val = onlyDecToHex2Digit( CC110x_CmdStrobe(reg) >> 4 );
+          onlyDecToHex2Digit(( CC110x_CmdStrobe(reg) >> 4 ), chHex); // convert 1 byte to 2 hex char
           delay(1);
-          String val1 = onlyDecToHex2Digit( CC110x_CmdStrobe(CC110x_SNOP) >> 4 );
+          char chHex1[3]; // for hex output
+          onlyDecToHex2Digit(( CC110x_CmdStrobe(CC110x_SNOP) >> 4 ), chHex1); // convert 1 byte to 2 hex char
 #ifdef debug
-          MSG_BUILD(F("cmdStrobeReg ")); MSG_BUILD(onlyDecToHex2Digit(reg)); MSG_BUILD(F(" chipStatus "));
-          MSG_BUILD(val); MSG_BUILD(F(" delay1 ")); MSG_BUILD_LF(val1);
+          MSG_BUILD(F("cmdStrobeReg ")); MSG_BUILD(input.substring(2, 4)); MSG_BUILD(F(" chipStatus "));
+          MSG_BUILD(chHex); MSG_BUILD(F(" delay1 ")); MSG_BUILD_LF(chHex1);
 #ifdef CODE_ESP
           MSG_OUTPUT(tmp);
 #endif
@@ -1425,7 +1494,7 @@ void Telnet() {
 
     for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
       if (!TelnetClient[i]) { /* find free socket */
-        TelnetClient[i] = TelnetServer.available();
+        TelnetClient[i] = TelnetServer.accept();
         String logText = F("Telnet client ");
         logText += TelnetClient[i].remoteIP().toString();
         logText += F(" connected");
@@ -1448,7 +1517,7 @@ void Telnet() {
 
     if (TELNET_ConnectionEstablished == false) {
       Serial.println(F("No free sessions ... drop connection"));
-      TelnetServer.available().stop();
+      TelnetServer.accept().stop();
 
       for (uint8_t i = 0; i < TELNET_CLIENTS_MAX; i++) {
         if (TelnetClient[i] || TelnetClient[i].connected()) {
@@ -1466,7 +1535,7 @@ void Telnet() {
       if (TelnetClient[i].available() > 0) {
 #ifdef debug_telnet
         Serial.print(F("[DB] Telnet, Data from session ")); Serial.print(i); Serial.print(F(" with length "));
-        Serial.println(TelnetClient[i].available());
+        Serial.println(TelnetClient[i].accept());
 #endif  // END - debug_telnet
         client_now = i; /* current telnet client is set where data is received */
       }
@@ -1601,12 +1670,12 @@ inline void doDetect() {  /* Pulsprüfung und Weitergabe an Patternprüfung */
 #ifdef debug_cc110x_MU
     Serial.println(F("[DB] -- RESET --"));
 #endif  // END - debug_cc110x_MU
-    MSGBuild();
+    msgOutput_MU();
   }
 }
 
 
-void MSGBuild() { /* Nachrichtenausgabe */
+void msgOutput_MU() { /* Nachrichtenausgabe */
   if (MsgLen >= MsgLenMin) {
     rssi = Chip_readReg(0x34, 0xC0);  // nicht konvertiert
     digitalWriteFast(LED, HIGH);      // LED on
@@ -1704,7 +1773,7 @@ void findpatt(int val) {  /* Patterneinsortierung */
       Serial.print(MsgLen); Serial.print(F(" | MsgLenMin: ")); Serial.println(MsgLenMin);
 #endif  // END - debug_cc110x_MU
       PatMAX = 1;
-      MSGBuild();
+      msgOutput_MU();
       break;
     }
   }

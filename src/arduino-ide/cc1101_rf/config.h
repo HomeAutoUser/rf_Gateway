@@ -21,12 +21,13 @@
 //#define debug_wifi        1     // to debug WiFi
 
 //#define COUNT_LOOP        1     // loop-benchmark (höher=besser, delay(1) = ESP8266 RFM69 ca. 850 ESP32 CC1101 ca. 500, Nano CC1101 ca. 1450
-//                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500, Empfang schlechter?
-//                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS ca. 5800
+//                                   loop-benchmark (höher=besser, yield    = ESP8266 CC1101 WMBUS ca. 6000, Bresser/LaCrosse ca. 9500
+//                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 WMBUS_T ca. 7300 (ohne Websocket), ca. 7150 (mit Websocket_index)
+//                                   loop-benchmark (höher=besser, yield    = ESP8266 RFM69 Lacrosse_mode1, Rojaflex ca. 8600 (ohne Websocket)
 //                                   loop-benchmark (höher=besser, yield    = ProMini CC1101 LaCrosse 74200, WMBUS ca. 26500
 
 #define FWVer             "V 2.1.3pre"
-#define FWVerDate         "2024-03-26"
+#define FWVerDate         "2024-04-03"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM

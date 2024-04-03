@@ -48,7 +48,6 @@ float Chip_readFreq();
 byte Chip_Bandw_cal(float input);
 void Chip_Datarate_Set(long datarate, byte * arr);
 void Chip_sendFIFO(char *startpos);
-void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi); // WMBus
 void SX1231_setIdleMode();        // SX1231 start idle mode
 uint8_t SX1231_setOperatingMode(uint8_t ModeNew, uint8_t Mode, uint8_t RegOpMode);
 void SX1231_afc(uint8_t freqAfc); // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
@@ -1349,19 +1348,19 @@ const uint8_t Config_PCA301[] PROGMEM = {
 
 #ifdef Rojaflex
 const uint8_t Config_Rojaflex[] PROGMEM = {
-  // SX1231 register values for Rojaflex
-  0x00, // Address 0x00 - RegFifo (FIFO data input/output)
+  // SX1231 register values for Rojaflex - getestet - i.O.
+  0x00, // Address 0x00 - RegFifo
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
-  0x0D, // Address 0x03 - RegBitrateMsb
-  0x06, // Address 0x04 - RegBitrateLsb
+  0x0C, // Address 0x03 - RegBitrateMsb
+  0x80, // Address 0x04 - RegBitrateLsb
   0x01, // Address 0x05 - RegFdevMsb
-  0xEB, // Address 0x06 - RegFdevLsb
-  0xD9, // Address 0x07 - RegFrfMsb
-  0x13, // Address 0x08 - RegFrfMid
-  0x33, // Address 0x09 - RegFrfLsb
+  0x52, // Address 0x06 - RegFdevLsb
+  0x6C, // Address 0x07 - RegFrfMsb
+  0x7A, // Address 0x08 - RegFrfMid
+  0xE1, // Address 0x09 - RegFrfLsb
   0x41, // Address 0x0A - RegOsc1
-  0x00, // Address 0x0B - RegAfcCtrl
+  0x40, // Address 0x0B - RegAfcCtrl
   0x02, // Address 0x0C - RegLowBat
   0x92, // Address 0x0D - RegListen1
   0xF5, // Address 0x0E - RegListen2
@@ -1375,7 +1374,7 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
   0x7B, // Address 0x16 - Reserved16
   0x9B, // Address 0x17 - Reserved17
   0x89, // Address 0x18 - RegLna
-  0x43, // Address 0x19 - RegRxBw (62.500 kHz)
+  0x4B, // Address 0x19 - RegRxBw
   0x53, // Address 0x1A - RegAfcBw
   0x40, // Address 0x1B - RegOokPeak
   0x80, // Address 0x1C - RegOokAvg
@@ -1385,32 +1384,32 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
   0x00, // Address 0x20 - RegAfcLsb
   0x00, // Address 0x21 - RegFeiMsb
   0x00, // Address 0x22 - RegFeiLsb
-  0x02, // Address 0x23 - RegRssiConfig
-  0xFF, // Address 0x24 - RegRssiValue
+  0x00, // Address 0x23 - RegRssiConfig
+  0xBA, // Address 0x24 - RegRssiValue
   0x00, // Address 0x25 - RegDioMapping1
   0x07, // Address 0x26 - RegDioMapping2
-  0x80, // Address 0x27 - RegIrqFlags1
+  0xD8, // Address 0x27 - RegIrqFlags1
   0x00, // Address 0x28 - RegIrqFlags2
   0xE4, // Address 0x29 - RegRssiThresh
   0x00, // Address 0x2A - RegRxTimeout1
   0x00, // Address 0x2B - RegRxTimeout2
   0x00, // Address 0x2C - RegPreambleMsb
   0x03, // Address 0x2D - RegPreambleLsb
-  0x90, // Address 0x2E - RegSyncConfig
-  0xAA, // Address 0x2F - RegSyncValue1
-  0x2D, // Address 0x30 - RegSyncValue2
-  0xD4, // Address 0x31 - RegSyncValue3
-  0x00, // Address 0x32 - RegSyncValue4
+  0x98, // Address 0x2E - RegSyncConfig
+  0xD3, // Address 0x2F - RegSyncValue1
+  0x91, // Address 0x30 - RegSyncValue2
+  0xD3, // Address 0x31 - RegSyncValue3
+  0x91, // Address 0x32 - RegSyncValue4
   0x00, // Address 0x33 - RegSyncValue5
   0x00, // Address 0x34 - RegSyncValue6
   0x00, // Address 0x35 - RegSyncValue7
   0x00, // Address 0x36 - RegSyncValue8
-  0x00, // Address 0x37 - RegPacketConfig1
-  0x05, // Address 0x38 - RegPayloadLength
+  0x91, // Address 0x37 - RegPacketConfig1
+  0x09, // Address 0x38 - RegPayloadLength
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x04, // Address 0x3C - RegFifoThresh
+  0x08, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -1430,9 +1429,9 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
   0x00, // Address 0x4D - RegAesKey16
   0x01, // Address 0x4E - RegTemp1
   0x00, // Address 0x4F - RegTemp2
-  0x2D, // Address 0x58 - RegTestLna (Sensitivity boost)
+  0x2D, // Address 0x58 - RegTestLna
   0x09, // Address 0x59 - RegTestTcxo
-  0x08, // Address 0x5F - RegTestllBw (PLL Bandwidth setting)
+  0x08, // Address 0x5F - RegTestllBw
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 Rojaflex register values

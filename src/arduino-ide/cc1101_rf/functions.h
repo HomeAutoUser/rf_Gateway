@@ -6,7 +6,8 @@
 #include <SPI.h>
 
 String EEPROMread_string(int address);
-String onlyDecToHex2Digit(byte Dec);
+void onlyDecToHex2Digit(byte Dec, char *ret);
+//String onlyDecToHex2Digit(byte Dec);
 boolean isNumeric(String str);
 boolean str2ip(char *string, byte * IP);
 byte hex2int(byte hex);

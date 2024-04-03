@@ -53,7 +53,12 @@
   - cc1101_rf_v211pre_240314_RFM69-WMBUS, modes: Lacrosse_mode1, Lacrosse_mode2, WMBus_T - reichen 685 Byte freier RAM???
   Der Sketch verwendet 19400 Bytes (63%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1363 Bytes (66%) des dynamischen Speichers, 685 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-
+  - cc1101_rf_Gateway-pre-release_2024-03-28, modes: #define Bresser_5in1, Lacrosse_mode1, Lacrosse_mode2, WMBus_T
+  Der Sketch verwendet 21364 Bytes (69%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1422 Bytes (69%) des dynamischen Speichers, 626 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v213pre_240403, modes: #define Bresser_5in1, Lacrosse_mode1, Lacrosse_mode2, WMBus_T
+  Der Sketch verwendet 21102 Bytes (68%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 1422 Bytes (69%) des dynamischen Speichers, 626 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -146,6 +151,9 @@
   Globale Variablen verwenden 51764 Bytes (15%) des dynamischen Speichers, 275916 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
   - cc1101_rf_v211pre_240314_RFM69-WMBUS
   Der Sketch verwendet 953521 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 52724 Bytes (16%) des dynamischen Speichers, 274956 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  - cc1101_rf_v213pre_240403
+  Der Sketch verwendet 952613 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 52724 Bytes (16%) des dynamischen Speichers, 274956 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!

@@ -1,6 +1,6 @@
 ﻿a:link.RAW, a:visited.RAW { color: #cc00cc; }
 .td1,.inp,input[type="number"]{text-align: center;}
-.dd {width: 8.3%;}
+.dd {width: 53px;}
 select {text-align: right;}
 
 /* color of rssi value */
@@ -30,4 +30,10 @@ select {text-align: right;}
 
 #dataTable tr:nth-child(odd) > td {
  background-color: #e3e3e3
+}
+
+table#dataTable {
+ width: 870px;
+ table-layout: fixed;
+ word-wrap: break-word;
 }
