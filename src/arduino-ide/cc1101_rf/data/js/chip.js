@@ -5,8 +5,34 @@ const ts = document.title;
 
 function onMessage(event) {
  console.log('received message: ' + event.data);
- if(event.data == 'Connected') {
+ if(event.data == 'Connected'){
   websocket.send('chip');
+  const v=document.getElementById("cV").textContent;
+  var c=v;
+  if(ts=='cc1101_rf_Gateway'){
+   if(v=='03'){
+    c+=' = CC1100';
+   }else if(v=='04'||v=='14'){
+    c+=' = CC1101';
+   }else if(v=='05'){
+    c+=' = CC1100E';
+   }else if(v=='07'||v=='17'){
+    c+=' = CC110L';
+   }else if(v=='08'||v=='18'){
+    c+=' = CC113L';
+   }else if(v=='15'){
+    c+=' = CC115L';
+   }
+  } else if(ts=='rfm69_rf_Gateway') {
+   if(v=='21'||v=='22'){
+    c+=' = SX1231';
+   }else if(v=='23'){
+    c+=' = SX1231, RFM69W or RFM69CW';
+   }else if(v=='24'){
+    c+=' = SX1231H, RFM69HW or RFM69HCW';
+   }
+  }
+  document.getElementById("cV").innerHTML=c;
  }else{
   const obj=event.data.split(',');
   if(ts == 'cc1101_rf_Gateway') {
@@ -15,7 +41,7 @@ function onMessage(event) {
    document.getElementById("MS").innerHTML = RegOpMode[obj[1]];
   }
   document.getElementById("MODE").innerHTML = obj[0];
-  document.getElementById("ToggleBank").innerHTML = obj[2];
+  document.getElementById("toB").innerHTML = obj[2];
   document.getElementById("Time").innerHTML = obj[3];
  }
 }

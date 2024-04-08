@@ -10,7 +10,7 @@
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES  20 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  6  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -34,7 +34,7 @@ void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
 void Chip_writeReg(uint8_t regAddr, uint8_t value);
 void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
 void Chip_setReceiveMode();
-void Chip_setFreq(long frequency, byte * arr);
+void Chip_setFreq(uint32_t frequency, byte * arr);
 float Chip_readFreq();
 void CC110x_writeBurstReg(byte * uiBuffer, byte regAddr, byte len);
 void CC110x_setTransmitMode();
@@ -60,7 +60,7 @@ extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 
 extern int8_t freqErr;
-extern float Freq_offset;
+extern int16_t freqOffset;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern uint8_t freqAfc;
@@ -1127,7 +1127,8 @@ const uint8_t Config_OOK_MU_433[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x14,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x00,  // AGCCTRL2            AGC Control // 24 dB
+  0x07,  // AGCCTRL2            AGC Control // 42 dB
+  //  0x00,  // AGCCTRL2            AGC Control // 24 dB
   0x00,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout

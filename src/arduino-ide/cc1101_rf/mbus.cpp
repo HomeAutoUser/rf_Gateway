@@ -8,8 +8,8 @@
   Ralf9 2022: rf_mbus.c (culfw) in mbus.h umbenannt und fuer den SIGNALDuino angepasst und erweitert
 
 */
-
 #include "config.h"
+#if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"
 
 // Buffers
@@ -166,9 +166,11 @@ void mbus_task() {
         rssi = Chip_readRSSI();
 #endif
 #ifdef debug_mbus
+        char chHex[3];
         Serial.print(F("mbt2 RX "));
         for (uint8_t x = 0; x < 3; x++) {
-          Serial.print(onlyDecToHex2Digit(RXinfo.pByteIndex[x]));
+          onlyDecToHex2Digit(RXinfo.pByteIndex[x], chHex);
+          Serial.print(chHex);
         }
         Serial.println("");
 #endif
@@ -351,9 +353,11 @@ DECODE:
       uint16_t rxStatus = PACKET_CODING_ERROR; // rxStatus = 1
       uint16_t rxLength;
 #ifdef debug_mbus
+      char chHex[3];
       Serial.print(F("mbt4 RX "));
       for (uint16_t x = 0; x < RXinfo.length; x++) {
-        Serial.print(onlyDecToHex2Digit(MBbytes[x]));
+        onlyDecToHex2Digit(MBbytes[x], chHex);
+        Serial.print(chHex);
       }
       Serial.println("");
 #endif
@@ -386,14 +390,10 @@ DECODE:
       }
       if (rxStatus == PACKET_OK) { // rxStatus == 0
         digitalWriteFast(LED, HIGH);    // LED on
-//        msgCount++;
-//        msgCountMode[ReceiveModeNr]++;
 #ifdef debug_mbus
         Serial.println(F("mbt PACKET_OK"));
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-        //        String html_raw = "";                  // für die Ausgabe auf dem Webserver
-        //        html_raw.reserve(255);
 #ifdef CC110x
         int16_t rssiTmp = rssi;
         if (rssi >= 128) {
@@ -406,58 +406,12 @@ DECODE:
 #ifdef CC110x
         freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
 #endif
-
-        uint8_t wmbusFrameTypeA = 0;
-        if (RXinfo.framemode == WMBUS_CMODE) {
-          if (RXinfo.frametype == WMBUS_FRAMEB) {
-            wmbusFrameTypeA = 1;
-          }
+        uint8_t wmbusFrameTypeB = 0;
+        if (RXinfo.framemode == WMBUS_CMODE && RXinfo.frametype == WMBUS_FRAMEB) {
+          wmbusFrameTypeB = 1;
         }
         // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeA, uint8_t lqi, uint8_t rssi, int8_t freqErr);
-        msgOutput_MN (MBpacket, rxLength, wmbusFrameTypeA, lqi, rssi, freqErr);
-
-        /*
-                char chHex[3]; // for hex output
-                msg = "";
-                MSG_BUILD_MN(char(2));        // STX
-                MSG_BUILD_MN(MSG_BUILD_Data); // "MN;D=" | "data: "
-                if (RXinfo.framemode == WMBUS_CMODE) {
-                  if (RXinfo.frametype == WMBUS_FRAMEB) {
-                    MSG_BUILD_MN('Y'); // special marker for frame type B
-                  }
-                  //          if (RXinfo.frametype == WMBUS_FRAMEA) {
-                  //             MSG_BUILD_MN('X'); // special marker for frame type A
-                  //          } else {
-                  //            MSG_BUILD_MN('Y'); // special marker for frame type B
-                  //          }
-                }
-                for (uint8_t i = 0; i < rxLength; i++) {
-                  onlyDecToHex2Digit(MBpacket[i], chHex); // convert 1 byte to 2 hex char
-                  MSG_BUILD_MN(chHex);
-          #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-                  html_raw += chHex;
-          #endif
-                }
-                onlyDecToHex2Digit(lqi, chHex); // convert 1 byte to 2 hex char
-                MSG_BUILD_MN(chHex);  // LQI
-                onlyDecToHex2Digit(rssi, chHex); // convert 1 byte to 2 hex char
-                MSG_BUILD_MN(chHex); // RSSI
-                MSG_BUILD_MN(MSG_BUILD_RSSI); // ";R=" | "; RSSI="
-                MSG_BUILD_MN(rssi);
-                MSG_BUILD_MN(MSG_BUILD_AFC);  // ";A=" | "; FREQAFC="
-                MSG_BUILD_MN(freqErr);
-                MSG_BUILD_MN(';');
-                MSG_BUILD_MN(char(3));        // ETX
-                MSG_BUILD_MN(char(10));       // LF
-          #ifdef CODE_ESP
-                MSG_OUTPUTALL(msg);   // output msg to all
-          #endif
-                // END - MSG_BUILD_MN
-          #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-                WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
-          #endif
-        */
-
+        msgOutput_MN (MBpacket, rxLength, wmbusFrameTypeB, lqi, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
         digitalWriteFast(LED, LOW);    // LED off
       }
       RXinfo.state = 0;
@@ -1853,3 +1807,4 @@ uint16_t crcCalc(uint16_t crcReg, uint8_t crcData)
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com.
 ***********************************************************************************/
+#endif

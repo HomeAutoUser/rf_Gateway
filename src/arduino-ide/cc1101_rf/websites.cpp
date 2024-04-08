@@ -93,10 +93,10 @@ void web_chip() {           // ########## web_chip ##########
     website += chHex;
     website += F("</td></tr>");
 #endif
-    website += F("<tr><td>chip VERSION</td><td colspan=\"2\">");
+    website += F("<tr><td>chip VERSION</td><td colspan=\"2\"><span id=\"cV\">");
     onlyDecToHex2Digit(Chip_readReg(CHIP_VERSION, READ_BURST), chHex); // convert 1 byte to 2 hex char
     website += chHex;
-    website += F("</td></tr><tr><td>chip STATE</td><td colspan=\"2\"><span id=\"MS\">");
+    website += F("</span></td></tr><tr><td>chip STATE</td><td colspan=\"2\"><span id=\"MS\">");
 #ifdef CC110x
     website += Chip_readReg(CC110x_MARCSTATE, READ_BURST);
 #elif RFM69
@@ -108,7 +108,7 @@ void web_chip() {           // ########## web_chip ##########
 #endif
     website += F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
     website += ReceiveModeName;
-    website += F("</span></td></tr><tr><td>Enabled mode(s)</td><td colspan=\"2\"><span id=\"ToggleBank\">");
+    website += F("</span></td></tr><tr><td>Enabled mode(s)</td><td colspan=\"2\"><span id=\"toB\">");
     for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
       if (ToggleArray[modeNr]) {
         website += modeNr;
@@ -361,12 +361,17 @@ void web_detail_import() {  // ########## web_detail_import ##########
       detachInterrupt(digitalPinToInterrupt(GDO2));
       CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
       CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
+#ifdef debug_html
+      char chHex[3];
+#endif
       for (uint16_t i = 2; i < imp.length(); i += 7) {
         Adr = hexToDec(imp.substring(i, i + 2));
         Val = hexToDec(imp.substring(i + 2, i + 4));
 #ifdef debug_html
-        Serial.print(F("[DB] web_detail_import, cc110x adr: 0x")); Serial.print(onlyDecToHex2Digit(Adr));
-        Serial.print(F(" | val: 0x")); Serial.println(onlyDecToHex2Digit(Val));
+        onlyDecToHex2Digit(Adr, chHex);
+        Serial.print(F("[DB] web_detail_import, cc110x adr: 0x")); Serial.print(chHex);
+        onlyDecToHex2Digit(Val, chHex);
+        Serial.print(F(" | val: 0x")); Serial.println(chHex);
 #endif
         if (Adr > 0x2E) {
           break;
@@ -452,6 +457,7 @@ void web_detail() {         // ########## web_detail ##########
   long freq = (HttpServer.arg("freq").toFloat()) * 1000;
   freq += 0;
   uint8_t countargs = HttpServer.args();    // Anzahl Argumente
+  char chHex[3]; // for hex output
 
   for (byte i = 0; i <= REGISTER_MAX; i++) {
 #ifdef RFM69
@@ -502,11 +508,11 @@ void web_detail() {         // ########## web_detail ##########
         InputCommand(F("CDA")); // AFC - disable
       }
       // Frequency Offset
-      Freq_offset = freqOff;
+      freqOffset = freqOff * 1000;
 #ifdef CC110x
       Chip_writeReg(CC110x_FSCTRL0, 0);  // 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #endif
-      EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
+      EEPROM.put(EEPROM_ADDR_FOFFSET, freqOffset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
       EEPROM.commit();
 #endif
@@ -517,6 +523,7 @@ void web_detail() {         // ########## web_detail ##########
         Chip_writeReg(i + CHIP_FREQMSB, value[i]);  // write Frequency Control Bytes to chip
         EEPROMwrite(i + CHIP_FREQMSB, value[i]);    // write Frequency Control Bytes in flash
       }
+      Chip_readFreq();
       web_stat = F("Frequency, frequency offset and AFC set &#10004;");
       // bandwidth
     } else if (submit == "bbandw") {
@@ -594,7 +601,8 @@ void web_detail() {         // ########## web_detail ##########
         if (HttpServer.hasArg(strArg)) { // disabled inputs are not submitted
 #ifdef debug_html
           Serial.print(F("[DB] web_detail, regData["));
-          Serial.print(i); Serial.print(F("] = 0x")); Serial.println(onlyDecToHex2Digit(BrowserArgsReg[i]));
+          onlyDecToHex2Digit(BrowserArgsReg[i], chHex);
+          Serial.print(i); Serial.print(F("] = 0x")); Serial.println(chHex);
 #endif
           /* compare value with value to be written */
           uint8_t addr = i;
@@ -604,14 +612,14 @@ void web_detail() {         // ########## web_detail ##########
           }
 #endif
           BrowserArgsReg[i] = hexToDec(HttpServer.arg(strArg));
-          //          byte regVal = Chip_readReg(addr, READ_BURST);
-          //          if (BrowserArgsReg[i] != regVal) {
 #ifdef debug_html
           /* i > 34 && <= 40    | CC110x automatic control register */
           /* i > 40             | CC110x test register */
           Serial.print(F("[DB] web_detail, regData[")); Serial.print(i);
-          Serial.print(F("] value has changed 0x")); Serial.print(onlyDecToHex2Digit(regVal));
-          Serial.print(F(" -> 0x")); Serial.println(onlyDecToHex2Digit(BrowserArgsReg[i]));
+          onlyDecToHex2Digit(Chip_readReg(addr, READ_BURST), chHex);
+          Serial.print(F("] value has changed 0x")); Serial.print(chHex);
+          onlyDecToHex2Digit(BrowserArgsReg[i], chHex);
+          Serial.print(F(" -> 0x")); Serial.println(chHex);
 #endif
           if (i == CHIP_PKTLEN) { /* ToDo - CHIP_PKTLEN probably not optimal -> if register 6 is changed (dependencies) ??? */
             ReceiveModePKTLEN = BrowserArgsReg[i];
@@ -619,7 +627,6 @@ void web_detail() {         // ########## web_detail ##########
           /* write value to register */
           Chip_writeReg(addr, BrowserArgsReg[i]);   // write in chip
           EEPROMwrite(addr, BrowserArgsReg[i]);     // write in flash
-          //          }
         }
       }
     }
@@ -656,9 +663,9 @@ void web_detail() {         // ########## web_detail ##########
                "<tr><td colspan=\"2\">Frequency Offset</td><td class=\"f2 ce\">Afc: <input aria-label=\"FreO1\" name=\"afc\" type=\"checkbox\" value=\"1\"");
   website += (freqAfc == 1 ? F(" checked") : F(""));
   website += F("></td><td class=\"ce\">");
-  website += String(Freq_offset, 3);
+  website += String((freqOffset / 1000.0), 3);
   website += F(" MHz</td><td class=\"ce\"><input aria-label=\"FreO2\" size=\"6\" id=\"p2\" name=\"freq_off\" value=\"");
-  website += String(Freq_offset, 3);
+  website += String((freqOffset / 1000.0), 3);
   website += F("\"><div class=\"txt\">&ensp;MHz</div></td></tr>"
                // Bandwidth
                "<tr><td colspan=\"2\">Bandwidth"
@@ -702,7 +709,6 @@ void web_detail() {         // ########## web_detail ##########
 
   website += web_stat;
   website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
-  char chHex[3]; // for hex output
   for (byte i = 0; i <= REGISTER_MAX; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
@@ -1245,7 +1251,7 @@ void WebSocket_detail(byte variant) {
     website += F("detail,");
     website += ReceiveModeName;
     website += ',';
-    website += String(Freq_offset, 3);
+    website += String((freqOffset / 1000.0), 3);
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/detail" || webSocketSite[num] == "/detail_export") {
@@ -1347,7 +1353,7 @@ void WebSocket_raw(const String & html_raw) {
     website += ',';
     website += RSSI_dez;
     website += ',';
-    website += int16_t( (Freq_offset / 1000) + (26000000 / 16384 * freqErr / 1000) );
+    website += int16_t( (freqOffset) + (26000000 / 16384 * freqErr / 1000) );
 
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/raw") {

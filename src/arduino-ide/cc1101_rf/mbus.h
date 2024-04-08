@@ -12,8 +12,8 @@
 #ifndef MBUS_H
 #define MBUS_H
 
+#if defined (WMBus_S) || defined (WMBus_T)
 #include <Arduino.h>
-#include "config.h"
 #include "macros.h"
 #include "functions.h"
 
@@ -23,8 +23,6 @@
 #include "rfm69.h"
 #endif
 
-#define MSG_START char(0x2)
-#define MSG_END char(0x3)
 #define maxSendEcho 100
 
 extern String cmdstring;
@@ -41,16 +39,6 @@ extern uint8_t ToggleTimeMode[NUMBER_OF_MODES];     // Toggle, Zeit in Sekunden
 extern void WebSocket_raw(const String & html_raw); // RAW,Lacrosse_mode1,9203816AB3,-98,-22
 extern void CC110x_readFreqErr();
 extern void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeA, uint8_t lqi, uint8_t rssi, int8_t freqErr);
-
-#ifdef SIGNALduino_comp
-#define MSG_BUILD_Data          F("MN;D=")
-#define MSG_BUILD_RSSI          F(";R=")
-#define MSG_BUILD_AFC           F(";A=")
-#else
-#define MSG_BUILD_Data          F("data: ")
-#define MSG_BUILD_RSSI          F("; RSSI=")
-#define MSG_BUILD_AFC           F("; FREQAFC=")
-#endif  // END - SIGNALduino_comp || no compatible
 
 void mbus_init(uint8_t wmBusMode);
 void mbus_task();
@@ -69,8 +57,6 @@ void mbus_send(int8_t startdata);
 #define INFINITE                  0
 #define FIXED                     1
 #define MAX_FIXED_LENGTH          256
-
-#define RX_STATE_ERROR            3
 
 typedef struct RXinfoDescr {
   uint8_t  lengthField;         // The L-field in the WMBUS packet
@@ -436,5 +422,5 @@ uint16_t crcCalc(uint16_t crcReg, uint8_t crcData);
   Should you have any questions regarding your right to use this Software,
   contact Texas Instruments Incorporated at www.TI.com.
 ***********************************************************************************/
-
+#endif
 #endif

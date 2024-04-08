@@ -64,7 +64,7 @@ struct Data Registers[] = {
   { Config_PCA301,  sizeof(Config_PCA301) / sizeof(Config_PCA301[0]), "PCA301", 32  },
 #endif
 #ifdef Rojaflex
-  { Config_Rojaflex,  sizeof(Config_Rojaflex) / sizeof(Config_Rojaflex[0]), "Rojaflex", 12  },
+  { Config_Rojaflex,  sizeof(Config_Rojaflex) / sizeof(Config_Rojaflex[0]), "Rojaflex", 9  },
 #endif
 #ifdef WMBus_S
   { Config_WMBus_S,  sizeof(Config_WMBus_S) / sizeof(Config_WMBus_S[0]), "WMBus_S", 32  },

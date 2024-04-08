@@ -28,17 +28,6 @@ byte hex2int(byte hex) {                      // convert 1 (char) hexdigit to 1 
   return hex;
 }
 
-/*
-  String onlyDecToHex2Digit(byte Dec) {
-  char ret[3];
-  ret[0] = (Dec >> 4);
-  ret[1] = (Dec & 0x0F);
-  ret[0] = (ret[0] > 9 ? ret[0] + 55 : ret[0] + '0');
-  ret[1] = (ret[1] > 9 ? ret[1] + 55 : ret[1] + '0');
-  ret[2] = '\0';
-  return ret;
-  }
-*/
 
 void onlyDecToHex2Digit(byte Dec, char *ret) {
   ret[0] = Dec >> 4;
@@ -47,6 +36,7 @@ void onlyDecToHex2Digit(byte Dec, char *ret) {
   ret[1] = (ret[1] > 9 ? ret[1] + 55 : ret[1] + '0');
   ret[2] = '\0';
 }
+
 
 boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */
   unsigned int stringLength = str.length();

@@ -53,17 +53,17 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         EEPROM.commit();
 #endif
       }
-      EEPROM.get(EEPROM_ADDR_FOFFSET, Freq_offset); /* freq offset from EEPROM */
-      if (Freq_offset > 10.0 || Freq_offset < -10.0 || EEPROM.read(EEPROM_ADDR_FOFFSET) == 0xff) {
-        Freq_offset = 0;
-        EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
+      EEPROM.get(EEPROM_ADDR_FOFFSET, freqOffset); /* freq offset from EEPROM */
+      if (freqOffset > 10000 || freqOffset < -10000) {
+        freqOffset = 0;
+        EEPROM.put(EEPROM_ADDR_FOFFSET, freqOffset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         EEPROM.commit();
 #endif
       }
 #ifdef debug_chip
       Serial.print(F("[DB] freqAfc                       ")); Serial.println(freqAfc);
-      Serial.print(F("[DB] Freq_offset                   ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
+      Serial.print(F("[DB] freqOffset                    ")); Serial.print((freqOffset / 1000.0), 3); Serial.println(F(" MHz"));
       Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
@@ -189,12 +189,12 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     }
     Chip_writeReg(addr, pgm_read_byte_near(reg_name + i)); /* write value to SX1231 */
 
-    if (i == 9 && Freq_offset != 0.00) { // Register 0x07 0x08 0x09 - attention to the frequency offset !!!
+    if (i == 9 && freqOffset != 0) { // Register 0x07 0x08 0x09 - attention to the frequency offset !!!
       byte value[3];
       Chip_setFreq(Chip_readFreq(), value); // add offset to frequency
 #ifdef debug_chip
       Serial.print(F("[DB] SX1231 Frequency + offset calculated "));
-      Serial.print(((Chip_readFreq() + Freq_offset * 1000) / 1000), 3);
+      Serial.print(((Chip_readFreq() + freqOffset) / 1000), 3);
       Serial.println(F(" MHz and write new value"));
 #endif
       for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
@@ -385,17 +385,21 @@ float Chip_readFreq() {
   return Freq;
 }
 
-void Chip_setFreq(uint32_t frequency, byte * arr) {   // frequency set & calculation - 0x0D 0x0E 0x0F | function used in Chip_writeRegFor
+void Chip_setFreq(uint32_t frequency, byte * arr) {   // frequency set & calculation -  function used in Chip_writeRegFor
   uint32_t f;
-  f = (frequency + Freq_offset * 1000.0) * 1000 / fStep;
+  f = (frequency + freqOffset) * 1000 / fStep;
   arr[0] = f / 65536;
   arr[1] = (f % 65536) / 256;
   arr[2] = f % 256;
 #if defined(debug) || defined(debug_html) || defined(debug_chip)
-  Serial.print(F("[DB] Chip_setFreq, input  ")); Serial.println(frequency);
-  Serial.print(F("[DB] Chip_setFreq, output ")); Serial.print(onlyDecToHex2Digit(arr[0]));
-  Serial.print(' '); Serial.print(onlyDecToHex2Digit(arr[1]));
-  Serial.print(' '); Serial.println(onlyDecToHex2Digit(arr[2]));
+  Serial.print(F("[DB] web_Freq_Set, input  ")); Serial.println(frequency);
+  char chHex[3]; // for hex output
+  onlyDecToHex2Digit(arr[0], chHex);
+  Serial.print(F("[DB] web_Freq_Set, output "));  Serial.print(chHex);
+  onlyDecToHex2Digit(arr[1], chHex);
+  Serial.print(' '); Serial.print(chHex);
+  onlyDecToHex2Digit(arr[2], chHex);
+  Serial.print(' '); Serial.println(chHex);
 #endif
 }
 

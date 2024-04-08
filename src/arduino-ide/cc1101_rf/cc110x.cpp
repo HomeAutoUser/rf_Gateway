@@ -95,16 +95,16 @@ void ChipInit() { /* Init CC110x - Set default´s */
         EEPROM.commit();
 #endif
       }
-      EEPROM.get(EEPROM_ADDR_FOFFSET, Freq_offset); /* cc110x - freq offset from EEPROM */
-      if (Freq_offset > 10.0 || Freq_offset < -10.0 || EEPROM.read(EEPROM_ADDR_FOFFSET) == 0xff) {
-        Freq_offset = 0;
-        EEPROM.put(EEPROM_ADDR_FOFFSET, Freq_offset);
+      EEPROM.get(EEPROM_ADDR_FOFFSET, freqOffset); /* freq offset from EEPROM */
+      if (freqOffset > 10000 || freqOffset < -10000) {
+        freqOffset = 0;
+        EEPROM.put(EEPROM_ADDR_FOFFSET, freqOffset);
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
         EEPROM.commit();
 #endif
       }
 #ifdef debug_chip
-      Serial.print(F("[DB] CC110x_Freq.Offset              ")); Serial.print(Freq_offset, 3); Serial.println(F(" MHz"));
+      Serial.print(F("[DB] freqOffset                      ")); Serial.print((freqOffset / 1000.0), 3); Serial.println(F(" MHz"));
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
         if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
@@ -130,7 +130,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
         }
 
 #ifdef debug_chip
-        Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
+        Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000.0, 3); Serial.println(F(" MHz"));
 #endif
         ReceiveModeName = Registers[ReceiveModeNr].name;
         if (Registers[ReceiveModeNr].PKTLEN > 0) { // not by  User setting
@@ -251,12 +251,12 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
     Serial.print(F(" (0x")); SerialPrintDecToHex(Chip_readReg(i, READ_BURST));
     Serial.println(F(") from CC110x"));
 #endif
-    if (i == 15 && Freq_offset != 0.00) { /* 0D 0E 0F - attention to the frequency offset !!! */
+    if (i == 15 && freqOffset != 0) { /* 0D 0E 0F - attention to the frequency offset !!! */
       byte value[3];
       Chip_setFreq(Chip_readFreq(), value);
 #ifdef debug_chip
       Serial.print(F("[DB] CC110x_Freq.Offset calculated "));
-      Serial.print(((Chip_readFreq() + Freq_offset * 1000) / 1000), 3);
+      Serial.print(((Chip_readFreq() + freqOffset) / 1000), 3);
       Serial.println(F(" MHz an write new value"));
 #endif
       for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
@@ -493,17 +493,21 @@ float Chip_readFreq() {
 }
 
 
-void Chip_setFreq(long frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in Chip_writeRegFor */
-  int32_t f;
-  f = (frequency + Freq_offset * 1000) / 26000 * 65536;
+void Chip_setFreq(uint32_t frequency, byte * arr) {   /* frequency set & calculation - 0x0D 0x0E 0x0F | function used in Chip_writeRegFor */
+  uint32_t f;
+  f = (frequency + freqOffset) / 26000.0 * 65536;
   arr[0] = f / 65536;
   arr[1] = (f % 65536) / 256;
   arr[2] = f % 256;
 #if defined(debug) || defined(debug_html) || defined(debug_chip)
   Serial.print(F("[DB] web_Freq_Set, input  ")); Serial.println(frequency);
-  Serial.print(F("[DB] web_Freq_Set, output ")); Serial.print(onlyDecToHex2Digit(arr[0]));
-  Serial.print(' '); Serial.print(onlyDecToHex2Digit(arr[1]));
-  Serial.print(' '); Serial.println(onlyDecToHex2Digit(arr[2]));
+  char chHex[3]; // for hex output
+  onlyDecToHex2Digit(arr[0], chHex);
+  Serial.print(F("[DB] web_Freq_Set, output "));  Serial.print(chHex);
+  onlyDecToHex2Digit(arr[1], chHex);
+  Serial.print(' '); Serial.print(chHex);
+  onlyDecToHex2Digit(arr[2], chHex);
+  Serial.print(' '); Serial.println(chHex);
 #endif
 }
 
@@ -522,7 +526,9 @@ byte Chip_Bandw_cal(float input) {   /* bandwidth calculation from web */
   }
 END:
 #ifdef debug
-  Serial.print(F("[DB] Chip_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(onlyDecToHex2Digit((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b00001111) + bits));
+  char chHex[3]; // for hex output
+  onlyDecToHex2Digit((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b00001111) + bits, chHex);
+  Serial.print(F("[DB] Chip_Bandw_cal, Setting MDMCFG4 (10) to ")); Serial.println(chHex);
 #endif
   return ((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b00001111) + bits);
 }
@@ -561,7 +567,12 @@ void Chip_Datarate_Set(long datarate, byte * arr) {    /* datarate set & calcula
   arr[0] = ret + DRATE_E;
   arr[1] = DRATE_M;
 #ifdef debug
-  Serial.print(F("[DB] Chip_Datarate_Set, MDMCFG4..MDMCFG3 to ")); Serial.print(onlyDecToHex2Digit(arr[0])); Serial.print(onlyDecToHex2Digit(arr[1]));
+  char chHex[3]; // for hex output
+  Serial.print(F("[DB] Chip_Datarate_Set, MDMCFG4..MDMCFG3 to "));
+  onlyDecToHex2Digit(arr[0], chHex);
+  Serial.print(chHex);
+  onlyDecToHex2Digit(arr[1], chHex);
+  Serial.print(chHex);
   Serial.print(' '); Serial.print(F(" = ")); Serial.print(datarate); Serial.println(F(" Hz"));
 #endif
 }
@@ -604,11 +615,6 @@ byte CC110x_Deviation_Set(float deviation) {    /* Deviation set & calculation *
 
 
 byte web_Mod_set(byte input) {
-#ifdef debug
-  Serial.print(F("[DB] web_Mod_set, set new value to ")); Serial.println(input);
-  Serial.print(F("[DB] web_Mod_set, MDMCFG2 (12) value is ")); Serial.println(onlyDecToHex2Digit(Chip_readReg(0x12, READ_BURST)));
-#endif
-
   /* read all split values | example F1 -> 11110001 */
   byte reg12_6_4 = Chip_readReg(0x12, READ_BURST) & 0x8f ;
   byte output = input << 4;

@@ -27,7 +27,7 @@
 //                                   loop-benchmark (höher=besser, yield    = ProMini CC1101 LaCrosse 74200, WMBUS ca. 26500
 
 #define FWVer             "V 2.1.3pre"
-#define FWVerDate         "2024-04-03"
+#define FWVerDate         "2024-04-08"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -173,7 +173,7 @@
 #define EEPROM_ADDR_AP          173
 #define EEPROM_ADDR_PATABLE     174     // 8 Byte 
 #define EEPROM_ADDR_CHK         183     // FW – Prüfsumme über PKTLEN 183–184
-#define EEPROM_ADDR_FOFFSET     185     // chip freq offset | 185-188
+#define EEPROM_ADDR_FOFFSET     185     // int16_t - chip freq offset | 185-186
 #define EEPROM_ADDR_AFC         189     // chip afc | now only work on CC110x
 #define EEPROM_ADDR_Prot        200     // mit command 'm' gesetzter Modus für start ohne toggle | TODO prüfen
 #define EEPROM_ADDR_FW1         209

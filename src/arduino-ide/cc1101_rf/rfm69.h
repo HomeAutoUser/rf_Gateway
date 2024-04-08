@@ -18,7 +18,7 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES       19                   // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       6                    // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -64,10 +64,10 @@ extern byte FSK_RAW;                        // Marker - FSK Modulation
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
 
-extern float Freq_offset;
+extern uint8_t freqAfc;
+extern int16_t freqOffset;
 extern int16_t RSSI_dez;
 extern struct Data Registers[];
-extern uint8_t freqAfc;
 
 // ############################## all available SX1231 registers ##############################
 const uint8_t Config_User[] PROGMEM = {
