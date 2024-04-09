@@ -615,10 +615,8 @@ void loop() {
 #endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - if defined(debug_cc110x_ms) &&  defined(CC110x)
 
-    uint8_t uiBuffer[ReceiveModePKTLEN];                          // Array anlegen
-    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);  // Daten aus dem FIFO lesen
-
-    // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr);
+    uint8_t uiBuffer[ReceiveModePKTLEN];                            // Array anlegen
+    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);    // Daten aus dem FIFO lesen
     msgOutput_MN(uiBuffer, ReceiveModePKTLEN, 0, 0, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
 
 #if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
@@ -688,10 +686,6 @@ void loop() {
 
 void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr) {
   char chHex[3]; // for hex output
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  String html_raw = "";   // für die Ausgabe auf dem Webserver
-  html_raw.reserve(lenData * 2 + 1);
-#endif
   msgCount++;
   msgCountMode[ReceiveModeNr]++;
   String msg = "";
@@ -704,9 +698,6 @@ void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t 
   for (uint16_t i = 0; i < lenData; i++) {
     onlyDecToHex2Digit(data[i], chHex); // convert 1 byte to 2 hex char
     MSG_BUILD_MN(chHex);
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    html_raw += chHex;
-#endif
   }
   if (FSK_RAW == 2) {
     onlyDecToHex2Digit(lqi, chHex); // convert 1 byte to 2 hex char
@@ -726,9 +717,9 @@ void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t 
   MSG_BUILD_MN(char(10));       // LF
 #ifdef CODE_ESP
   MSG_OUTPUTALL(msg);   /* output msg to all */
-#endif
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  WebSocket_raw(html_raw);    // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+  uint8_t bg = msg.indexOf("D=");     // Startpos Data
+  uint8_t en = msg.indexOf(";", bg);  // Endpos Data
+  WebSocket_raw(msg.substring(bg + 2, en)); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
 }
 

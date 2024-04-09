@@ -95,7 +95,7 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 421168 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     421168   code in flash
-  - cc1101_rf_v207pre_240224_Cmd-tos
+  // cc1101_rf_v207pre_240224_Cmd-tos
   . Variables and constants in RAM (global, static), used 38576 / 80192 bytes (48%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1628     initialized variables
@@ -108,7 +108,7 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 415516 / 1048576 bytes (39%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     415516   code in flash
-  - cc1101_rf_v211pre_240314_RFM69-WMBUS
+  // cc1101_rf_v211pre_240314_RFM69-WMBUS
   . Variables and constants in RAM (global, static), used 39616 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1660     initialized variables
@@ -121,7 +121,32 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 418488 / 1048576 bytes (39%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     418488   code in flash
-
+  // cc1101_rf_v213pre_24049 - CC110X
+  . Variables and constants in RAM (global, static), used 40516 / 80192 bytes (50%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1852     initialized variables
+  ╠══ RODATA   4648     constants
+  ╚══ BSS      34016    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61555 / 65536 bytes (93%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     28787    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 423580 / 1048576 bytes (40%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     423580   code in flash
+  // cc1101_rf_v213pre_24049 - RFM69
+  . Variables and constants in RAM (global, static), used 39764 / 80192 bytes (49%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1836     initialized variables
+  ╠══ RODATA   4640     constants
+  ╚══ BSS      33288    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61015 / 65536 bytes (93%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     28247    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 419568 / 1048576 bytes (40%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     419568   code in flash
 
   - ESP32 OHNE debug´s (alle Protokolle)
   // ... to 240130 - cc110x
@@ -194,15 +219,6 @@
 
   https://www.ti.com/lit/ds/symlink/cc1101.pdf
   https://www.shotech.de/Datasheet/semtech/sx1231.pdf
-
-  #######
-
-  mod MR
-  - cc1101_rf.ino | void Interupt_Variant(byte nr) angepasst auf RFM69, war nur CC1101 ReceiveModePKTLEN + Chip user setting extra Behandlung
-  - websites.cpp  | web_detail_SX1231_import erweitert
-  - register RFM69 ergänzt Avantek | Bresser_6in1 | Bresser_7in1 | ... (teilweise noch ungeprüft)
-  - websites.cpp  | web_detail_cc110x_export erweitert und detail_cc110x_exp.js erzeugt
-  - websites.cpp  | optimiert ... _cc110x_export _rfm69_export _cc110x_import _rfm69_import aufgelöst zu _export _import
 
 */
 

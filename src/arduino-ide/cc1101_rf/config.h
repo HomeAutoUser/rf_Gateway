@@ -27,7 +27,7 @@
 //                                   loop-benchmark (höher=besser, yield    = ProMini CC1101 LaCrosse 74200, WMBUS ca. 26500
 
 #define FWVer             "V 2.1.3pre"
-#define FWVerDate         "2024-04-08"
+#define FWVerDate         "2024-04-09"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
