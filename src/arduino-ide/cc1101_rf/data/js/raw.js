@@ -95,8 +95,14 @@ function TableHandlers() {
     if (!cell) {return;} // Quit, not clicked on a cell
     const row = cell.parentElement;
     if(cell.cellIndex == 1) {
-      var successful = document.execCommand('copy');
-      if (successful){ console.log('copyToClipboard ' + cell.innerHTML); }
+      console.log('copyToClipboard ' + cell.innerHTML);
+
+      const el = document.createElement('textarea');
+      el.value = cell.innerHTML;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
     }
   });
 }
