@@ -16,6 +16,8 @@ uint8_t rssi;
 uint8_t SX1231_CrcOn;
 #endif
 
+Data myArraySRAM2;
+
 #if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"
 #endif
@@ -241,8 +243,9 @@ void Interupt_Variant(byte nr) {
   detachInterrupt(digitalPinToInterrupt(GDO2));
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 #endif
+  memcpy_P(&myArraySRAM2, &Registers[nr], sizeof( Data));
   if (nr != 1) {  // all other Modes
-    Chip_writeRegFor(Registers[nr].reg_val, Registers[nr].length, Registers[nr].name);
+    Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
   } else {        // only Chip user setting
     for (byte i = 1; i < REGISTER_MAX; i++) {
       uint8_t addr = i;
@@ -267,9 +270,9 @@ void Interupt_Variant(byte nr) {
   delay(10); // TODO - wozu ist das gut???
 #endif
 
-  ReceiveModeName = Registers[ReceiveModeNr].name;
-  if (Registers[ReceiveModeNr].PKTLEN > 0) {                    // not by User setting
-    ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+  ReceiveModeName = myArraySRAM2.name;
+  if (myArraySRAM2.PKTLEN > 0) {                    // not by User setting
+    ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
   } else {
     ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
   }
@@ -615,8 +618,10 @@ void loop() {
 #endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - if defined(debug_cc110x_ms) &&  defined(CC110x)
 
-    uint8_t uiBuffer[ReceiveModePKTLEN];                            // Array anlegen
-    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);    // Daten aus dem FIFO lesen
+    uint8_t uiBuffer[ReceiveModePKTLEN];                          // Array anlegen
+    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);  // Daten aus dem FIFO lesen
+
+    // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr);
     msgOutput_MN(uiBuffer, ReceiveModePKTLEN, 0, 0, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
 
 #if defined(debug_cc110x_ms) &&  defined(CC110x)    /* MARCSTATE – Main Radio Control State Machine State */
@@ -717,9 +722,7 @@ void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t 
   MSG_BUILD_MN(char(10));       // LF
 #ifdef CODE_ESP
   MSG_OUTPUTALL(msg);   /* output msg to all */
-  uint8_t bg = msg.indexOf("D=");     // Startpos Data
-  uint8_t en = msg.indexOf(";", bg);  // Endpos Data
-  WebSocket_raw(msg.substring(bg + 2, en)); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
+  WebSocket_raw(msg.substring(6, msg.indexOf(";", 7))); // Dauer: kein client ca. 100 µS, 1 client ca. 900 µS, 2 clients ca. 1250 µS
 #endif
 }
 
@@ -758,7 +761,8 @@ void ToggleOnOff() {
     }
   }
 #ifdef debug
-  MSG_BUILD(F("[DB] Toggle (output all)    | switched to ")); MSG_BUILD_LF(Registers[ReceiveModeNr].name);
+  memcpy_P(&myArraySRAM2, &Registers[nr], sizeof( Data));
+  MSG_BUILD(F("[DB] Toggle (output all)    | switched to ")); MSG_BUILD_LF(myArraySRAM2.name);
 #ifdef CODE_ESP
   MSG_OUTPUT(tmp);
 #endif
@@ -838,13 +842,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
         NO_Chip();
       } else {
         for (byte i = 0; i < NUMBER_OF_MODES; i++) {
+          memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
 #ifdef CC110x
-          if (strcmp(Registers[i].name, "OOK_MU_433") == 0) {
+          if (strcmp(myArraySRAM2.name, "OOK_MU_433") == 0) {
             Interupt_Variant(i);
             break;
           }
 #elif RFM69
-          if (strcmp(Registers[i].name, "RFM69 Factory Default") == 0) {
+          if (strcmp(myArraySRAM2.name, "RFM69 Factory Default") == 0) {
             Interupt_Variant(i);
             break;
           }
@@ -955,7 +960,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                     EEPROMwrite(ReceiveModeNr + EEPROM_ADDR_ToggleMode, enable);
                     ToggleCnt = 0;
 #ifdef debug
-                    MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(Registers[ReceiveModeNr].name);
+                    memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
+                    MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(myArraySRAM2.name);
                     MSG_BUILD(F(" set to ")); MSG_BUILD(enable); MSG_BUILD(F("\n"));
 #endif
                     for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
@@ -1223,12 +1229,13 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (!input[1]) {
         MSG_BUILD_LF(F("available register modes:"));
         for (uint8_t i = 0; i < NUMBER_OF_MODES; i++) {
+          memcpy_P(&myArraySRAM2, &Registers[i], sizeof(Data));
           if (i < 10) {
             MSG_BUILD('0');
           }
           MSG_BUILD(i);
           MSG_BUILD(F(" - "));
-          MSG_BUILD(Registers[i].name);
+          MSG_BUILD(myArraySRAM2.name);
           MSG_BUILD(F(" ("));
           MSG_BUILD(ToggleArray[i] == 1 ? F("enabled") : F("disabled"));
           if (ToggleArray[i]) {

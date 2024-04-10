@@ -8,6 +8,7 @@
   Ralf9 2022: rf_mbus.c (culfw) in mbus.h umbenannt und fuer den SIGNALDuino angepasst und erweitert
 
 */
+
 #include "config.h"
 #if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"
@@ -410,7 +411,8 @@ DECODE:
         if (RXinfo.framemode == WMBUS_CMODE && RXinfo.frametype == WMBUS_FRAMEB) {
           wmbusFrameTypeB = 1;
         }
-        msgOutput_MN(MBpacket, rxLength, wmbusFrameTypeB, lqi, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
+        // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeA, uint8_t lqi, uint8_t rssi, int8_t freqErr);
+        msgOutput_MN (MBpacket, rxLength, wmbusFrameTypeB, lqi, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
         digitalWriteFast(LED, LOW);    // LED off
       }
       RXinfo.state = 0;

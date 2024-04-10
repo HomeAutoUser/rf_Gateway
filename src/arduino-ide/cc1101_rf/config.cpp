@@ -18,7 +18,7 @@
   reg_val             length            name                PKTLEN
 */
 
-struct Data Registers[] = {
+const struct Data Registers[] PROGMEM = {
   { Config_Default, sizeof(Config_Default) / sizeof(Config_Default[0]), "Chip factory default", 32  },
   { Config_User, REGISTER_MAX, "Chip user setting", 0 },
 #ifdef OOK_MU_433

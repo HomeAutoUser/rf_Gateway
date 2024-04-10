@@ -3,9 +3,6 @@
 
 #include <Arduino.h>
 
-/* **********************************************************
-   Receiving hardware and some Definitions for program code */
-
 //#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
 //#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
 
@@ -27,7 +24,7 @@
 //                                   loop-benchmark (höher=besser, yield    = ProMini CC1101 LaCrosse 74200, WMBUS ca. 26500
 
 #define FWVer             "V 2.1.3pre"
-#define FWVerDate         "2024-04-09"
+#define FWVerDate         "2024-04-10"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -136,7 +133,7 @@
 /* all other devices without WLAN
     NOTE: Don't forget to adjust variable NUMBER_OF_MODES manually in cc110x.h or rfm69.h !!!
 */
-#define Bresser_5in1            1
+//#define Bresser_5in1            1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 //#define OOK_MU_433              1     // OOK_MU_433 or WMBus, both is not enough RAM

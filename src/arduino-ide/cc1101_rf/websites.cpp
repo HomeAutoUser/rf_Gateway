@@ -198,7 +198,8 @@ void web_modes() {          // ########## web_modes ##########
 #endif
       } else if (ToggleCnt == 1) {
         web_status = F("<tr><td class=\"ac grn\">");
-        web_status += Registers[ReceiveModeNr].name;
+        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
+        web_status += myArraySRAM2.name;
         web_status += F(" &#10004; | toggle &#128721;</td>");
         Interupt_Variant(ReceiveModeNr);
       } else if (ToggleCnt > 1) {
@@ -230,6 +231,7 @@ void web_modes() {          // ########## web_modes ##########
                "<td class=\"acf\">msg count</td>"
                "</tr>");
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+    memcpy_P(&myArraySRAM2, &Registers[modeNr], sizeof( Data));
     website += F("<tr><td"); // Spalte 1 - available modes
     website += ReceiveModeNr == modeNr ? F(" class=\"bggn\">") : F(">"); // background color light green
     if (modeNr <= 9) {
@@ -237,7 +239,7 @@ void web_modes() {          // ########## web_modes ##########
     }
     website += modeNr;
     website += F(" - ");
-    website += Registers[modeNr].name;
+    website += myArraySRAM2.name;
     website += F("</td>");
     website += F("<td class=\"ac"); // Spalte 2 - enable modes
     website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green

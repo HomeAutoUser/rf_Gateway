@@ -39,7 +39,8 @@ void ChipInit() { /* Init RFM69 - Set default´s */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
     for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-      chk += Registers[i].PKTLEN;
+      memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
+      chk += myArraySRAM2.PKTLEN;
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
 
@@ -67,10 +68,11 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
+        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
         if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
           // if (ReceiveModeNr == 0 && ToggleTime == 0) { // für Test
 #ifdef debug_chip
-          ReceiveModeName = Registers[ReceiveModeNr].name;
+          ReceiveModeName = myArraySRAM2.name;
           Serial.println(F("[DB] SX1231 use config from EEPROM"));
           Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
           Serial.print(F(", ")); Serial.println(ReceiveModeName);
@@ -94,10 +96,11 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         }
 
         if (ToggleCnt > 0) { // normaler Start
-          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
+          Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
+          //          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
         }
-        ReceiveModeName = Registers[ReceiveModeNr].name;
-        ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        ReceiveModeName = myArraySRAM2.name;
+        ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
         if (ReceiveModeName[0] == 'W') { // WMBUS
           FSK_RAW = 2;
         } else {
@@ -139,22 +142,22 @@ void ChipInit() { /* Init RFM69 - Set default´s */
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure SX1231 and write values to EEPROM"));
 #endif
-        for (byte i = 0; i < Registers[0].length; i++) {                 /* write register values ​​to flash */
+        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
+        for (byte i = 0; i < myArraySRAM2.length; i++) {                 /* write register values ​​to flash */
 #ifdef debug_chip
           Serial.print(F("[DB] write default value 0x"));
-          SerialPrintDecToHex(pgm_read_byte_near(Registers[0].reg_val + i)); //
+          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM2.reg_val + i)); //
           Serial.print(F(" to EEPROM address "));
           Serial.println(i);
 #endif
-          EEPROMwrite(i, pgm_read_byte_near(Registers[0].reg_val + i));  // Config_Default
+          EEPROMwrite(i, pgm_read_byte_near(myArraySRAM2.reg_val + i));  // Config_Default
         }
       }  // Ende EEPROM wurde gelöscht
-
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        /* set RFM69 to factory settings */
-        Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
-        ReceiveModeName = Registers[0].name;
-        ReceiveModePKTLEN = Registers[0].PKTLEN;
+        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
+        Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
+        ReceiveModeName = myArraySRAM2.name;
+        ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
       }
 #ifdef debug_chip
       Serial.println(F("[DB] set cc110x to factory settings"));

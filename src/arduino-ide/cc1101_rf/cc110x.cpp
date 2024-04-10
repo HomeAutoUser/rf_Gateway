@@ -14,9 +14,7 @@ byte ReceiveModeNr = 0;       // activated protocol in flash
 byte ReceiveModePKTLEN;
 boolean ChipFound = false;    // against not clearly defined entrances (if flicker)
 
-
 /********************* functions *********************/
-
 
 void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
@@ -68,7 +66,8 @@ void ChipInit() { /* Init CC110x - Set default´s */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
     for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-      chk += Registers[i].PKTLEN;
+      memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
+      chk += myArraySRAM2.PKTLEN;
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
 
@@ -107,11 +106,12 @@ void ChipInit() { /* Init CC110x - Set default´s */
       Serial.print(F("[DB] freqOffset                      ")); Serial.print((freqOffset / 1000.0), 3); Serial.println(F(" MHz"));
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
+        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
         if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
           //        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM TODO - testen
 #ifdef debug_chip
           //ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
-          ReceiveModeName = Registers[ReceiveModeNr].name;
+          ReceiveModeName = myArraySRAM2.name;
           Serial.println(F("[DB] CC110x use config from EEPROM"));
           Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
           Serial.print(F(", ")); Serial.println(ReceiveModeName);
@@ -124,17 +124,16 @@ void ChipInit() { /* Init CC110x - Set default´s */
             Chip_writeReg(i, EEPROMread(i));
           }
         }
-
         if (ToggleCnt > 0) { // normaler Start
-          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
+          Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
+          //          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
         }
-
 #ifdef debug_chip
         Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000.0, 3); Serial.println(F(" MHz"));
 #endif
-        ReceiveModeName = Registers[ReceiveModeNr].name;
-        if (Registers[ReceiveModeNr].PKTLEN > 0) { // not by  User setting
-          ReceiveModePKTLEN = Registers[ReceiveModeNr].PKTLEN;
+        ReceiveModeName = myArraySRAM2.name;
+        if (myArraySRAM2.PKTLEN > 0) { // not by  User setting
+          ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
         } else {
           ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register
         }
@@ -175,15 +174,26 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure CC110x and write values to EEPROM"));
 #endif
-        for (byte i = 0; i < Registers[0].length; i++) {                 /* write register values ​​to flash */
-          EEPROMwrite(i, pgm_read_byte_near(Registers[0].reg_val + i));  // Config_Default
+        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
+        for (byte i = 0; i < myArraySRAM2.length; i++) {                 /* write register values ​​to flash */
+#ifdef debug_chip
+          Serial.print(F("[DB] write default value 0x"));
+          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM2.reg_val + i)); //
+          Serial.print(F(" to EEPROM address "));
+          Serial.println(i);
+#endif
+          EEPROMwrite(i, pgm_read_byte_near(myArraySRAM2.reg_val + i));  // Config_Default
         }
       }  // Ende EEPROM wurde gelöscht
 
       /* set cc110x to factory settings */
-      Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
-      ReceiveModeName = Registers[0].name;
-      ReceiveModePKTLEN = Registers[0].PKTLEN;
+      memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
+      Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
+      ReceiveModeName = myArraySRAM2.name;
+      ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
+      //      Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
+      //      ReceiveModeName = Registers[0].name;
+      //      ReceiveModePKTLEN = Registers[0].PKTLEN;
 #ifdef debug_chip
       Serial.println(F("[DB] set Chip to factory settings"));
       Serial.print(F("[DB] ReceiveModeNr = "));
@@ -198,7 +208,6 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #endif
   }
 }
-
 
 void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   /*

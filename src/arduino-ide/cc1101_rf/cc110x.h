@@ -10,7 +10,7 @@
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES  20 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  6  // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -65,8 +65,9 @@ extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern uint8_t freqAfc;
 extern int16_t RSSI_dez;
-extern struct Data Registers[];
 extern unsigned long uptime;
+extern const struct Data Registers[];
+extern Data myArraySRAM2;
 
 // ############################## all available CC110x registers ##############################
 const uint8_t Config_User[] PROGMEM = {

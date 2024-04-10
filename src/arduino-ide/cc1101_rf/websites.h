@@ -42,7 +42,7 @@ extern IPAddress edns;
 extern WebSocketsServer webSocket;
 extern String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX];
 extern int8_t freqErr;
-extern struct Data Registers[];
+extern const struct Data Registers[];
 extern void InputCommand(String input);
 extern void appendLogFile(String logText);
 extern void Interupt();
