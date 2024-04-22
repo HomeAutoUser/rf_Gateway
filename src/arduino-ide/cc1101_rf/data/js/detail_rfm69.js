@@ -1,6 +1,5 @@
-﻿var js = document.createElement("script");
-js.src = '/js/all.js';
-document.head.appendChild(js);
+﻿document.write('<script src="/js/all.js"><\/script>');
+document.write('<script src="/js/functions.js"><\/script>');
 
 var store = document.querySelector(':root');
 var value = getComputedStyle(store);
@@ -55,7 +54,7 @@ function onMessage(event) {
     document.getElementById('s' + i).innerHTML = txt + '(rw)';
    }
 
-   element.maxLength = "2";
+   element.maxLength = 2;
    element.onkeypress = validHEX;
    element.placeholder = element.value.replace(element.value, obj[i]);
    element.setAttribute('size', '2');
@@ -72,8 +71,6 @@ function onMessage(event) {
    }
   }
 
-  const FXOSC = 32000000;
-  const Fstep = FXOSC / 524288;
   var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
 
   // 0x02 RegDataModul
@@ -88,49 +85,37 @@ function onMessage(event) {
   }
 
   // 0x03 RegBitrateMsb 0x04 RegBitrateLsb
-  var DRATE1 = parseInt(obj[3], 16);
-  var DRATE2 = parseInt(obj[4], 16);
-  var DRATE = (FXOSC / ((DRATE1 * 256) + DRATE2)) / 1000;
+	var DRATE = SX_DRATEread(obj[3],obj[4])  / 1000;	// ToDo
   document.getElementById('DRATE').innerHTML = DRATE.toFixed(3) + ' kBaud';
   document.getElementsByName('datarate')[0].value = DRATE.toFixed(3);
-  document.getElementById('p4').maxLength = "7";
+  document.getElementById('p4').maxLength = 7;
   document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
 
   // 0x05 RegFdevMsb 0x06 RegFdevLsb
-  var FdevMsb = parseInt(obj[5], 16);
-  var FdevLsb = parseInt(obj[6], 16);
-  var Fdev = ( Fstep * (FdevLsb + FdevMsb * 256) ) / 1000;
+	var Fdev = SX_DEVread(obj[5], obj[6]) / 1000;	// ToDo
   document.getElementById('DEVIATN').innerHTML = Fdev.toFixed(3) + ' kHz';
   document.getElementsByName('deviation')[0].value = Fdev.toFixed(3);
-  document.getElementById('p5').maxLength = "7";
+  document.getElementById('p5').maxLength = 7;
   document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
-  Freq = parseInt(obj[7], 16) * 256;
-  Freq = (Freq + parseInt(obj[8], 16) ) * 256;
-  Freq = (Freq + parseInt(obj[9], 16) );
-  Freq = (Fstep * Freq) / 1000000;
+	Freq = SX_FREQread(obj[7], obj[8], obj[9]) / 1000000;	// ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  document.getElementById('p2').maxLength = "6";
+  document.getElementById('p2').maxLength = 6;
   document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
   Freq = Freq - (obj[REGISTER_MAX + 3] * 1);
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-  document.getElementById('p1').maxLength = "7";
+  document.getElementById('p1').maxLength = 7;
   document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
   // 0x19 RegRxBw
-  var RxBwMant = (parseInt(obj[25], 16) & 0b00011000) >> 3;
-  var RxBwExp = (parseInt(obj[25], 16) & 0b00000111);
-  var RxBwComp = (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000).toFixed(3); // Rx filter bandwidth in kHz 
+	var RxBwComp = (SX_BWread(obj[25], obj[2]) / 1000).toFixed(3);	// ToDo
   var selectElement = document.getElementById('bandw');
   if(!bw_list) {
    bw_list = true;
-   for (var bwExp = 7; bwExp >= 0; bwExp--) {
-    for (var bwMant = 2; bwMant >= 0; bwMant--) {
-     var RxBw = (FXOSC / ((16 + bwMant * 4) * (2 ** (bwExp + 2 + ModType))) / 1000).toFixed(3); // Rx filter bandwidth in kHz 
-     selectElement.add(new Option(RxBw));
-    }
+   for (let i = 0; i < SX_BWsteps().length; i++) {
+    selectElement.add( new Option( (SX_BWsteps(obj[2])[i] / 1000).toFixed(3) ) ); // ToDo
    }
   }
   selectElement.value = RxBwComp;
@@ -159,7 +144,12 @@ document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
 
   for ( i=0; i<Explan.length; i++ ) {
-   document.getElementById('n' + i).innerHTML = Explan[i];
+   if(document.getElementById('n' + i) !== null) {
+    document.getElementById('n' + i).innerHTML = Explan[i];
+   } else {
+    continue;
+   }
+
    var id = 't' + i;
 
    if (ExplanAdd[i] != '') {

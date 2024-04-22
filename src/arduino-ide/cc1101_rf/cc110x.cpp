@@ -7,22 +7,16 @@
 #include "macros.h"
 
 /******************* macros for CC110x *******************/
-#define wait_Miso() while (digitalRead(MISO) > 0) // Wait until SPI MISO line goes low
-
-/********************** variables for CC110x **********************/
-byte ReceiveModeNr = 0;       // activated protocol in flash
-byte ReceiveModePKTLEN;
-boolean ChipFound = false;    // against not clearly defined entrances (if flicker)
+#define wait_Miso() while (digitalReadFast(MISO) > 0) // Wait until SPI MISO line goes low
 
 /********************* functions *********************/
-
 void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
   Serial.println(F("[DB] CC110x_init starting"));
 #endif
 
   if (uptime == 0) { // for command f
-    pinMode(SS, OUTPUT);
+    pinModeFast(SS, OUTPUT);
     SPI.begin();
     SPI.beginTransaction(SPISettings(4000000, MSBFIRST, SPI_MODE0));  // SCLK frequency, burst access max. 6,5 MHz
 
@@ -39,6 +33,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
   }
 
   uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
+  //chipVersion = 0x14; // for test without chip
   if (chipVersion == 0x14 || chipVersion == 0x04 || chipVersion == 0x03 || chipVersion == 0x05 || chipVersion == 0x07 || chipVersion == 0x17) {  // found CC110x
     CC110x_CmdStrobe(CC110x_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
     ChipFound = true;
@@ -66,8 +61,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
     for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-      memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
-      chk += myArraySRAM2.PKTLEN;
+      chk += pgm_read_word(&(Registers[i].PKTLEN));
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
 
@@ -106,12 +100,9 @@ void ChipInit() { /* Init CC110x - Set default´s */
       Serial.print(F("[DB] freqOffset                      ")); Serial.print((freqOffset / 1000.0), 3); Serial.println(F(" MHz"));
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
         if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
-          //        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM TODO - testen
 #ifdef debug_chip
-          //ReceiveModeNr = EEPROMread(EEPROM_ADDR_Prot);
-          ReceiveModeName = myArraySRAM2.name;
+          String ReceiveModeName = getModeName(ReceiveModeNr);
           Serial.println(F("[DB] CC110x use config from EEPROM"));
           Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
           Serial.print(F(", ")); Serial.println(ReceiveModeName);
@@ -123,32 +114,12 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #endif
             Chip_writeReg(i, EEPROMread(i));
           }
-        }
-        if (ToggleCnt > 0) { // normaler Start
-          Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
-          //          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
-        }
-#ifdef debug_chip
-        Serial.print(F("[DB] CC110x_Frequency              ")); Serial.print(Chip_readFreq() / 1000.0, 3); Serial.println(F(" MHz"));
-#endif
-        ReceiveModeName = myArraySRAM2.name;
-        if (myArraySRAM2.PKTLEN > 0) { // not by  User setting
-          ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
+          Chip_setReceiveMode(); /* enable RX */
         } else {
-          ReceiveModePKTLEN = Chip_readReg(0x06, READ_BURST); // PKTLEN register
+          Interupt_Variant(ReceiveModeNr); // Empfangsvariante & Register einstellen
         }
-        uint8_t MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
-        if (ReceiveModeName[0] == 'W') { // WMBUS
-          FSK_RAW = 2;
-        } else {
-          FSK_RAW = 0;
-          if (MOD_FORMAT != 3) { // FSK
-            attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-          } else { // OOK
-            attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
-          }
-        }
-        Chip_setReceiveMode(); /* enable RX */
+      } else { // Ende if (ReceiveModeNr < NUMBER_OF_MODES) {
+        CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
       }
     } else { /* Ende normaler Start */
       /* ERROR EEPROM oder Registeranzahl geändert */
@@ -174,30 +145,37 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure CC110x and write values to EEPROM"));
 #endif
-        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
-        for (byte i = 0; i < myArraySRAM2.length; i++) {                 /* write register values ​​to flash */
+#ifdef CODE_ESP
+        memcpy_P(&myArraySRAM, &Registers[0], REGISTER_WR); // ESP
+#else
+        const uint32_t ptr = pgm_read_ptr(&(Registers[0].regVal)); // Arduino, pointer to register values
+#endif
+        for (byte i = 0; i < REGISTER_WR; i++) {                 // write register values ​​to EEPROM
 #ifdef debug_chip
           Serial.print(F("[DB] write default value 0x"));
-          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM2.reg_val + i)); //
+#ifdef CODE_ESP
+          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to EEPROM
+#else
+          SerialPrintDecToHex(pgm_read_byte_near(ptr + i)); // Arduino write value to EEPROM
+#endif
           Serial.print(F(" to EEPROM address "));
           Serial.println(i);
 #endif
-          EEPROMwrite(i, pgm_read_byte_near(myArraySRAM2.reg_val + i));  // Config_Default
+#ifdef CODE_ESP
+          EEPROMwrite(i, pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to EEPROM
+#else
+          EEPROMwrite(i, pgm_read_byte_near(ptr + i)); // Arduino write value to EEPROM
+#endif
+          // EEPROMwrite(i, pgm_read_byte_near(myArraySRAM.regVal + i));  // Config_Default
         }
       }  // Ende EEPROM wurde gelöscht
 
-      /* set cc110x to factory settings */
-      memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
-      Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
-      ReceiveModeName = myArraySRAM2.name;
-      ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
-      //      Chip_writeRegFor(Registers[0].reg_val, Registers[0].length, Registers[0].name);
-      //      ReceiveModeName = Registers[0].name;
-      //      ReceiveModePKTLEN = Registers[0].PKTLEN;
+      // set cc110x to factory settings
+      Chip_writeRegFor(0);
 #ifdef debug_chip
       Serial.println(F("[DB] set Chip to factory settings"));
       Serial.print(F("[DB] ReceiveModeNr = "));
-      Serial.print(ReceiveModeNr); Serial.print(F(", ")); Serial.println(ReceiveModeName);
+      Serial.print(ReceiveModeNr); Serial.print(F(", ")); Serial.println(getModeName(ReceiveModeNr));
       Serial.println(F("[DB] Chip remains idle, please set receive mode!"));
 #endif
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
@@ -218,8 +196,8 @@ void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   */
 
 #ifdef debug_chip
-  Serial.print(F("[DB] Chip_writeReg       0x")); SerialPrintDecToHex(regAddr);
-  Serial.print(F(" 0x")); SerialPrintDecToHex(value); Serial.println("");
+  Serial.print(F("[DB] Chip_writeReg Addr: 0x")); SerialPrintDecToHex(regAddr);
+  Serial.print(F(" Val: 0x")); SerialPrintDecToHex(value); Serial.println("");
 #endif
 
   ChipSelect();           // Select CC110x
@@ -229,36 +207,46 @@ void Chip_writeReg(uint8_t regAddr, uint8_t value) {
   ChipDeselect();         // Deselect CC110x
 }
 
-
-void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus) {
-  /*
-    variable loop to write register
-
-    'reg_name'    Register name from register.cpp
-    'reg_length'  Register name length from register.cpp
-    'reg_modus'   Text for Modus from simplification.h
-  */
-
+void Chip_writeRegFor(uint8_t regNr) { // write all registers
   freqOffAcc = 0;                      // reset cc110x afc offset
   freqErrAvg = 0;                      // reset cc110x afc average
-  Chip_writeReg(CC110x_FSCTRL0, 0);  // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
-
-#ifdef debug_chip
-  Serial.print(F("[DB] Chip_writeRegFor length = ")); Serial.println(reg_length);
-  Serial.print(F("[DB] Chip_writeRegFor modus  = ")); Serial.println(reg_modus);
+  Chip_writeReg(CC110x_FSCTRL0, 0);    // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+#ifdef CODE_ESP
+  memcpy_P(&myArraySRAM, &Registers[regNr], REGISTER_WR); // ESP, copy PROGMEM to SRAM
+#else
+  const uint32_t ptr = pgm_read_ptr(&(Registers[regNr].regVal)); // Arduino, pointer to register values
 #endif
-
-  for (byte i = 0; i < reg_length; i++) {
-    if (ReceiveModeNr == 1) { // CC110x User setting
+  ReceiveModePKTLEN = pgm_read_word(&(Registers[regNr].PKTLEN));
+  //ReceiveModeName = getModeName(regNr);
+#ifdef debug_chip
+  Serial.print(F("[DB] Chip_writeRegFor register number: ")); Serial.println(regNr);
+  Serial.print(F("[DB] Chip_writeRegFor register name:   ")); Serial.println(getModeName(regNr));
+  Serial.print(F("[DB] Chip_writeRegFor register count:  ")); Serial.println(REGISTER_WR);
+  Serial.print(F("[DB] Chip_writeRegFor packet length:   ")); Serial.println(ReceiveModePKTLEN);
+  char hex[3];
+#endif
+  for (byte i = 0; i <= REGISTER_WR; i++) {
+    if (regNr == 1) { // CC110x User setting
       Chip_writeReg(i, EEPROM.read(i)); /* write value to cc110x */
     } else {
-      Chip_writeReg(i, pgm_read_byte_near(reg_name + i)); /* write value to cc110x */
+#ifdef CODE_ESP
+      Chip_writeReg(i, pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to CC110x
+#else
+      Chip_writeReg(i, pgm_read_byte_near(ptr + i)); // Arduino write value to CC110x
+#endif
     }
 #ifdef debug_chip
-    Serial.print(F("[DB] Chip_writeRegFor, i=")); Serial.print(i);
-    Serial.print(F(" read ")); Serial.print(Chip_readReg(i, READ_BURST));
-    Serial.print(F(" (0x")); SerialPrintDecToHex(Chip_readReg(i, READ_BURST));
-    Serial.println(F(") from CC110x"));
+    Serial.print(F("[DB] write register address: 0x"));
+    onlyDecToHex2Digit(i, hex);
+    Serial.print(hex);
+    Serial.print(F(" value: 0x"));
+#ifdef CODE_ESP
+    onlyDecToHex2Digit(pgm_read_byte_near(myArraySRAM.regVal + i), hex);
+#else
+    onlyDecToHex2Digit(pgm_read_byte_near(ptr + i), hex);
+#endif
+    Serial.print(hex);
+    Serial.println("");
 #endif
     if (i == 15 && freqOffset != 0) { /* 0D 0E 0F - attention to the frequency offset !!! */
       byte value[3];
@@ -269,25 +257,17 @@ void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_mo
       Serial.println(F(" MHz an write new value"));
 #endif
       for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
-        if (pgm_read_byte_near(reg_name + i2 + 13) != value[i2]) {
-          Chip_writeReg(i2 + 13, value[i2]);  // write new values in CC110x
-        }
+        Chip_writeReg(i2 + 13, value[i2]);  // write new values in CC110x
       }
     }
   }
-  ReceiveModeName = reg_modus;
 #if defined (WMBus_S) || defined (WMBus_T)
-  if (reg_modus.startsWith("W")) { // WMBUS
-    if (reg_modus.endsWith("S")) { // WMBUS_S
-#ifdef debug_mbus
-      Serial.println(reg_modus);
-#endif
+  String ReceiveModeName = getModeName(regNr); // name of active mode from array
+  if (ReceiveModeName.startsWith("W")) { // WMBUS
+    if (ReceiveModeName.endsWith("S")) { // WMBUS_S
       mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
     }
-    if (reg_modus.endsWith("T")) { // WMBUS_T
-#ifdef debug_mbus
-      Serial.println(reg_modus);
-#endif
+    if (ReceiveModeName.endsWith("T")) { // WMBUS_T
       mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
   }
@@ -336,8 +316,8 @@ void CC110x_setTransmitMode() {
 
 void Chip_setReceiveMode() {
   CC110x_CmdStrobe(CC110x_SIDLE);  // Idle mode
-  if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x11) {   // RXFIFO_OVERFLOW
-    CC110x_CmdStrobe(CC110x_SFRX);
+  if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x11) { // RXFIFO_OVERFLOW
+    CC110x_CmdStrobe(CC110x_SFRX); // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
   }
   uint8_t maxloop = 0xff;
   while (maxloop-- && (CC110x_CmdStrobe(CC110x_SRX) & CC110x_STATUS_STATE_BM) != CC110x_STATE_RX)  // RX enable
@@ -375,7 +355,7 @@ uint8_t CC110x_cmdStrobeTo(const uint8_t cmd) {            // wait MISO and send
 
 uint8_t waitTo_Miso() { // wait with timeout until MISO goes low
   uint8_t i = 255;
-  while (digitalRead(MISO) > 0) { // Wait until SPI MISO line goes low
+  while (digitalReadFast(MISO) > 0) { // Wait until SPI MISO line goes low
     delayMicroseconds(10);
     i--;
     if (i == 0) { // timeout

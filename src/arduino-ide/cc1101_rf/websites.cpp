@@ -107,7 +107,7 @@ void web_chip() {           // ########## web_chip ##########
     website += String(Chip_readReg(0x28, 0x00), BIN);
 #endif
     website += F("</td></tr><tr><td>chip reception mode</td><td colspan=\"2\"><span id=\"MODE\">");
-    website += ReceiveModeName;
+    website += getModeName(ReceiveModeNr);
     website += F("</span></td></tr><tr><td>Enabled mode(s)</td><td colspan=\"2\"><span id=\"toB\">");
     for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
       if (ToggleArray[modeNr]) {
@@ -198,8 +198,7 @@ void web_modes() {          // ########## web_modes ##########
 #endif
       } else if (ToggleCnt == 1) {
         web_status = F("<tr><td class=\"ac grn\">");
-        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
-        web_status += myArraySRAM2.name;
+        web_status += getModeName(ReceiveModeNr);
         web_status += F(" &#10004; | toggle &#128721;</td>");
         Interupt_Variant(ReceiveModeNr);
       } else if (ToggleCnt > 1) {
@@ -231,7 +230,6 @@ void web_modes() {          // ########## web_modes ##########
                "<td class=\"acf\">msg count</td>"
                "</tr>");
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
-    memcpy_P(&myArraySRAM2, &Registers[modeNr], sizeof( Data));
     website += F("<tr><td"); // Spalte 1 - available modes
     website += ReceiveModeNr == modeNr ? F(" class=\"bggn\">") : F(">"); // background color light green
     if (modeNr <= 9) {
@@ -239,7 +237,7 @@ void web_modes() {          // ########## web_modes ##########
     }
     website += modeNr;
     website += F(" - ");
-    website += myArraySRAM2.name;
+    website += getModeName(modeNr);
     website += F("</td>");
     website += F("<td class=\"ac"); // Spalte 2 - enable modes
     website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
@@ -328,7 +326,9 @@ void web_detail_export() {  // ########## web_detail_export ##########
                "<br>File to import on program SX1231SKB"
                "<br><button id=\"save-btn\" onclick=\"saveFile('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
                "<br>File to import on program SmartRF Studio 7"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>");
+               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>"
+               "<br>File in C++ header format"
+               "<br><button id=\"save-btn\" onclick=\"saveFile('h')\">save current registers in C++ header file</button><br>");
 #endif
 
   website += F("<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
@@ -345,10 +345,23 @@ void web_detail_import() {  // ########## web_detail_import ##########
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String website = FPSTR(html_meta);
-#ifdef CC110x                 // #### web_detail_import - CC110x #### //
+  uint8_t Adr = 0;
+  uint8_t Val = 0;
+
+#ifdef CC110x
   website.reserve(1024);
+#elif RFM69
+  website.reserve(1280);
+#endif
+
+#ifdef CC110x
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\"></head>"
                "<body><form method=\"post\">"); /* form method wichtig für Daten von Button´s !!! */
+#elif RFM69
+  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
+               "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
+               "<body><form method=\"post\" onsubmit=\"return SXimpFromCC()\">");   /* form method wichtig für Daten von Button´s !!! */
+#endif
 
   if (countargs != 0) {
 #ifdef debug_html
@@ -356,10 +369,10 @@ void web_detail_import() {  // ########## web_detail_import ##########
     Serial.print(F("[DB] web_detail_import, countargs: ")); Serial.println(countargs);
     Serial.print(F("[DB] web_detail_import, import:    ")); Serial.println(imp);
 #endif
+
     if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
+#ifdef CC110x
       ToggleCnt = 1; // stop toggle
-      uint8_t Adr;
-      uint8_t Val;
       detachInterrupt(digitalPinToInterrupt(GDO2));
       CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
       CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
@@ -397,48 +410,40 @@ void web_detail_import() {  // ########## web_detail_import ##########
         attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE);
       }
       ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_SINGLE); // only if fixed packet length
-      ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
+      ReceiveModeNr = 1;
       Chip_setReceiveMode();  // start receive mode
+      // END - CC110x - submit == "registers"
+#elif RFM69
+      Adr += 0;
+      Val += 0;
+      for (uint16_t i = 0; i < imp.length(); i += 5) {
+        Adr = hexToDec(imp.substring(i, i + 2));
+        Val = hexToDec(imp.substring(i + 2, i + 4));
+      }
+
+      // ToDO - Further processing after JAVA completion
+      website += F("<br>- read all actionable registers -");
+#endif  // END - RFM69 - submit == "registers"
     }
   } else {
     website += F("Import current register values<br><br>"
                  "FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
                  "(Please paste the string in SIGNALduino format)<br><br>"
                  "<input size=\"100\" maxlength=\"288\" value=\"example ['01AB','11FB']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
-                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button></form>"
-                 "<br>File to import from program SmartRF Studio 7<br>[development]");
-  }
-
-#elif RFM69                 // #### web_detail_import - RFM69 #### //
-  website.reserve(1024);
-  website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\">"
-               "<script src=\"/js/detail_rfm69_imp.js\"></script></head>"
-               "<body><form method=\"post\" onsubmit=\"return SXimpFromCC()\">"   /* form method wichtig für Daten von Button´s !!! */
-               "Import current register values<br>");
-
-  if (countargs != 0) {
-#ifdef debug_html
-    Serial.print(F("[DB] web_detail_import, submit:    ")); Serial.println(submit);
-    Serial.print(F("[DB] web_detail_import, countargs: ")); Serial.println(countargs);
-    Serial.print(F("[DB] web_detail_import, import:    ")); Serial.println(imp);
-#endif
-    if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
-      website += F("<br>- read all actionable registers -");
-    }
-  } else {
-    website += F("<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =><br>"
-                 "<input size=\"100\" maxlength=\"288\" value=\"example ['0104','2FAA']\" name=\"imp\" pattern=\"^\\['[0-9a-fA-F]{4}'(,'[0-9a-fA-F]{4}')+\\]$\">"
-                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button></form>"
-                 "<br>File to import from program SX1231SKB<br>"
+                 "<br><br><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"registers\">acceptance of the values ​​in the register</button></form>");
+#ifdef CC110x
+    website += F("<br>File to import from program SmartRF Studio 7<br>[development]");
+    // END - CC110x - countargs == 0
+#elif RFM69
+    website += F("<br>File to import from program SX1231SKB<br>"
                  "<button onclick=\"document.getElementById('inputfile').click()\">Choose a file</button>"
                  "<input type=\"file\" id=\"inputfile\" style=\"display:none\" name=\"inputfile\" onClick=\"inputfile()\" accept=\".cfg\">");
+#endif  // END - RFM69 - countargs == 0
   }
-#endif
-
   website += F("<br><br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
                "</body></html>");
   sendHtml(website);
-}                           // #### web_detail_import - END #### //
+}                           // END - #### web_detail_import #### //
 
 
 void web_detail() {         // ########## web_detail ##########
@@ -632,7 +637,6 @@ void web_detail() {         // ########## web_detail ##########
         }
       }
     }
-    ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
     ReceiveModeNr = 1;
   }
 
@@ -710,7 +714,11 @@ void web_detail() {         // ########## web_detail ##########
                "<tr><td class=\"in\" colspan=\"6\"><span id=\"state\">");
 
   website += web_stat;
-  website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
+  website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes<span id=\"FXc\" hidden>");
+  website += CC110x_fxOsc;
+  website += F("</span><span id=\"FXr\" hidden>");
+  website += SX1231_fxOsc;
+  website += F("</span></td></tr>");
   for (byte i = 0; i <= REGISTER_MAX; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;
@@ -888,7 +896,7 @@ void web_raw() {            // ########## web_raw ##########
                "</tr></table><br>"
                "<div><table id = \"dataTable\">"
                "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
-  website += ReceiveModeName;
+  website += getModeName(ReceiveModeNr);
   website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
                "</table></div>"
                "</form></body></html>");
@@ -1192,7 +1200,7 @@ void WebSocket_chip() {
       String website = "";
       website.reserve(55);
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        website += ReceiveModeName;
+        website += getModeName(ReceiveModeNr);
       }
       website += ',';
 #ifdef CC110x
@@ -1251,7 +1259,7 @@ void WebSocket_detail(byte variant) {
       website += ',';
     }
     website += F("detail,");
-    website += ReceiveModeName;
+    website += getModeName(ReceiveModeNr);
     website += ',';
     website += String((freqOffset / 1000.0), 3);
 
@@ -1272,7 +1280,7 @@ void WebSocket_modes() {
     String website = F("MODE,");
     website.reserve(128);
     if (ReceiveModeNr < NUMBER_OF_MODES) {
-      website += ReceiveModeName;
+      website += getModeName(ReceiveModeNr);
     }
     website += ',';
     website += ReceiveModeNr;
@@ -1349,14 +1357,13 @@ void WebSocket_raw(const String & html_raw) {
   if (webSocket.connectedClients() > 0) {
     String website = F("RAW,");
     website.reserve(460);
-    website += ReceiveModeName;
+    website += getModeName(ReceiveModeNr);
     website += ',';
     website += html_raw;
     website += ',';
     website += RSSI_dez;
     website += ',';
-    website += int16_t( (freqOffset) + (26000000 / 16384 * freqErr / 1000) );
-
+    website += int16_t(round(26000000 / 16384.0 * freqErr / 1000.0));
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/raw") {
         webSocket.sendTXT(num, website);

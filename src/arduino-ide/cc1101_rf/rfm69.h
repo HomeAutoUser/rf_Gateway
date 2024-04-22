@@ -6,19 +6,19 @@
 #include <digitalWriteFast.h>             // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
-//#define fxOsc 28375000                             // Crystal oscillator frequency SX1231
-#define fxOsc 32000000                             // Crystal oscillator frequency RFM69
+#define fxOsc                 SX1231_fxOsc         // Crystal oscillator frequency RFM69
 const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CHIP_NAME             "RFM69"              // name Chip
 #define CHIP_RFNAME           "rfm69_rf_Gateway"   // name web interface
-#define REGISTER_MAX          84                   // register count
+#define REGISTER_MAX          84                   // register count with test register, continuously until 0x4F, then 0x58, 0x59, 0x5F, 0x6F, 0x71
+#define REGISTER_WR           84                   // register count without test register (for compatibility with the CC110x)
 #define REGISTER_STATUS_MAX   0x71                 // register count (for compatibility with the CC110x)
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES       19                   // ESP - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       16                   // ESP - Anzahl Datensätze in struct Data, defined in config.h
 #else
-#define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data, defined in config.h
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -34,15 +34,14 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CHIP_FREQMSB          0x07                 // Frequency Control Word, High Byte address
 
 const uint8_t SX1231_RegAddrTranslate[5] = {0x58, 0x59, 0x5F, 0x6F, 0x71};
-static const char PROGMEM RECEIVE_MODE_USER[] = "RFM69 user configuration";
 
 void ChipInit();
 int Chip_readRSSI();
 uint8_t Chip_readReg(uint8_t addr, uint8_t regType);  // SX1231 read register (address) (regType for compatibility with the CC110x)
 void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
 void Chip_writeReg(uint8_t regAddr, uint8_t value);   // SX1231 write register (address, value)
-void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
-void Chip_setFreq(uint32_t frequency, byte * arr);    /* frequency set & calculation */
+void Chip_writeRegFor(uint8_t regNr);                 // write all registers
+void Chip_setFreq(uint32_t frequency, byte * arr);    // frequency set & calculation
 void Chip_setReceiveMode();                           // SX1231 start receive mode
 float Chip_readFreq();
 byte Chip_Bandw_cal(float input);
@@ -54,12 +53,14 @@ void SX1231_afc(uint8_t freqAfc); // AfcAutoOn, 0  AFC is performed each time
 void SX1231_read_reg_all();       // SX1231 read all 112 register
 void SX1231_Deviation_Set(float deviation, byte * arr); // calculate register values (RegFdevMsb 0x5, RegFdevLsb 0x06) for frequency deviation
 void SX1231_setTransmitMode();    // SX1231 start transmit mode
-
+String getModeName(const uint8_t modeNr);
+void Interupt_Variant(byte nr);    // Empfangsvariante & Register einstellen
+ 
 extern boolean ChipFound;
-extern String ReceiveModeName;              // name of active mode from array
+//extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 extern byte ReceiveModePKTLEN;
-extern byte FSK_RAW;                        // Marker - FSK Modulation
+extern volatile byte FSK_RAW;               // Marker - FSK Modulation
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
@@ -69,7 +70,9 @@ extern int16_t freqOffset;
 extern int16_t RSSI_dez;
 
 extern const struct Data Registers[];
-extern Data myArraySRAM2;
+#ifdef CODE_ESP
+extern Data myArraySRAM;
+#endif
 
 // ############################## all available SX1231 registers ##############################
 const uint8_t Config_User[] PROGMEM = {
@@ -166,7 +169,7 @@ const uint8_t Config_Default[] PROGMEM = {
 
 #ifdef Avantek
 const uint8_t Config_Avantek[] PROGMEM = {
-  // SX1231 register values for Avantek
+  // SX1231 register values for Avantek -  OK
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
   0x00, // Address 0x02 - RegDataModul
@@ -223,11 +226,13 @@ const uint8_t Config_Avantek[] PROGMEM = {
   0x00, // Address 0x35 - RegSyncValue7
   0x00, // Address 0x36 - RegSyncValue8
   0x00, // Address 0x37 - RegPacketConfig1
-  0x1A, // Address 0x38 - RegPayloadLength
+  0x08, // Address 0x38 - RegPayloadLength
+//  0x1A, // Address 0x38 - RegPayloadLength
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x19, // Address 0x3C - RegFifoThresh
+  0x07, // Address 0x3C - RegFifoThresh
+//  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -348,7 +353,7 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
 
 #ifdef Bresser_6in1
 const uint8_t Config_Bresser_6in1[] PROGMEM = {
-  // SX1231 register values for Bresser 6-in-1
+  // SX1231 register values for Bresser 6-in-1 - OK
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
   0x00, // Address 0x02 - RegDataModul
@@ -409,7 +414,8 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x19, // Address 0x3C - RegFifoThresh
+  0x11, // Address 0x3C - RegFifoThresh
+//  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -439,7 +445,7 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
 
 #ifdef Bresser_7in1
 const uint8_t Config_Bresser_7in1[] PROGMEM = {
-  // SX1231 register values for Bresser 6-in-1
+  // SX1231 register values for Bresser 7-in-1 - OK
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode - Standby mode (STDBY)
   0x00, // Address 0x02 - RegDataModul
@@ -500,7 +506,8 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x19, // Address 0x3C - RegFifoThresh
+  0x16, // Address 0x3C - RegFifoThresh
+//  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -591,7 +598,8 @@ const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x08, // Address 0x3C - RegFifoThresh
+  0x0D, // Address 0x3C - RegFifoThresh
+//  0x08, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -621,7 +629,7 @@ const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
 
 #ifdef Fine_Offset_WH51_868
 const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
-  // SX1231 register values for Fine_Offset_WH51_868
+  // SX1231 register values for Fine_Offset_WH51_868 - OK
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
@@ -682,7 +690,8 @@ const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
-  0x08, // Address 0x3C - RegFifoThresh
+  0x0D, // Address 0x3C - RegFifoThresh
+//  0x08, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -803,7 +812,7 @@ const uint8_t Config_Fine_Offset_WH57_434[] PROGMEM = {
 
 #ifdef Fine_Offset_WH57_868
 const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
-  // SX1231 register values for FineOffset_WH57
+  // SX1231 register values for FineOffset_WH57 - OK
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
@@ -985,7 +994,7 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
 
 #ifdef KOPP_FC
 const uint8_t Config_KOPP_FC[] PROGMEM = {
-  // SX1231 register values for KOPP_FC
+  // SX1231 register values for KOPP_FC - ToDo this settings are from Config_Lacrosse_mode2
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
@@ -1259,7 +1268,7 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
 
 #ifdef PCA301
 const uint8_t Config_PCA301[] PROGMEM = {
-  // SX1231 register values for PCA301
+  // SX1231 register values for PCA301 - ToDo this settings are from Config_Lacrosse_mode2
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul
@@ -1651,7 +1660,7 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
 
 #ifdef X_Sense
 const uint8_t Config_X_Sense[] PROGMEM = {
-  // SX1231 register values for X_Sense
+  // SX1231 register values for X_Sense - ToDo this settings are from Config_Lacrosse_mode2
   0x00, // Address 0x00 - RegFifo (FIFO data input/output)
   0x04, // Address 0x01 - RegOpMode
   0x00, // Address 0x02 - RegDataModul

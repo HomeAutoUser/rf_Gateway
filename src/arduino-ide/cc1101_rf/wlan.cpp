@@ -245,7 +245,7 @@ void start_WLAN_STATION(String qssid, String qpass) {
 
   unsigned long startTime = millis(); /* ... Give ESP 60 seconds to connect to station. */
   while (WiFi.status() != WL_CONNECTED && millis() - startTime < 60000) {
-    digitalWriteFast(LED, !digitalRead(LED));  // LED toggle
+    digitalWriteFast(LED, !digitalReadFast(LED));  // LED toggle
     delay(500);
 #ifdef debug_wifi
     Serial.println('.');

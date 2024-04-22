@@ -2,7 +2,6 @@
   Copyright (c) 2022, HomeAutoUser & elektron-bbs
   All rights reserved.
 */
-
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <digitalWriteFast.h>                 // https://github.com/ArminJo/digitalWriteFast
@@ -16,7 +15,9 @@ uint8_t rssi;
 uint8_t SX1231_CrcOn;
 #endif
 
-Data myArraySRAM2;
+#ifdef CODE_ESP
+Data myArraySRAM;
+#endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
 #include "mbus.h"
@@ -39,7 +40,7 @@ Data myArraySRAM2;
 #define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
 #define t_minP 90                             // Zeitdauer minimum für gültigen Puls in µs
 String msg;
-unsigned long lastTime = 0;                   // Zeit, letzte Aktion
+volatile unsigned long lastTime;              // Zeit, letzte Aktion
 int16_t ArPaT[PatMaxCnt];                     // Pattern Array für Zeiten
 signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
 byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
@@ -97,8 +98,10 @@ uint8_t ToggleTimeMode[NUMBER_OF_MODES];      // Toggle, Zeit pro Mode in Sekund
 byte ToggleCnt = 0;                           // Toggle, Anzahl aktiver Modi
 
 byte MOD_FORMAT;                              // Marker - Modulation
-byte FSK_RAW;                                 // Marker - FSK Modulation RAW interrupt
-
+volatile byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
+byte ReceiveModeNr;                           // activated protocol
+byte ReceiveModePKTLEN;
+boolean ChipFound = false;                    // against not clearly defined entrances (if flicker)
 
 /* predefinitions of the functions */
 inline void doDetect();
@@ -117,7 +120,7 @@ int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synt
 float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
 uint8_t freqAfc = 0;                          // CC110x AFC an oder aus
 int16_t freqOffset;                           // Frequency offset
-String ReceiveModeName;                       // name of active mode from array
+//String ReceiveModeName;                       // name of active mode from array
 uint32_t msgCount;                            // Nachrichtenzähler über alle empfangenen Nachrichten
 uint32_t msgCountMode[NUMBER_OF_MODES];       // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
@@ -197,7 +200,7 @@ void Telnet();
 
 /* --- END - all SETTINGS for the ESP8266 and ESP32 ------------------------------------------------------------------------------------------- */
 #else
-#define ICACHE_RAM_ATTR
+//#define ICACHE_RAM_ATTR
 #define FPSTR String
 #endif
 
@@ -233,20 +236,19 @@ void Interupt() {
 }
 #endif
 
-
 /* --------------------------------------------------------------------------------------------------------------------------------- void Interupt_Variant */
 void Interupt_Variant(byte nr) {
 #ifdef debug_chip
-  Serial.print(F("[DB] Interupt_Variant called with nr: ")); Serial.println(nr);
+  Serial.print(F("[DB] Interupt_Variant called with mode nr: ")); Serial.println(nr);
 #endif
 #ifdef CC110x
   detachInterrupt(digitalPinToInterrupt(GDO2));
   CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
 #endif
-  memcpy_P(&myArraySRAM2, &Registers[nr], sizeof( Data));
-  if (nr != 1) {  // all other Modes
-    Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
+  if (nr != 1) {  // all other Modes except user setting
+    Chip_writeRegFor(nr); // write all registers
   } else {        // only Chip user setting
+    //ReceiveModeName = getModeName(nr);
     for (byte i = 1; i < REGISTER_MAX; i++) {
       uint8_t addr = i;
 #ifdef RFM69
@@ -257,35 +259,36 @@ void Interupt_Variant(byte nr) {
       Chip_writeReg(addr, EEPROMread(i));
     }
   }
-#ifdef CC110x
-  CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
-#elif RFM69
-  Chip_writeReg(0x28, 0x10);      // FIFO are cleared when this bit is set.
-  SX1231_CrcOn = (Chip_readReg(0x37, READ_BURST) & 0b00010000) >> 4; // RegPacketConfig1, CrcOn - Enables CRC calculation/check (Tx/Rx).
+  String ReceiveModeName = getModeName(nr);
+#ifdef debug_chip
+  Serial.print(F("[DB] Interupt_Variant ReceiveModeName: ")); Serial.println(ReceiveModeName);
 #endif
-
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-  WebSocket_modes();
-#else
-  delay(10); // TODO - wozu ist das gut???
-#endif
-
-  ReceiveModeName = myArraySRAM2.name;
-  if (myArraySRAM2.PKTLEN > 0) {                    // not by User setting
-    ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
-  } else {
+  if (ReceiveModePKTLEN == 0) {                    // by user and factory setting
     ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
   }
+#ifdef debug_chip
+  Serial.print(F("[DB] Interupt_Variant ReceiveModePKTLEN: ")); Serial.println(ReceiveModePKTLEN);
+#endif
 
 #ifdef CC110x
-  MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
   if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
   } else {
     FSK_RAW = 0;
+    MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
     if (MOD_FORMAT != 3) {          // FSK
+#if defined(ARDUINO_AVR_NANO) || defined(ARDUINO_AVR_PRO)
+      // https://forum.arduino.cc/t/is-it-possible-to-detach-interrupt-in-the-function-called-with-interrupt/614918/13
+      EIFR = 0b00000001; // External Interrupt Flag Register, Pin D2 = INT0, clear the flag
+#endif
+#ifdef debug_chip
+      Serial.print(F("[DB] Interupt_Variant attachInterrupt: ")); Serial.println(F("RISING"));
+#endif
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING); /* "Bei steigender Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
     } else {                        // OOK
+#ifdef debug_chip
+      Serial.print(F("[DB] Interupt_Variant attachInterrupt: ")); Serial.println(F("CHANGE"));
+#endif
       attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE); /* "Bei wechselnder Flanke auf dem Interruptpin" --> "Führe die Interupt Routine aus" */
     }
   }
@@ -296,18 +299,28 @@ void Interupt_Variant(byte nr) {
     FSK_RAW = 0;
   }
 #endif
+#ifdef debug_chip
+  Serial.print(F("[DB] Interupt_Variant FSK_RAW: ")); Serial.println(FSK_RAW);
+#endif
+#ifdef CC110x
+  CC110x_CmdStrobe(CC110x_SFRX); // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
+#elif RFM69
+  Chip_writeReg(0x28, 0x10);      // FIFO are cleared when this bit is set.
+  SX1231_CrcOn = (Chip_readReg(0x37, READ_BURST) & 0b00010000) >> 4; // RegPacketConfig1, CrcOn - Enables CRC calculation/check (Tx/Rx).
+#endif
   Chip_setReceiveMode();            // start receive mode
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   WebSocket_chip();
   WebSocket_detail(1);
+  WebSocket_modes();
 #endif
 }
 
 
 /* --------------------------------------------------------------------------------------------------------------------------------- void setup */
 void setup() {
-#ifdef ESP32
-  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  //disable brownout detector
+#ifdef ARDUINO_ARCH_ESP32
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0);  // disable brownout detector - TODO nur erforderlich bei schlechter Stromversorgung
 #endif
   Serial.begin(SerialSpeed);
   Serial.setTimeout(Timeout_Serial); /* sets the maximum milliseconds to wait for serial data. It defaults to 1000 milliseconds. */
@@ -316,12 +329,12 @@ void setup() {
     ; /* wait for serial port to connect. Needed for native USB */
   }
 #ifdef CC110x
-  pinMode(GDO0, INPUT); // for WMBUS
-  //  pinMode(GDO0, OUTPUT);        // TODO wird evtl. für Senden MU gebraucht
+  pinModeFast(GDO0, INPUT); // for WMBUS
+  //  pinModeFast(GDO0, OUTPUT);        // TODO wird evtl. für Senden MU gebraucht
   //  digitalWriteFast(GDO0, LOW);  // TODO wird evtl. für Senden MU gebraucht
-  pinMode(GDO2, INPUT);
+  pinModeFast(GDO2, INPUT);
 #endif
-  pinMode(LED, OUTPUT);
+  pinModeFast(LED, OUTPUT);
   digitalWriteFast(LED, LOW);
 
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32) /* code for ESP8266 and ESP32 */
@@ -511,8 +524,16 @@ void setup() {
     }
   }
 #ifdef debug_chip
-  Serial.print(F("[DB] ToggleCnt:     ")); Serial.println(ToggleCnt);
-  Serial.print(F("[DB] ReceiveModeNr: ")); Serial.println(ReceiveModeNr);
+  Serial.println(F("Available modes:"));
+  for (uint8_t x = 0; x < NUMBER_OF_MODES; x++) {
+    Serial.print(x);
+    Serial.print(F(": "));
+    Serial.println(getModeName(x));
+  }
+  Serial.print(F("[DB] ToggleCnt:       ")); Serial.println(ToggleCnt);
+  Serial.print(F("[DB] ReceiveModeNr:   ")); Serial.println(ReceiveModeNr);
+  Serial.print(F("[DB] ReceiveModeName: ")); Serial.println(getModeName(ReceiveModeNr));
+  delay(10000);
 #endif
   ChipInit();
   if (ToggleCnt == 1) {                 // wechseln in den zuletzt aktivierten Empfangsmodus
@@ -529,7 +550,7 @@ void loop() {
   /* https://arduino-esp8266.readthedocs.io/en/3.1.2/reference.html#timing-and-delays
      delay(ms) pauses the sketch for a given number of milliseconds and allows WiFi and TCP/IP tasks to run. */
   // delay(1);
-#ifdef Code_ESP8266
+#ifdef ARDUINO_ARCH_ESP8266
   yield();
 #endif
 
@@ -595,11 +616,11 @@ void loop() {
   }
 #endif
 
-  if (FSK_RAW == 2) { // WMBUS
 #if defined (WMBus_S) || defined (WMBus_T)
+  if (FSK_RAW == 2) { // WMBUS
     mbus_task();
-#endif
   }
+#endif
 
   /* not OOK */
   if ( (FSK_RAW == 1) && (ChipFound == true) ) { /* Received data | RX (not OOK !!!) */
@@ -641,7 +662,7 @@ void loop() {
     while (FiFo.count() > 0 ) {       // Puffer auslesen und an Dekoder uebergeben
       aktVal = FiFo.dequeue();    // get next element
       decode(aktVal);
-#ifdef Code_ESP8266
+#ifdef ARDUINO_ARCH_ESP8266
       if (FiFo.count() < 120) {
         yield();
       }
@@ -689,6 +710,18 @@ void loop() {
 }
 /* --------------------------------------------------------------------------------------------------------------------------------- void loop end */
 
+String getModeName(const uint8_t modeNr) {
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+  uint8_t len = strlen_P((char*)pgm_read_dword(&(Registers[modeNr].regName)));
+  char buf[len + 1] = {};
+  return strcpy_P(buf, (char*)pgm_read_dword(&(Registers[modeNr].regName)));
+#else
+  uint8_t len = strlen_P((char*)pgm_read_word(&(Registers[modeNr].regName)));
+  char buf[len + 1] = {};
+  return strcpy_P(buf, (char*)pgm_read_word(&(Registers[modeNr].regName)));
+#endif
+}
+
 void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr) {
   char chHex[3]; // for hex output
   msgCount++;
@@ -728,9 +761,6 @@ void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t 
 
 /* #### ab hier, Funktionen mit Makroabhängigkeit #### */
 void ToggleOnOff() {
-  //#ifdef CC110x
-  //  detachInterrupt(digitalPinToInterrupt(GDO2));
-  //#endif
 #ifdef CODE_ESP
   String tmp = "";    // for temp outputs print
   tmp.reserve(256);
@@ -761,8 +791,7 @@ void ToggleOnOff() {
     }
   }
 #ifdef debug
-  memcpy_P(&myArraySRAM2, &Registers[nr], sizeof( Data));
-  MSG_BUILD(F("[DB] Toggle (output all)    | switched to ")); MSG_BUILD_LF(myArraySRAM2.name);
+  MSG_BUILD(F("[DB] Toggle (output all)    | switched to ")); MSG_BUILD_LF(getModeName(ReceiveModeNr));
 #ifdef CODE_ESP
   MSG_OUTPUT(tmp);
 #endif
@@ -840,16 +869,15 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case 'e': /* command e - set registers to default*/
       if (ChipFound == false) {
         NO_Chip();
-      } else {
+      } else { // ToDo - Toggle läuft weiter - evtl. zurück setzen?
         for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-          memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
 #ifdef CC110x
-          if (strcmp(myArraySRAM2.name, "OOK_MU_433") == 0) {
+          if (getModeName(i) == F("ASK/OOK 433 MHz")) {
             Interupt_Variant(i);
             break;
           }
 #elif RFM69
-          if (strcmp(myArraySRAM2.name, "RFM69 Factory Default") == 0) {
+          if (getModeName(i) == F("Chip factory default")) {
             Interupt_Variant(i);
             break;
           }
@@ -960,8 +988,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
                     EEPROMwrite(ReceiveModeNr + EEPROM_ADDR_ToggleMode, enable);
                     ToggleCnt = 0;
 #ifdef debug
-                    memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
-                    MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(myArraySRAM2.name);
+                    MSG_BUILD(F("[DB] Input, ToggleBank mode ")); MSG_BUILD(getModeName(ReceiveModeNr));
                     MSG_BUILD(F(" set to ")); MSG_BUILD(enable); MSG_BUILD(F("\n"));
 #endif
                     for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
@@ -1188,10 +1215,11 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
     case 'I': /* command I */
       if (!input[1]) {
         MSG_BUILD(F("# # #   current status   # # #\n"));
-        if (ReceiveModeName == "" && ChipFound == true) {         // ReceiveModeName if uC restart
+        String ReceiveModeName = "";
+        if (ReceiveModeNr > NUMBER_OF_MODES && ChipFound == true) {         // ReceiveModeName if uC restart
           ReceiveModeName = F("Chip configuration");
-        } else if (ReceiveModeName != "" && ChipFound == true) {  // ReceiveModeName is set with command m<n>
-          //
+        } else if (ReceiveModeNr < NUMBER_OF_MODES && ChipFound == true) {  // ReceiveModeName is set with command m<n>
+          ReceiveModeName = getModeName(ReceiveModeNr);
         } else if (ChipFound == false) {                          // ReceiveModeName if no chip
           ReceiveModeName = F("Chip NOT recognized");
         }
@@ -1229,13 +1257,12 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (!input[1]) {
         MSG_BUILD_LF(F("available register modes:"));
         for (uint8_t i = 0; i < NUMBER_OF_MODES; i++) {
-          memcpy_P(&myArraySRAM2, &Registers[i], sizeof(Data));
           if (i < 10) {
             MSG_BUILD('0');
           }
           MSG_BUILD(i);
           MSG_BUILD(F(" - "));
-          MSG_BUILD(myArraySRAM2.name);
+          MSG_BUILD(getModeName(i));
           MSG_BUILD(F(" ("));
           MSG_BUILD(ToggleArray[i] == 1 ? F("enabled") : F("disabled"));
           if (ToggleArray[i]) {
@@ -1404,7 +1431,8 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #ifdef CC110x
               Chip_writeReg(CC110x_FSCTRL0, 0);                         // 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #endif  // END - CC110x
-              ReceiveModeName = FPSTR(RECEIVE_MODE_USER);
+              // ReceiveModeName = getModeName(1);
+              ReceiveModeNr = 1;                         // activated protocol
             }
           }
         }

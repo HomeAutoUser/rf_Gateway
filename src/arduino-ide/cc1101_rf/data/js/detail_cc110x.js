@@ -1,6 +1,5 @@
-﻿var js = document.createElement("script");
-js.src = '/js/all.js';
-document.head.appendChild(js);
+﻿document.write('<script src="/js/all.js"><\/script>');
+document.write('<script src="/js/functions.js"><\/script>');
 
 var store = document.querySelector(':root');
 var value = getComputedStyle(store);
@@ -37,7 +36,7 @@ function onMessage(event) {
    let element = document.getElementsByName(name)[0];
    document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
 
-   element.maxLength = "2";
+   element.maxLength = 2;
    element.onkeypress = validHEX;
    element.placeholder = element.value.replace(element.value, obj[i]);
    element.setAttribute('size', '2');
@@ -64,51 +63,35 @@ function onMessage(event) {
 
   // 0x0C: FSCTRL0 
   if(document.getElementsByName('afc')[0].checked) {
-   var off = ( parseInt(obj[12], 16) );
-   if (off > 127) {
-    off -= 255;
-   }
-   off = (26000000 / 16384 * off / 1000);
-   document.getElementById('n' + 12).innerHTML = Explan[12] + ' (Freq. offset ' + off.toFixed(0) + ' kHz)';
+   document.getElementById('n' + 12).innerHTML = Explan[12] + ' (Freq. offset ' + (C_FREQOFFread(obj[12]) / 1000).toFixed(0) + ' kHz)';	// ToDo
   }
 
   // 0x0D: FREQ2 0x0E: FREQ1 0x0F: FREQ0
-  Freq = parseInt(obj[13], 16) * 256;
-  Freq = (Freq + parseInt(obj[14], 16) ) * 256;
-  Freq = (Freq + parseInt(obj[15], 16) );
-  Freq = (26 * Freq) / 65536;
+  Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  document.getElementById('p2').maxLength = "6";
+  document.getElementById('p2').maxLength = 6;
   document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
   Freq = Freq - (obj[49] * 1);
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-  document.getElementById('p1').maxLength = "7";
+  document.getElementById('p1').maxLength = 7;
   document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
   // 0x10: MDMCFG4 0x11: MDMCFG3
-  var CHANBW_M = (parseInt(obj[16], 16) & 0b00110000) >> 4;
-  var CHANBW_E = (parseInt(obj[16], 16) >> 6);
-  var RxBwComp = (26000000 / (8 * (4 + CHANBW_M) * (2 ** CHANBW_E)) / 1000).toFixed(2);
+  var RxBwComp = (C_BWread(obj[16]) / 1000).toFixed(3); // ToDO
   var selectElement = document.getElementById('bandw');
   if(!bw_list) {
    bw_list = true;
-   for (var bwExp = 3; bwExp >= 0; bwExp--) {
-    for (var bwMant = 3; bwMant >= 0; bwMant--) {
-     var RxBw = (26000000 / (8 * (4 + bwMant) * (2 ** bwExp)) / 1000).toFixed(2);
-     selectElement.add(new Option(RxBw));
-    }
+   for (let i = 0; i < C_BWsteps().length; i++) {
+    selectElement.add( new Option( (C_BWsteps()[i] / 1000).toFixed(3) ) ); // ToDo
    }
   }
   selectElement.value = RxBwComp;
   document.getElementById('CHANBW').innerHTML = RxBwComp + ' kHz';
-
-  var DRATE_E = parseInt(obj[16], 16);
-  var DRATE_M = parseInt(obj[17], 16);
-  var DRATE = ( ( (256 + DRATE_M) * (2 ** (DRATE_E & 15)) ) * 26000000.0 / (2 ** 28) / 1000.0 ).toFixed(2);
+  var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(2); // ToDo
   document.getElementById('DRATE').innerHTML = DRATE + ' kBaud';
   document.getElementsByName('datarate')[0].value = DRATE;
-  document.getElementById('p4').maxLength = "6";
+  document.getElementById('p4').maxLength = 7;
   document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,2})?$";
 
   // 0x12: MDMCFG2
@@ -121,22 +104,21 @@ function onMessage(event) {
     }
    }
   }
-  var val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
+  val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
   document.getElementById('MOD_FORMAT').innerHTML = MOD[val];
   document.getElementById('modulation').value = MOD[val];
-  var val = (parseInt(obj[18], 16) & 0b00000111);
+  val = (parseInt(obj[18], 16) & 0b00000111);
   document.getElementById('SYNC_MODE').innerHTML = SYNC_MODE[val];
 
   // 0x13: MDMCFG1
-  var val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
+  val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
   document.getElementById('MDMCFG1').innerHTML = 'minimum ' + NUM_PREAMBLE[val] + ' preamble bytes to be transmitted configured in MDMCFG1 register';
 
   // 0x15: DEVIATN
-  var DEVIATN = parseInt(obj[21], 16);
-  DEVIATN = (8 + (DEVIATN & 7)) * ( 2 ** ((DEVIATN >> 4) & 7) ) * 26000.0 / ( 2 ** 17);
+  var DEVIATN = C_DEVread(obj[21]) / 1000; // ToDo
   document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(2) + ' kHz';
   document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(2);
-  document.getElementById('p5').maxLength = "5";
+  document.getElementById('p5').maxLength = 5;
   document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,2})?$";
 
   document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
@@ -189,11 +171,11 @@ document.onreadystatechange = function () {
 
    if (ExplanAdd[nr] != ''){
     if(id && modal) {
-     modal.style.display = "block";    // When the user clicks the button, open the modal
+     modal.style.display = "block";    // When user clicks button, open the modal
      lastmodal = modal;
     }
     if(cla && cla == 'close'){
-     lastmodal.style.display = "none"; // When the user clicks on <span> (x), close the modal
+     lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
     }
    }
   }

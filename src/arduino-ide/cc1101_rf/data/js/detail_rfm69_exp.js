@@ -1,6 +1,5 @@
-﻿var js = document.createElement("script");
-js.src = '/js/all.js';
-document.head.appendChild(js);
+﻿document.write('<script src="/js/all.js"><\/script>');
+document.write('<script src="/js/functions.js"><\/script>');
 
 let SX1231SKB_file;
 let CC110x_file;
@@ -9,8 +8,6 @@ const txt_hex = '0x';
 const txt_ln = '\n';
 var FileSX1231;
 var FileCC110x;
-const FXOSC = 32000000;
-const Fstep = FXOSC / 524288;
 
 
 function onMessage(event) {
@@ -22,27 +19,39 @@ function onMessage(event) {
 
  if(event.data.includes(',detail,')) {
   const obj=event.data.split(',');
+	const fileName=obj[obj.length - 2].replaceAll(' ', '_');
 
   SX1231SKB_file = '#Type	Register Name	Address[Hex]	Value[Hex]\n';
-  CC110x_file = 'development\n';
-
+  SX1231h_file = 'const uint8_t ' + fileName + '[] PROGMEM = {\n';
+  SX1231h_file += '  // SX1231 register values for ' + obj[obj.length - 2] + txt_ln;
+  
   for (i=0; i<= 84; i++) {
    if (i==80) {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x58' + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x58, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    } else if (i==81) {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x59' + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x59, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    } else if (i==82) {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x5F' + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x5F, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    } else if (i==83) {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x6F' + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x6F, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    } else if (i==84) {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x71' + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x71, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    } else {
     SX1231SKB_file += 'REG	' + RegName[i] + tab + txt_hex + dec2hex(i) + tab + txt_hex + obj[i] + txt_ln;
+    SX1231h_file += '  0x' + obj[i] + ', // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
    }
   }
   SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
-  FileSX1231 = 'SX1231SKB_' + obj[obj.length - 2] + '.cfg';
+  FileSX1231 = 'SX1231SKB_' + fileName + '.cfg';
+  SX1231h_file += '}; // END SX1231 ' +  fileName + ' register values' + txt_ln;
+  FileSX1231h = 'SX1231_' + fileName + '.h';
+
+  CC110x_file = 'development\n';
   FileCC110x = 'SRF_' + obj[obj.length - 2] + '.xml';
 
   let element = document.getElementById("REGs");
@@ -66,7 +75,7 @@ function onMessage(event) {
   // 0x05 RegFdevMsb 0x06 RegFdevLsb | TODO
   var r05 = parseInt(obj[5], 16);
   var r06 = parseInt(obj[6], 16);
-  var Fdev = ( Fstep * (r06 + r05 * 256) ) / 1000;
+  var Fdev = ( Fstep_SX * (r06 + r05 * 256) ) / 1000;
   // cc1101 DEVIATN (0x15)
   if (Fdev > 380.859375) {
    Fdev = 380.859375;
@@ -122,23 +131,17 @@ function onMessage(event) {
   txt += "'080" + r37_7 + "',";
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
-  var r07to09 = parseInt(obj[7], 16) * 256;
-  r07to09 = (r07to09 + parseInt(obj[8], 16) ) * 256;
-  r07to09 = (r07to09 + parseInt(obj[9], 16) );
-  r07to09 = (Fstep * r07to09) / 1000000;
-  r07to09 = (r07to09 * 1000) / 26000 * 65536;
+  var r07to09 = SX_FREQread(obj[7], obj[8], obj[9]);
   // cc1101 FREQ2 (0x0D) | FREQ1 (0x0E) | FREQ0 (0x0F)
-  var c0D = parseInt( r07to09 / 65536 );
-  txt += "'0D" + c0D.toString(16) +"',";
-  var c0E = parseInt((r07to09 % 65536) / 256 );
-  txt += "'0E" + c0E.toString(16) + "',";
-  var c0F = parseInt( r07to09 % 256 );
-  txt += "'0F" + c0F.toString(16) + "',";
+  var arr = C_FREQset(r07to09);
+  txt += "'0D" + arr[0];
+  txt += "'0E" + arr[1];
+  txt += "'0F" + arr[2];
 
   // 0x19 RegRxBw
   var RxBwMant = (parseInt(obj[25], 16) & 0b00011000) >> 3;
   var RxBwExp = (parseInt(obj[25], 16) & 0b00000111);
-  var RxBw = (2 * (FXOSC / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000)).toFixed(3);
+  var RxBw = (2 * (FXOSC_SX / ((16 + RxBwMant * 4) * (2 ** (RxBwExp + 2 + ModType))) / 1000)).toFixed(3);
   // cc1101 MDMCFG4 (0x10) CHANBW_E & CHANBW_M
   var bits1 = 0;
   var bits2 = 0;
@@ -169,7 +172,7 @@ function onMessage(event) {
   // 0x03 RegBitrateMsb 0x04 RegBitrateLsb
   var r03 = parseInt(obj[3], 16);
   var r04 = parseInt(obj[4], 16);
-  var rBitRate = (FXOSC / ((r03 * 256) + r04));
+  var rBitRate = (FXOSC_SX / ((r03 * 256) + r04));
   // cc1101 MDMCFG4 (0x0010) DRATE_E | MDMCFG3 (0x0011) DRATE_M
   if (rBitRate < 24.7955) {
     rBitRate = 24.7955;
@@ -212,6 +215,8 @@ function saveFile(variant) {
  let data;
  if (variant == 'SX') {
   data = SX1231SKB_file;
+ } else if (variant == 'h') {
+  data = SX1231h_file;
  } else {
   data = CC110x_file;
   alert('development');
@@ -222,7 +227,11 @@ function saveFile(variant) {
  const textToBLOB = new Blob([data], { type: 'text/plain' });
 
  let newLink = document.createElement("a");
- newLink.download = FileSX1231;
+ if (variant == 'SX') {
+  newLink.download = FileSX1231;
+ } else if (variant == 'h') {
+  newLink.download = FileSX1231h;
+ }
 
  if (window.webkitURL != null) {
   newLink.href = window.webkitURL.createObjectURL(textToBLOB);
@@ -321,8 +330,8 @@ const RegName = [
 'RegTemp1',
 'RegTemp2',
 'RegTestLna',
-'RegTestPa1',
-'RegTestPa2',
+'RegTestTcxo',
+'RegTestllBw',
 'RegTestDagc',
 'RegTestAfc'
 ];

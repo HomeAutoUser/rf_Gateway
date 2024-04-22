@@ -7,6 +7,22 @@
 #include <digitalWriteFast.h>   // https://github.com/ArminJo/digitalWriteFast
 #include <SPI.h>
 
+#define CHIP_NAME                 "CC110x"              // name Chip
+#ifdef SIGNALduino_comp
+#define CHIP_RFNAME               "cc1101_rf_Gateway"   // name web interface
+#else
+#define CHIP_RFNAME               "cc110x_rf_Gateway"   // name web interface
+#endif
+
+#define fxOsc                    CC110x_fxOsc           // Crystal oscillator frequency CC110x
+#define REGISTER_MAX             0x2E                   // register count with test register
+#define REGISTER_WR              0x28                   // register count without test register
+#define REGISTER_STATUS_MAX      0x3D                   // register count inc. Status Registers
+#define CMD_W_REG_MAX             52                    // command W address max 0x40 (ASCII 52 = 4)
+#define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)
+#define CHIP_BitRate             0x10                   // first BitRate/DataRate address
+#define CHIP_FREQMSB             0x0D                   // Frequency Control Word, High Byte
+
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES  20 // ESP - Anzahl Datensätze in struct Data
 #else
@@ -17,32 +33,35 @@
 #include "mbus.h"           // benötigt NUMBER_OF_MODES
 #endif
 
-static const char RECEIVE_MODE_USER[] PROGMEM = "CC110x user configuration";
 const uint8_t CC110x_PATABLE_433[8] PROGMEM = {0xC0, 0xC8, 0x84, 0x60, 0x34, 0x1D, 0x0E, 0x12};
 const uint8_t CC110x_PATABLE_868[8] PROGMEM = {0xC2, 0xCB, 0x81, 0x50, 0x27, 0x1E, 0x0F, 0x03};
 const int8_t CC110x_PATABLE_POW[8] PROGMEM = {10, 7, 5, 0, -10, -15, -20, -30};
 
+byte Chip_Bandw_cal(float input);
 int Chip_readRSSI();
-void CC110x_readFreqErr();
+float Chip_readFreq();
 uint8_t Chip_readReg(uint8_t regAddr, uint8_t regType);
-uint8_t CC110x_CmdStrobe(uint8_t cmd);
-uint8_t CC110x_cmdStrobeTo(const uint8_t cmd); // wait MISO and send command strobe to the CC1101 IC via SPI
-uint8_t waitTo_Miso(); // wait with timeout until MISO goes low
 void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi); // WMBus
 void ChipInit();
 void Chip_readBurstReg(uint8_t * uiBuffer, uint8_t regAddr, uint8_t len);
 void Chip_writeReg(uint8_t regAddr, uint8_t value);
-void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus);
+void Chip_writeRegFor(uint8_t regNr);                 // write all registers
 void Chip_setReceiveMode();
 void Chip_setFreq(uint32_t frequency, byte * arr);
-float Chip_readFreq();
+void Chip_sendFIFO(char *startpos);
+void Chip_Datarate_Set(long datarate, byte * arr);
+
+byte CC110x_Deviation_Set(float deviation);
+uint8_t CC110x_CmdStrobe(uint8_t cmd);
+uint8_t CC110x_cmdStrobeTo(const uint8_t cmd); // wait MISO and send command strobe to the CC1101 IC via SPI
+void CC110x_readFreqErr();
 void CC110x_writeBurstReg(byte * uiBuffer, byte regAddr, byte len);
 void CC110x_setTransmitMode();
-void Chip_sendFIFO(char *startpos);
-byte Chip_Bandw_cal(float input);
-void Chip_Datarate_Set(long datarate, byte * arr);
-byte CC110x_Deviation_Set(float deviation);
+
+uint8_t waitTo_Miso(); // wait with timeout until MISO goes low
 byte web_Mod_set(byte input);
+String getModeName(const uint8_t modeNr);
+void Interupt_Variant(byte nr);    // Empfangsvariante & Register einstellen
 
 #if defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_ESP8266)
 extern IRAM_ATTR void Interupt();     /* Pulseauswertung */
@@ -51,10 +70,10 @@ extern void Interupt();
 #endif
 
 extern boolean ChipFound;
-extern String ReceiveModeName;              // name of active mode from array
+//extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 extern byte ReceiveModePKTLEN;
-extern byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
+extern volatile byte FSK_RAW;               // Marker - FSK Modulation RAW interrupt
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
 extern uint8_t ToggleCnt;                   // Toggle, Anzahl aktiver Modi
@@ -67,7 +86,9 @@ extern uint8_t freqAfc;
 extern int16_t RSSI_dez;
 extern unsigned long uptime;
 extern const struct Data Registers[];
-extern Data myArraySRAM2;
+#ifdef CODE_ESP
+extern Data myArraySRAM;
+#endif
 
 // ############################## all available CC110x registers ##############################
 const uint8_t Config_User[] PROGMEM = {
@@ -149,7 +170,7 @@ const uint8_t Config_Default[] PROGMEM = {
 };
 
 #ifdef Avantek
-const uint8_t Config_Avantek[] PROGMEM = {
+const uint8_t Config_Avantek[] PROGMEM = { // ToDo - kein Empfang
   /*
     Address Config = No address check
     Base Frequency = 433.299744
@@ -1774,22 +1795,6 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   //0x09,  // 0x2F TEST0         Various Test Settings
 };
 #endif
-
-
-#define CHIP_NAME                 "CC110x"              // name Chip
-#ifdef SIGNALduino_comp
-#define CHIP_RFNAME               "cc1101_rf_Gateway"   // name web interface
-#else
-#define CHIP_RFNAME               "cc110x_rf_Gateway"   // name web interface
-#endif
-
-#define REGISTER_MAX              46                    // register count
-#define REGISTER_STATUS_MAX     0x3D                    // register count inc. Status Registers
-#define CMD_W_REG_MAX             52                    // command W address max 0x40 (ASCII 52 = 4)
-
-#define CHIP_RxBw                0x10                   // Modem Configuration ... (BW & DRate)
-#define CHIP_BitRate             0x10                   // first BitRate/DataRate address
-#define CHIP_FREQMSB             0x0D                   // Frequency Control Word, High Byte
 
 /** Command strobes */
 #define CC110x_SRES              0x30        // Reset CC110x chip

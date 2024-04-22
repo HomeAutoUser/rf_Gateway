@@ -5,17 +5,12 @@
 #include "functions.h"
 #include "macros.h"
 
-/********************* variables for RFM69 *********************/
-byte ReceiveModeNr = 0;           // activated protocol in flash
-boolean ChipFound = false;        // against not clearly defined entrances (if flicker)
-byte ReceiveModePKTLEN;
-
 /********************* functions *********************/
 void ChipInit() { /* Init RFM69 - Set default´s */
 #ifdef debug_chip
   Serial.println(F("[DB] RFM69 init starting"));
 #endif
-  pinMode(SS, OUTPUT);
+  pinModeFast(SS, OUTPUT);
   ChipDeselect();
   SPI.begin();
   SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0)); // SCLK frequency, burst access max. 10 MHz
@@ -39,8 +34,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
     uint16_t chk = 0;
     uint16_t chk_comp = 0;
     for (byte i = 0; i < NUMBER_OF_MODES; i++) {
-      memcpy_P(&myArraySRAM2, &Registers[i], sizeof( Data));
-      chk += myArraySRAM2.PKTLEN;
+      chk += pgm_read_word(&(Registers[i].PKTLEN));
     }
     EEPROM.get(EEPROM_ADDR_CHK, chk_comp);
 
@@ -68,11 +62,9 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       Serial.print(F("[DB] ReceiveModeNr                 ")); Serial.println(ReceiveModeNr);
 #endif
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        memcpy_P(&myArraySRAM2, &Registers[ReceiveModeNr], sizeof( Data));
-        if (ReceiveModeNr > 0 && ToggleCnt == 0) { // use config from EEPROM
-          // if (ReceiveModeNr == 0 && ToggleTime == 0) { // für Test
+        if (ReceiveModeNr == 1 && ToggleCnt == 1) { // use config from EEPROM
 #ifdef debug_chip
-          ReceiveModeName = myArraySRAM2.name;
+          String ReceiveModeName = getModeName(ReceiveModeNr);
           Serial.println(F("[DB] SX1231 use config from EEPROM"));
           Serial.print(F("[DB] write ReceiveModeNr ")); Serial.print(ReceiveModeNr);
           Serial.print(F(", ")); Serial.println(ReceiveModeName);
@@ -93,39 +85,20 @@ void ChipInit() { /* Init RFM69 - Set default´s */
 #endif
             Chip_writeReg(addr, EEPROMread(i));
           }
-        }
-
-        if (ToggleCnt > 0) { // normaler Start
-          Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
-          //          Chip_writeRegFor(Registers[ReceiveModeNr].reg_val, Registers[ReceiveModeNr].length, Registers[ReceiveModeNr].name);
-        }
-        ReceiveModeName = myArraySRAM2.name;
-        ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
-        if (ReceiveModeName[0] == 'W') { // WMBUS
-          FSK_RAW = 2;
         } else {
-          FSK_RAW = 0;
+          Interupt_Variant(ReceiveModeNr); // Empfangsvariante & Register einstellen
         }
-#ifdef debug_chip
-        Serial.print(F("[DB] RFM69_Frequency               ")); Serial.print(Chip_readFreq() / 1000, 3); Serial.println(F(" MHz"));
-#endif
-        Chip_setReceiveMode();     // SX1231 start receive mode
-        Chip_writeReg(0x28, 0x10); // FIFO are cleared when this bit is set.
-#ifdef debug_chip
-        Serial.println(F("[DB] SX1231 read all 112 register after load new settings"));
-        SX1231_read_reg_all();      // SX1231 read all 112 register
-#endif
-      } else {
+      } else { // Ende if (ReceiveModeNr < NUMBER_OF_MODES) {
         SX1231_setIdleMode();        // SX1231 start idle mode
       }
-    } else { /* Ende normaler Start */
+    } else { // Ende if (EEPROMread(EEPROM_ADDR_FW1) == Prog_Ident1 && EEPROMread(EEPROM_ADDR_FW2) == Prog_Ident2 && chk == chk_comp)
       /* ERROR EEPROM oder Registeranzahl geändert */
-      EEPROMwrite(EEPROM_ADDR_Prot, 0);  // reset
+      EEPROMwrite(EEPROM_ADDR_Prot, 0); // set ReceiveModeNr to Chip factory default
       ToggleCnt = 0;
       ReceiveModeNr = 0;
       ReceiveModePKTLEN = 0;
       /* wenn Registerwerte geändert wurden beim compilieren */
-      if (chk != chk_comp) {  // checksum over Registers[].PKTLEN not OK
+      if (chk != chk_comp) {  // checksum over PKTLEN not OK
         Serial.println(F("ChipInit, reset togglebank and stop receiving (chk != chk registers.PKTLEN)"));
         EEPROM.put(EEPROM_ADDR_CHK, chk);  // reset
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
@@ -137,32 +110,43 @@ void ChipInit() { /* Init RFM69 - Set default´s */
         Serial.println(F("ChipInit, EEPROM Init to defaults after ERROR"));
         EEPROMwrite(EEPROM_ADDR_FW1, Prog_Ident1);  // reset Prog_Ident1
         EEPROMwrite(EEPROM_ADDR_FW2, Prog_Ident2);  // reset Prog_Ident2
-        /* set adr. 200 - 204 to value 0 or 255 (active protocol and toggle array) */
-        EEPROMwrite(EEPROM_ADDR_Prot, 0);    // ReceiveModeNr
 #ifdef debug_chip
         Serial.println(F("[DB] reconfigure SX1231 and write values to EEPROM"));
 #endif
-        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
-        for (byte i = 0; i < myArraySRAM2.length; i++) {                 /* write register values ​​to flash */
+#ifdef CODE_ESP
+        memcpy_P(&myArraySRAM, &Registers[0], REGISTER_WR); // ESP
+#else
+        const uint32_t ptr = pgm_read_ptr(&(Registers[0].regVal)); // Arduino, pointer to register values
+#endif
+        for (byte i = 0; i <= REGISTER_WR; i++) {                 // write register values ​​to EEPROM
+          uint8_t addr = i;
+          if (i >= 80) {
+            addr = SX1231_RegAddrTranslate[i - 80];
+          }
 #ifdef debug_chip
           Serial.print(F("[DB] write default value 0x"));
-          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM2.reg_val + i)); //
-          Serial.print(F(" to EEPROM address "));
-          Serial.println(i);
+#ifdef CODE_ESP
+          SerialPrintDecToHex(pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to EEPROM
+#else
+          SerialPrintDecToHex(pgm_read_byte_near(ptr + i)); // Arduino write value to EEPROM
 #endif
-          EEPROMwrite(i, pgm_read_byte_near(myArraySRAM2.reg_val + i));  // Config_Default
+          Serial.print(F(" to EEPROM address "));
+          Serial.println(addr);
+#endif
+#ifdef CODE_ESP
+          EEPROMwrite(addr, pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to EEPROM
+#else
+          EEPROMwrite(addr, pgm_read_byte_near(ptr + i)); // Arduino write value to EEPROM
+#endif
         }
-      }  // Ende EEPROM wurde gelöscht
+      } // Ende EEPROM wurde gelöscht
       if (ReceiveModeNr < NUMBER_OF_MODES) {
-        memcpy_P(&myArraySRAM2, &Registers[0], sizeof( Data));
-        Chip_writeRegFor(myArraySRAM2.reg_val, myArraySRAM2.length, myArraySRAM2.name);
-        ReceiveModeName = myArraySRAM2.name;
-        ReceiveModePKTLEN = myArraySRAM2.PKTLEN;
+        Chip_writeRegFor(0); // write all registers to Chip factory default
       }
 #ifdef debug_chip
       Serial.println(F("[DB] set cc110x to factory settings"));
       Serial.print(F("[DB] ReceiveModeNr = "));
-      Serial.print(ReceiveModeNr); Serial.print(F(", ")); Serial.println(ReceiveModeName);
+      Serial.print(ReceiveModeNr); Serial.print(F(", ")); Serial.println(getModeName(ReceiveModeNr));
       Serial.println(F("[DB] RFM69 remains idle, please set receive mode!"));
 #endif
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
@@ -174,53 +158,68 @@ void ChipInit() { /* Init RFM69 - Set default´s */
   }
 }
 
-void Chip_writeRegFor(const uint8_t *reg_name, uint8_t reg_length, String reg_modus) {
-  /* variable loop to write register
-    'reg_name'    Register name from register.cpp
-    'reg_length'  Register name length from register.cpp
-    'reg_modus'   Text for Modus from simplification.h */
-  //  freqOffAcc = 0;                      // reset cc110x afc offset
-  //  freqErrAvg = 0;                      // reset cc110x afc average
-#ifdef debug_chip
-  Serial.print(F("[DB] Chip_writeRegFor length = ")); Serial.println(reg_length);
-  Serial.print(F("[DB] Chip_writeRegFor modus  = ")); Serial.println(reg_modus);
+void Chip_writeRegFor(uint8_t regNr) { // write all registers
+#ifdef CODE_ESP
+  memcpy_P(&myArraySRAM, &Registers[regNr], REGISTER_WR); // ESP, copy PROGMEM to SRAM
+#else
+  const uint32_t ptr = pgm_read_ptr(&(Registers[regNr].regVal)); // Arduino, pointer to register values
 #endif
-  for (byte i = 1; i < reg_length; i++) {
-    uint8_t addr = i;
-    if (i >= 80) {
-      addr = SX1231_RegAddrTranslate[i - 80];
-    }
-    Chip_writeReg(addr, pgm_read_byte_near(reg_name + i)); /* write value to SX1231 */
-
-    if (i == 9 && freqOffset != 0) { // Register 0x07 0x08 0x09 - attention to the frequency offset !!!
-      byte value[3];
-      Chip_setFreq(Chip_readFreq(), value); // add offset to frequency
+  ReceiveModePKTLEN = pgm_read_word(&(Registers[regNr].PKTLEN));
+  //ReceiveModeName = getModeName(regNr);
 #ifdef debug_chip
-      Serial.print(F("[DB] SX1231 Frequency + offset calculated "));
-      Serial.print(((Chip_readFreq() + freqOffset) / 1000), 3);
-      Serial.println(F(" MHz and write new value"));
+  Serial.print(F("[DB] Chip_writeRegFor register number: ")); Serial.println(regNr);
+  Serial.print(F("[DB] Chip_writeRegFor register name:   ")); Serial.println(getModeName(regNr));
+  Serial.print(F("[DB] Chip_writeRegFor register count:  ")); Serial.println(REGISTER_WR);
+  Serial.print(F("[DB] Chip_writeRegFor packet length:   ")); Serial.println(ReceiveModePKTLEN);
+  char hex[3];
 #endif
-      for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
-        if (pgm_read_byte_near(reg_name + i2 + 7) != value[i2]) {
+  for (byte i = 1; i <= REGISTER_WR; i++) {
+    if (ReceiveModeNr == 1) { // CC110x User setting
+      Chip_writeReg(i, EEPROM.read(i)); /* write value to cc110x */
+    } else {
+      uint8_t addr = i;
+      if (i >= 80) {
+        addr = SX1231_RegAddrTranslate[i - 80];
+      }
+#ifdef CODE_ESP
+      Chip_writeReg(addr, pgm_read_byte_near(myArraySRAM.regVal + i)); // ESP write value to SX1231
+#else
+      Chip_writeReg(addr, pgm_read_byte_near(ptr + i)); // Arduino write value to SX1231
+#endif
+#ifdef debug_chip
+      Serial.print(F("[DB] write register address: "));
+      onlyDecToHex2Digit(addr, hex);
+      Serial.print(hex);
+      Serial.print(F(" value: "));
+#ifdef CODE_ESP
+      onlyDecToHex2Digit(pgm_read_byte_near(myArraySRAM.regVal + i), hex);
+#else
+      onlyDecToHex2Digit(pgm_read_byte_near(ptr + i), hex);
+#endif
+      Serial.print(hex);
+      Serial.println("");
+#endif
+      if (i == 9 && freqOffset != 0) { // Register 0x07 0x08 0x09 - attention to the frequency offset !!!
+        byte value[3];
+        Chip_setFreq(Chip_readFreq(), value); // add offset to frequency
+#ifdef debug_chip
+        Serial.print(F("[DB] SX1231 Frequency + offset calculated "));
+        Serial.print(((Chip_readFreq() + freqOffset) / 1000), 3);
+        Serial.println(F(" MHz and write new value"));
+#endif
+        for (byte i2 = 0; i2 < 3; i2++) { // write value to frequency register 0x07, 0x08, 0x09
           Chip_writeReg(i2 + 7, value[i2]);  // write new values in SX1231
         }
       }
     }
   }
-  ReceiveModeName = reg_modus;
 #if defined (WMBus_S) || defined (WMBus_T)
-  if (reg_modus.startsWith("W")) { // WMBUS
-    if (reg_modus.endsWith("S")) { // WMBUS_S
-#ifdef debug_mbus
-      Serial.println(reg_modus);
-#endif
-      //mbus_init(11);
+  String ReceiveModeName = getModeName(regNr); // name of active mode from array
+  if (ReceiveModeName.startsWith("W")) { // WMBUS
+    if (ReceiveModeName.endsWith("S")) { // WMBUS_S
       mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
     }
-    if (reg_modus.endsWith("T")) { // WMBUS_T
-#ifdef debug_mbus
-      Serial.println(reg_modus);
-#endif
+    if (ReceiveModeName.endsWith("T")) { // WMBUS_T
       mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
   }
@@ -423,7 +422,9 @@ byte Chip_Bandw_cal(float input) {   /* bandwidth calculation from web */
   }
 END:
 #ifdef debug
-  Serial.print(F("[DB] Chip_Bandw_cal, Setting RegRxBw (19) to ")); Serial.println(onlyDecToHex2Digit((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b11100000) + bits));
+  char hex[3];
+  onlyDecToHex2Digit(((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b11100000) + bits), hex);
+  Serial.print(F("[DB] Chip_Bandw_cal, Setting RegRxBw (0x19) to ")); Serial.println(hex);
 #endif
   return ((Chip_readReg(CHIP_RxBw, READ_BURST) & 0b11100000) + bits);
 }

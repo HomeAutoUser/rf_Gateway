@@ -1,6 +1,5 @@
-﻿var js = document.createElement("script");
-js.src = '/js/all.js';
-document.head.appendChild(js);
+﻿document.write('<script src="/js/all.js"><\/script>');
+document.write('<script src="/js/functions.js"><\/script>');
 
 function onMessage(event) {
  console.log('received message: ' + event.data);
@@ -13,7 +12,7 @@ function inputfile() {
     const fileList = event.target.files;
 
     var reader = new FileReader();
-    var regPosAdr = '';
+    var regAdrPos = '';
     var regAdr = '';
     var regValTxt = '';
     var regVal = '';
@@ -27,9 +26,9 @@ function inputfile() {
 
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].match(/REG/g)) {
-          regPosAdr = lines[i].search("0x");
-          regAdr = lines[i].substr(regPosAdr+2,2);
-          regValTxt = lines[i].substr(regPosAdr+4);
+          regAdrPos = lines[i].search("0x");
+          regAdr = lines[i].substr(regAdrPos+2,2);
+          regValTxt = lines[i].substr(regAdrPos+4);
           regVal = regValTxt.search("0x");
           regVal = regValTxt.substr(regVal+2,2)
           regTxt += regAdr;
@@ -53,18 +52,85 @@ function inputfile() {
 
 function SXimpFromCC() {
   var input = document.getElementsByName("imp")[0].value;
-  var checked = "TEST ";
+  var inputTXT = '';
+  const Sync = [];
+  const Freq = [];
+  const Drate = [];
+  var Dev = '';
+
   input = input.slice(1);     // cut first [
   input = input.slice(0, -1); // cut last ]
 
   const reg = input.split(',');
-  for ( let i=0; i<reg.length; i++ ) {
+  for ( let i=0; i<reg.length; i++ ){
     // Examination of specific registers
-    checked += reg[i];
+    var adr = reg[i].substring(1, 3);
+    if(SXallowedRegFromCC.includes(adr)) {
+      // all Sync register, once failed = no Sync set
+      if(adr == '04' || adr == '05') {
+        Sync.push(reg[i].substring(1, 5));
+      }
+      
+      // all Frequency register, once failed = no Frequency set
+      if(adr == '0D' || adr == '0E' || adr == '0F') {
+        Freq.push(reg[i].substring(1, 5));
+      }
+      // all Datarate register, once failed = no Datarate set
+      if(adr == '10' || adr == '11') {
+        Drate.push(reg[i].substring(1, 5));
+      }
+      // Deviation
+      if(adr == '15') {
+        Dev += reg[i].substring(1, 5);
+      }
+    }
   }
 
-  //alert("return value: " + input);
-  document.getElementsByName("imp")[0].value = checked;
+  // for test ['01AB','0D21','0E65','0F6A','10AA','11FB'] / ['01AB','0D21','1511']
+  if (Sync.length == 2) {
+    inputTXT += Sync[0]+',';
+    inputTXT += Sync[1]+',';
+  }
+  
+  if (Freq.length == 3) {
+    var val = cCalFreq(Freq[0].substring(2, 4), Freq[1].substring(2, 4), Freq[2].substring(2, 4), 26);
+    alert('freq cc110x: ' + val);
+    alert('cal rfm register');
+    inputTXT += Freq[0]+',';
+    inputTXT += Freq[1]+',';
+    inputTXT += Freq[2]+',';
+  }
+
+  if (Drate.length == 2) {
+    inputTXT += Drate[0]+',';
+    inputTXT += Drate[1]+',';
+  }
+
+  if(Dev != '') {
+    inputTXT += Dev;
+  }
+  
+  if(inputTXT.charAt(inputTXT.length-1) ==',') {
+    inputTXT = inputTXT.slice(0, -1);
+  }
+
+  if (inputTXT != '') {
+    document.getElementsByName("imp")[0].value = inputTXT;
+  }
   return true;
 };
 
+const SXallowedRegFromCC = [
+ // Sync
+ '04',
+ '05',
+ // Frequency
+ '0D',
+ '0E',
+ '0F',
+ // Datarate & Bandwidth
+ '10',
+ '11',
+ // Deviation
+ '15',
+];
