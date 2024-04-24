@@ -2,7 +2,7 @@
 js.src = '/js/all.js';
 document.head.appendChild(js);
 
-function onMessage(event) {
+function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
 
  if(event.data == 'Connected') {

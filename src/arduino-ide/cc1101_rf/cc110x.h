@@ -72,7 +72,7 @@ extern void Interupt();
 extern boolean ChipFound;
 //extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
-extern byte ReceiveModePKTLEN;
+//extern byte ReceiveModePKTLEN;
 extern volatile byte FSK_RAW;               // Marker - FSK Modulation RAW interrupt
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
@@ -300,7 +300,8 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control (15 per minute) - SIGNALduino: 0x1B  AGCCTRL2 - 0x07 - 0x43
+//  0x43,  // AGCCTRL2            AGC Control (10 per minute)
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -377,7 +378,8 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -454,7 +456,8 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -532,7 +535,8 @@ const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   0x15,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, 8 von 8 MSG in 30 Sekunden)
   //  0x0E,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode1 gut)
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -612,7 +616,8 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   //0x15,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -920,7 +925,8 @@ const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -997,7 +1003,8 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x43,  // AGCCTRL2            AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x48,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -1773,7 +1780,8 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x18,  // 0x18 MCSM0         Main Radio Control State Machine Configuration
   0x2E,  // 0x19 FOCCFG        Frequency Offset Compensation Configuration
   0xBF,  // 0x1A BSCFG         Bit Synchronization Configuration
-  0x43,  // 0x1B AGCCTRL2      AGC Control
+  0x07,  // AGCCTRL2            AGC Control
+//  0x43,  // AGCCTRL2            AGC Control
   0x09,  // 0x1C AGCCTRL1      AGC Control
   0xB5,  // 0x1D AGCCTRL0      AGC Control
   0x87,  // 0x1E WOREVT1       High Byte Event0 Timeout

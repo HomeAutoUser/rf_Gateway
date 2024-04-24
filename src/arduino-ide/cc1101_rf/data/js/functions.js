@@ -82,6 +82,69 @@ function SX_DRATEread(RegBitrateMsb, RegBitrateLsb) {
  return DRATE;
 }
 
+function C_DRATEset(DRATE,RxBw) {
+ // need CHANBW_E & CHANBW_M so set MDMCFG4 complete
+ // unchecked -> detail_rfm69.js
+ var ret = [];
+ var bits1 = 0;
+ var bits2 = 0;
+ var bw1 = 0;
+ var bw2 = 0;
+ var c10 = 0;
+
+ if(RxBw == undefined) {
+	RxBw = 0; // min value check or 0 
+ }
+
+ exit_loops:
+	for (var e = 0; e < 4; e++) {
+		for (var m = 0; m < 4; m++) {
+      bits2 = bits1;
+      bits1 = (e << 6) + (m << 4);
+      bw2 = bw1;
+      bw1 = (FXOSC_C / 1000) / (8 * (4 + m) * (1 << e));
+      if (RxBw >= bw1) {
+        break exit_loops;
+      }
+		}
+	}
+
+ if((~(RxBw - bw1) + 1) > (~(RxBw - bw2) + 1)) {
+	c10 = bits1;
+ } else {
+	c10 = bits2;
+ }
+ 
+ if (DRATE < 24.7955) {
+	DRATE = 24.7955;
+ } else if (DRATE > 1621830) {
+	DRATE = 1621830;
+ }
+
+ var DRATE_E = DRATE * ( 2**20 ) / FXOSC_C * 1.0;
+ DRATE_E = Math.log(DRATE_E) / Math.log(2);
+ DRATE_E = Math.trunc(DRATE_E);
+ var DRATE_M = (DRATE * (2**28) / (FXOSC_C * 1.0 * (2**DRATE_E))) - 256;
+ DRATE_M = Math.trunc(DRATE_M);
+ var DRATE_Mr = Math.round(DRATE_M);
+ var DRATE_M1 = DRATE_M + 1;
+ var DRATE_E1 = DRATE_E;
+
+ if (DRATE_M1 == 256) {
+	DRATE_M1 = 0;
+	DRATE_E1++;
+ }
+
+ if (DRATE_Mr != DRATE_M) {
+	DRATE_M = DRATE_M1;
+	DRATE_E = DRATE_E1;
+ }
+ c10 += DRATE_E;
+ ret.push(DRATE_E.toString(16));
+ ret.push(DRATE_M.toString(16));
+ return ret;
+}
+
 function C_DEVread(DEVIATN) {
  DEVIATN = parseInt(DEVIATN, 16);
  DEVIATN = (8 + (DEVIATN & 7)) * ( 2 ** ((DEVIATN >> 4) & 7) ) * FXOSC_C / ( 2 ** 17);

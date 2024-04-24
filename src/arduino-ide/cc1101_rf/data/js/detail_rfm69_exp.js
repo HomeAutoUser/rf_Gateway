@@ -1,54 +1,47 @@
-﻿document.write('<script src="/js/all.js"><\/script>');
-document.write('<script src="/js/functions.js"><\/script>');
+﻿var js = document.createElement("script");
+js.src = '/js/all.js';
+document.head.appendChild(js);
+var js2 = document.createElement("script");
+js2.src = '/js/functions.js';
+document.head.appendChild(js2);
 
 let SX1231SKB_file;
 let CC110x_file;
 const tab = '	';
-const txt_hex = '0x';
-const txt_ln = '\n';
 var FileSX1231;
 var FileCC110x;
+const SX1231_RegAddrTrans = ['0x58','0x59','0x5F','0x6F','0x71'];
+
+let stateCheck = setInterval(() => {
+  if (document.readyState === 'complete' && websocket.readyState == 1) {
+    websocket.send('detail');
+    clearInterval(stateCheck);  // document ready
+  }
+}, 50);
 
 
-function onMessage(event) {
+function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
-
- if(event.data == 'Connected') {
-  websocket.send('detail');
- }
 
  if(event.data.includes(',detail,')) {
   const obj=event.data.split(',');
-	const fileName=obj[obj.length - 2].replaceAll(' ', '_');
 
+	const fileName=obj[obj.length - 2].replaceAll(' ','_');
   SX1231SKB_file = '#Type	Register Name	Address[Hex]	Value[Hex]\n';
   SX1231h_file = 'const uint8_t ' + fileName + '[] PROGMEM = {\n';
-  SX1231h_file += '  // SX1231 register values for ' + obj[obj.length - 2] + txt_ln;
-  
+  SX1231h_file += '  // SX1231 register values for ' + obj[obj.length - 2] + '\n';
   for (i=0; i<= 84; i++) {
-   if (i==80) {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x58' + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x58, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
-   } else if (i==81) {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x59' + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x59, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
-   } else if (i==82) {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x5F' + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x5F, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
-   } else if (i==83) {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x6F' + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x6F, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
-   } else if (i==84) {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x71' + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x71, // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
+   if (i>=80) {
+    SX1231SKB_file += 'REG	' + RegName[i] + tab + SX1231_RegAddrTrans[i-80] + tab + '0x' + obj[i] + '\n';
+    SX1231h_file += '  0x' + obj[i] + ', // ' + SX1231_RegAddrTrans[i-80] + ' - ' + RegName[i] + '\n';
    } else {
-    SX1231SKB_file += 'REG	' + RegName[i] + tab + txt_hex + dec2hex(i) + tab + txt_hex + obj[i] + txt_ln;
-    SX1231h_file += '  0x' + obj[i] + ', // ' + txt_hex + dec2hex(i) + ' - ' + RegName[i] + txt_ln;
+    SX1231SKB_file += 'REG	' + RegName[i] + tab + '0x' + dec2hex(i) + tab + '0x' + obj[i] + '\n';
+    SX1231h_file += '  0x' + obj[i] + ', // ' + '0x' + dec2hex(i) + ' - ' + RegName[i] + '\n';
    }
   }
-  SX1231SKB_file += 'PKT	False;False;0;0;' + txt_ln;
+  SX1231SKB_file += 'PKT	False;False;0;0;' + '\n';
   FileSX1231 = 'SX1231SKB_' + fileName + '.cfg';
-  SX1231h_file += '}; // END SX1231 ' +  fileName + ' register values' + txt_ln;
+  SX1231h_file += '}; // END SX1231 ' +  fileName + ' register values' + '\n';
   FileSX1231h = 'SX1231_' + fileName + '.h';
 
   CC110x_file = 'development\n';
@@ -210,6 +203,7 @@ function onMessage(event) {
   element.innerText = txt;
  }
 }
+
 
 function saveFile(variant) {
  let data;

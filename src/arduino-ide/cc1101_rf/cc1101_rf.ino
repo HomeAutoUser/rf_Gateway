@@ -100,7 +100,7 @@ byte ToggleCnt = 0;                           // Toggle, Anzahl aktiver Modi
 byte MOD_FORMAT;                              // Marker - Modulation
 volatile byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
 byte ReceiveModeNr;                           // activated protocol
-byte ReceiveModePKTLEN;
+//byte ReceiveModePKTLEN;
 boolean ChipFound = false;                    // against not clearly defined entrances (if flicker)
 
 /* predefinitions of the functions */
@@ -263,12 +263,12 @@ void Interupt_Variant(byte nr) {
 #ifdef debug_chip
   Serial.print(F("[DB] Interupt_Variant ReceiveModeName: ")); Serial.println(ReceiveModeName);
 #endif
-  if (ReceiveModePKTLEN == 0) {                    // by user and factory setting
-    ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
-  }
-#ifdef debug_chip
-  Serial.print(F("[DB] Interupt_Variant ReceiveModePKTLEN: ")); Serial.println(ReceiveModePKTLEN);
-#endif
+//  if (ReceiveModePKTLEN == 0) {                    // by user and factory setting
+//    ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
+//  }
+//#ifdef debug_chip
+//  Serial.print(F("[DB] Interupt_Variant ReceiveModePKTLEN: ")); Serial.println(ReceiveModePKTLEN);
+//#endif
 
 #ifdef CC110x
   if (ReceiveModeName[0] == 'W') {  // WMBUS
@@ -639,9 +639,12 @@ void loop() {
 #endif  // END - CODE_AVR || CODE_ESP
 #endif  // END - if defined(debug_cc110x_ms) &&  defined(CC110x)
 
-    uint8_t uiBuffer[ReceiveModePKTLEN];                          // Array anlegen
-    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN);  // Daten aus dem FIFO lesen
-
+    uint8_t ReceiveModePKTLEN = pgm_read_word(&(Registers[ReceiveModeNr].PKTLEN));
+    if (ReceiveModePKTLEN == 0) {                                // by user and factory setting
+      ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST); // direct PKTLEN register
+    }
+    uint8_t uiBuffer[ReceiveModePKTLEN];                         // Array anlegen
+    Chip_readBurstReg(uiBuffer, CHIP_RXFIFO, ReceiveModePKTLEN); // Daten aus dem FIFO lesen
     // msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t wmbusFrameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr);
     msgOutput_MN(uiBuffer, ReceiveModePKTLEN, 0, 0, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
 

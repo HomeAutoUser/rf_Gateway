@@ -283,10 +283,16 @@ void web_detail_export() {  // ########## web_detail_export ##########
     web_chip();
   }
   String website = FPSTR(html_meta);
+  website.reserve(2000);
+  website += FPSTR(html_head_table);
+  website += F("<span id=\"FXc\" hidden>");
+  website += CC110x_fxOsc;
+  website += F("</span><span id=\"FXr\" hidden>");
+  website += SX1231_fxOsc;
+  website += F("</span>");
 
 #ifdef CC110x                 // #### web_detail_export - CC110x #### //
   char chHex[3]; // for hex output
-  website.reserve(1400);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
                "<script src=\"/js/detail_cc110x_exp.js\"></script></head>"
                "Export all current register values (without the registers 0x29 ... 0x2E)<br>Just copy and paste string into your application<br>"
@@ -317,7 +323,6 @@ void web_detail_export() {  // ########## web_detail_export ##########
   website += F("]<br><br>File to import on program SmartRF Studio 7<br>[development]<br>");
 
 #elif RFM69                   // #### web_detail_export - RFM69 #### //
-  website.reserve(950);
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
                "<script src=\"/js/detail_rfm69_exp.js\"></script></head>"
                "Export all current register values<br>Just copy and paste string into your application<br>"
@@ -345,14 +350,10 @@ void web_detail_import() {  // ########## web_detail_import ##########
   String imp = HttpServer.arg("imp");         // String der Register inklusive Werte
   uint8_t countargs = HttpServer.args();      // Anzahl Argumente
   String website = FPSTR(html_meta);
+  website.reserve(1800);
+  website += FPSTR(html_head_table);
   uint8_t Adr = 0;
   uint8_t Val = 0;
-
-#ifdef CC110x
-  website.reserve(1024);
-#elif RFM69
-  website.reserve(1280);
-#endif
 
 #ifdef CC110x
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_imp.css\"></head>"
@@ -402,6 +403,7 @@ void web_detail_import() {  // ########## web_detail_import ##########
       } else {
         website += F("Import of the register values closed​​");
       }
+      // ToDo - könnten wir hier vieleicht gleich Interupt_Variant(1) aufrufen?
       CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
       MOD_FORMAT = ( Chip_readReg(0x12, READ_SINGLE) & 0b01110000 ) >> 4;
       if (MOD_FORMAT != 3) {
@@ -409,7 +411,7 @@ void web_detail_import() {  // ########## web_detail_import ##########
       } else {
         attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE);
       }
-      ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_SINGLE); // only if fixed packet length
+      //ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_SINGLE); // only if fixed packet length
       ReceiveModeNr = 1;
       Chip_setReceiveMode();  // start receive mode
       // END - CC110x - submit == "registers"
@@ -628,9 +630,9 @@ void web_detail() {         // ########## web_detail ##########
           onlyDecToHex2Digit(BrowserArgsReg[i], chHex);
           Serial.print(F(" -> 0x")); Serial.println(chHex);
 #endif
-          if (i == CHIP_PKTLEN) { /* ToDo - CHIP_PKTLEN probably not optimal -> if register 6 is changed (dependencies) ??? */
-            ReceiveModePKTLEN = BrowserArgsReg[i];
-          }
+          //          if (i == CHIP_PKTLEN) { /* ToDo - CHIP_PKTLEN probably not optimal -> if register 6 is changed (dependencies) ??? */
+          //            ReceiveModePKTLEN = BrowserArgsReg[i];
+          //          }
           /* write value to register */
           Chip_writeReg(addr, BrowserArgsReg[i]);   // write in chip
           EEPROMwrite(addr, BrowserArgsReg[i]);     // write in flash
@@ -656,6 +658,11 @@ void web_detail() {         // ########## web_detail ##########
                "\"></script>"
                "</head>");
   website += FPSTR(html_head_table);
+  website += F("<span id=\"FXc\" hidden>");
+  website += CC110x_fxOsc;
+  website += F("</span><span id=\"FXr\" hidden>");
+  website += SX1231_fxOsc;
+  website += F("</span>");
   website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<table><tr>"
                "<th class=\"f1\" colspan=\"2\"><a href=\"chip\">general information</a></th>"
@@ -714,11 +721,7 @@ void web_detail() {         // ########## web_detail ##########
                "<tr><td class=\"in\" colspan=\"6\"><span id=\"state\">");
 
   website += web_stat;
-  website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes<span id=\"FXc\" hidden>");
-  website += CC110x_fxOsc;
-  website += F("</span><span id=\"FXr\" hidden>");
-  website += SX1231_fxOsc;
-  website += F("</span></td></tr>");
+  website += F("</span></td></tr><tr><td>register</td><td class=\"ce\">value</td><td colspan=\"4\">notes</td></tr>");
   for (byte i = 0; i <= REGISTER_MAX; i++) {
     website += F("<tr><td class=\"f4\"><span id=\"s");
     website += i;

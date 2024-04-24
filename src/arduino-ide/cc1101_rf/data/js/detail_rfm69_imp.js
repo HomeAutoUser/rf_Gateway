@@ -1,7 +1,11 @@
-﻿document.write('<script src="/js/all.js"><\/script>');
-document.write('<script src="/js/functions.js"><\/script>');
+﻿var js = document.createElement("script");
+js.src = '/js/all.js';
+document.head.appendChild(js);
+var js2 = document.createElement("script");
+js2.src = '/js/functions.js';
+document.head.appendChild(js2);
 
-function onMessage(event) {
+function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
 }
 

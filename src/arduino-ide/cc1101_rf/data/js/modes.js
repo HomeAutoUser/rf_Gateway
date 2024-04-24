@@ -2,7 +2,6 @@
 var value = getComputedStyle(store);          /* Get the styles (properties and values) for the root */
 var color1 = value.getPropertyValue('--bt_reception_active');
 var color2 = value.getPropertyValue('--bt_reception_enable');
-var status_html = false;
 var onlyOne = false;
 var changed = 0;
 var wsMsg = 0;
@@ -11,26 +10,21 @@ var js = document.createElement("script");
 js.src = '/js/all.js';
 document.head.appendChild(js);
 
-function onMessage(event) {
+function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
 
- if (event.data.includes('Connected') ) {
-  status_html = 1;
-  check();
- } else if (event.data.includes('MODE,') ) {
+ if (event.data.includes('MODE,') ) {
   const obj=event.data.split(',');
   const time=obj[3].split('_');
   const msgcnt=obj[4].split('_');
 	wsMsg++;
   for (var c = 0; c < time.length; c++) { // msg count
-   var id = 'c';
-   id += c;
-   var name = 't';
-   name += c;
+   var id = 'c' + c;
+   var name = 't' + c;
    document.getElementById(id).innerHTML = msgcnt[c];
    if(changed == 0){
     document.getElementsByName(name)[0].value = time[c];
-   };
+   }
 
    if (!onlyOne){
     document.getElementsByName(name)[0].onkeypress = validNumber;
@@ -64,12 +58,6 @@ function onMessage(event) {
     var today = new Date();
     document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');
   }
- }
-}
-
-function check(){
- if (status_html && !onlyOne) {
-  websocket.send('modes');
  }
 }
 

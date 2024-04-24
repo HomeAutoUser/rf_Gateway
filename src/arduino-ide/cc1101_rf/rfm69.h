@@ -55,11 +55,11 @@ void SX1231_Deviation_Set(float deviation, byte * arr); // calculate register va
 void SX1231_setTransmitMode();    // SX1231 start transmit mode
 String getModeName(const uint8_t modeNr);
 void Interupt_Variant(byte nr);    // Empfangsvariante & Register einstellen
- 
+
 extern boolean ChipFound;
 //extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
-extern byte ReceiveModePKTLEN;
+//extern byte ReceiveModePKTLEN;
 extern volatile byte FSK_RAW;               // Marker - FSK Modulation
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
@@ -227,12 +227,12 @@ const uint8_t Config_Avantek[] PROGMEM = {
   0x00, // Address 0x36 - RegSyncValue8
   0x00, // Address 0x37 - RegPacketConfig1
   0x08, // Address 0x38 - RegPayloadLength
-//  0x1A, // Address 0x38 - RegPayloadLength
+  //  0x1A, // Address 0x38 - RegPayloadLength
   0x00, // Address 0x39 - RegNodeAdrs
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
   0x07, // Address 0x3C - RegFifoThresh
-//  0x19, // Address 0x3C - RegFifoThresh
+  //  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -415,7 +415,7 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
   0x11, // Address 0x3C - RegFifoThresh
-//  0x19, // Address 0x3C - RegFifoThresh
+  //  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -507,7 +507,7 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
   0x16, // Address 0x3C - RegFifoThresh
-//  0x19, // Address 0x3C - RegFifoThresh
+  //  0x19, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -599,7 +599,7 @@ const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
   0x0D, // Address 0x3C - RegFifoThresh
-//  0x08, // Address 0x3C - RegFifoThresh
+  //  0x08, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2
@@ -691,7 +691,7 @@ const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
   0x00, // Address 0x3A - RegBroadcastAdrs
   0x00, // Address 0x3B - RegAutoModes
   0x0D, // Address 0x3C - RegFifoThresh
-//  0x08, // Address 0x3C - RegFifoThresh
+  //  0x08, // Address 0x3C - RegFifoThresh
   0x02, // Address 0x3D - RegPacketConfig2
   0x00, // Address 0x3E - RegAesKey1
   0x00, // Address 0x3F - RegAesKey2

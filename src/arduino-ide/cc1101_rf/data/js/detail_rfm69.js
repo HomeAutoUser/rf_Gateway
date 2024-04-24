@@ -1,69 +1,29 @@
-﻿document.write('<script src="/js/all.js"><\/script>');
-document.write('<script src="/js/functions.js"><\/script>');
+﻿var js = document.createElement("script");
+js.src = '/js/all.js';
+document.head.appendChild(js);
+var js2 = document.createElement("script");
+js2.src = '/js/functions.js';
+document.head.appendChild(js2);
 
 var store = document.querySelector(':root');
 var value = getComputedStyle(store);
 var color1 = value.getPropertyValue('--val_std');
 var color2 = value.getPropertyValue('--val_diff');
-var status_html = false;
-var status_websocket = false;
 var mod_list = false;
 var bw_list = false;
+const SX1231_RegAddrTrans = ['58','59','5F','6F','71'];
 
-function onMessage(event) {
+
+function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
-
- if(event.data == 'Connected') {
-  status_websocket = 1;
-  check();
- }
 
  if(event.data.includes(',detail,')) {
   const obj=event.data.split(',');
   var REGISTER_MAX = 84;
-  var name;
-  var hex;
-  var Freq;
 
   for (i=0; i<= REGISTER_MAX; i++) {
-   name = 'r' + i;
-   if (i <= 15) {
-    hex = '0' + i.toString(16)
-   } else {
-    hex = i.toString(16)
-   }
-
-   if (i == 80) {
-    hex = "58";
-   } else if (i == 81) {
-    hex = "59";
-   } else if (i == 82) {
-    hex = "5F";
-   } else if (i == 83) {
-    hex = "6F";
-   } else if (i == 84) {
-    hex = "71";
-   }
-
-   let element = document.getElementsByName(name)[0];
-   var txt = '0x' + hex.toUpperCase() + '&ensp;access ';
-   if(Explan_short[i] != '') {
-    document.getElementById('s' + i).innerHTML = txt + Explan_short[i];
-    element.disabled = true;
-   } else {
-    document.getElementById('s' + i).innerHTML = txt + '(rw)';
-   }
-
-   element.maxLength = 2;
-   element.onkeypress = validHEX;
+   let element = document.getElementsByName('r' + i)[0];
    element.placeholder = element.value.replace(element.value, obj[i]);
-   element.setAttribute('size', '2');
-   if(element.disabled == false) {
-    element.title = "Input: two hex characters";
-   } else {
-    element.title = "read only";
-   }
-
    if (element.value != obj[i]) {
     element.value = element.value.replace(element.value, obj[i]);
     element.placeholder = obj[i];
@@ -72,7 +32,6 @@ function onMessage(event) {
   }
 
   var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
-
   // 0x02 RegDataModul
   if (!mod_list) {
    mod_list = true;
@@ -88,25 +47,17 @@ function onMessage(event) {
 	var DRATE = SX_DRATEread(obj[3],obj[4])  / 1000;	// ToDo
   document.getElementById('DRATE').innerHTML = DRATE.toFixed(3) + ' kBaud';
   document.getElementsByName('datarate')[0].value = DRATE.toFixed(3);
-  document.getElementById('p4').maxLength = 7;
-  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
 
   // 0x05 RegFdevMsb 0x06 RegFdevLsb
 	var Fdev = SX_DEVread(obj[5], obj[6]) / 1000;	// ToDo
   document.getElementById('DEVIATN').innerHTML = Fdev.toFixed(3) + ' kHz';
   document.getElementsByName('deviation')[0].value = Fdev.toFixed(3);
-  document.getElementById('p5').maxLength = 7;
-  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
-	Freq = SX_FREQread(obj[7], obj[8], obj[9]) / 1000000;	// ToDO
+	var Freq = SX_FREQread(obj[7], obj[8], obj[9]) / 1000000;	// ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  document.getElementById('p2').maxLength = 6;
-  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
   Freq = Freq - (obj[REGISTER_MAX + 3] * 1);
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-  document.getElementById('p1').maxLength = 7;
-  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
   // 0x19 RegRxBw
@@ -136,20 +87,54 @@ function onMessage(event) {
   document.getElementById('PKTCTRL0').innerHTML = RegPacketConfig1[PacketFormat] +' with PayloadLength ' + PayloadLength;
 
   document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
- }  // END - event.data.includes(',detail,')
-}   // END function onMessage(event)
+ }
+}
 
 
-document.onreadystatechange = function () {
+document.onreadystatechange = function () { // Website
  if (document.readyState == 'complete') {
+  document.getElementById('p1').maxLength = 7;
+  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p2').maxLength = 6;
+  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p4').maxLength = 7;
+  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
+  document.getElementById('p5').maxLength = 7;
+  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
+
+  var hex;
+  var txt;
 
   for ( i=0; i<Explan.length; i++ ) {
-   if(document.getElementById('n' + i) !== null) {
-    document.getElementById('n' + i).innerHTML = Explan[i];
+   if (i <= 15) {
+    hex = '0' + i.toString(16)
    } else {
-    continue;
+    hex = i.toString(16)
+   }
+   if (i>=80) {
+    hex = SX1231_RegAddrTrans[i-80];
    }
 
+   let element = document.getElementsByName('r' + i)[0];
+   element.maxLength = 2;
+   element.onkeypress = validHEX;
+   element.setAttribute('size', '2');
+
+   txt = '0x' + hex.toUpperCase() + '&ensp;access ';
+   if(Explan_short[i] != '') {
+    document.getElementById('s' + i).innerHTML = txt + Explan_short[i];
+    element.disabled = true;
+   } else {
+    document.getElementById('s' + i).innerHTML = txt + '(rw)';
+   }
+
+   if(element.disabled == false) {
+    element.title = "Input: two hex characters";
+   } else {
+    element.title = "read only";
+   }
+   
+   document.getElementById('n' + i).innerHTML = Explan[i];
    var id = 't' + i;
 
    if (ExplanAdd[i] != '') {
@@ -177,23 +162,16 @@ document.onreadystatechange = function () {
     document.getElementById(id).innerHTML = '';
    }
   }
-
-  status_html = 1;
-  check();
-  var lastmodal;
-
-  window.onclick = function(event) {
-
-  }
  }  // END - document.readyState == 'complete'
 }   // END - document.onreadystatechange = function ()
 
 
-function check(){
- if (status_html && status_websocket) {
-  websocket.send('detail');
- }
-}
+let stateCheck = setInterval(() => {
+  if (document.readyState === 'complete' && websocket.readyState == 1) {
+    websocket.send('detail');
+    clearInterval(stateCheck);
+  }
+}, 50);
 
 
 function validHEX(e) {

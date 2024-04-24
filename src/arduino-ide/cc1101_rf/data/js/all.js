@@ -15,7 +15,7 @@ function WebSocket_Init() {
  websocket = new WebSocket(wsurl);
  websocket.onopen = WebSocket_open;
  websocket.onclose = WebSocket_close;
- websocket.onmessage = onMessage;
+ websocket.onmessage = WebSocket_MSG;
 }
 
 function WebSocket_open(event) {

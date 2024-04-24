@@ -1,46 +1,28 @@
-﻿document.write('<script src="/js/all.js"><\/script>');
-document.write('<script src="/js/functions.js"><\/script>');
+﻿var js = document.createElement("script");
+js.src = '/js/all.js';
+document.head.appendChild(js);
+var js2 = document.createElement("script");
+js2.src = '/js/functions.js';
+document.head.appendChild(js2);
 
 var store = document.querySelector(':root');
 var value = getComputedStyle(store);
 var color1 = value.getPropertyValue('--val_std');
 var color2 = value.getPropertyValue('--val_diff');
-var status_html = false;
-var status_websocket = false;
 var mod_list = false;
 var bw_list = false;
 
-function onMessage(event) {
- console.log('received message: ' + event.data);
 
- if(event.data == 'Connected') {
-  status_websocket = 1;
-  check();
- }
+function WebSocket_MSG(event) {
+ console.log('received message: ' + event.data);
 
  if(event.data.includes(',detail,')) {
   const obj=event.data.split(',');
   var REGISTER_MAX = 46;
-  var name;
-  var hex;
-  var Freq;
 
   for (i=0; i<= REGISTER_MAX; i++) {
-   name = 'r' + i;
-   if (i <= 15) {
-    hex = '0' + i.toString(16)
-   } else {
-    hex = i.toString(16)
-   }
-
-   let element = document.getElementsByName(name)[0];
-   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
-
-   element.maxLength = 2;
-   element.onkeypress = validHEX;
+   let element = document.getElementsByName('r' + i)[0];
    element.placeholder = element.value.replace(element.value, obj[i]);
-   element.setAttribute('size', '2');
-   element.title = "Input: 2 characters in hexadecimal";
 
    if (element.value != obj[i]) {
     element.value = element.value.replace(element.value, obj[i]);
@@ -67,14 +49,10 @@ function onMessage(event) {
   }
 
   // 0x0D: FREQ2 0x0E: FREQ1 0x0F: FREQ0
-  Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
+  var Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  document.getElementById('p2').maxLength = 6;
-  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-  Freq = Freq - (obj[49] * 1);
+  Freq = Freq - (obj[REGISTER_MAX + 3] * 1);
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-  document.getElementById('p1').maxLength = 7;
-  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
   // 0x10: MDMCFG4 0x11: MDMCFG3
@@ -88,11 +66,9 @@ function onMessage(event) {
   }
   selectElement.value = RxBwComp;
   document.getElementById('CHANBW').innerHTML = RxBwComp + ' kHz';
-  var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(2); // ToDo
+  var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(3); // ToDo
   document.getElementById('DRATE').innerHTML = DRATE + ' kBaud';
   document.getElementsByName('datarate')[0].value = DRATE;
-  document.getElementById('p4').maxLength = 7;
-  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,2})?$";
 
   // 0x12: MDMCFG2
   if (!mod_list) {
@@ -116,20 +92,42 @@ function onMessage(event) {
 
   // 0x15: DEVIATN
   var DEVIATN = C_DEVread(obj[21]) / 1000; // ToDo
-  document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(2) + ' kHz';
-  document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(2);
-  document.getElementById('p5').maxLength = 5;
-  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,2})?$";
+  document.getElementById('DEVIATN').innerHTML = DEVIATN.toFixed(3) + ' kHz';
+  document.getElementsByName('deviation')[0].value = DEVIATN.toFixed(3);
 
   document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
- }  // END - event.data.includes(',detail,')
-}   // END function onMessage(event)
+ }
+}
 
 
 document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
+  document.getElementById('p1').maxLength = 7;
+  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p2').maxLength = 6;
+  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p4').maxLength = 8;
+  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
+  document.getElementById('p5').maxLength = 7;
+  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
+
+  var hex;
+  var lastmodal;
 
   for ( i=0; i<Explan.length; i++ ) {
+   if (i <= 15) {
+    hex = '0' + i.toString(16)
+   } else {
+    hex = i.toString(16)
+   }
+
+   let element = document.getElementsByName('r' + i)[0];
+   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
+   element.maxLength = 2;
+   element.onkeypress = validHEX;
+   element.setAttribute('size', '2');
+   element.title = "Input: 2 characters in hexadecimal";
+
    document.getElementById('n' + i).innerHTML = Explan[i];
    var id = 't' + i;
 
@@ -159,10 +157,6 @@ document.onreadystatechange = function () {
    }
   }
 
-  status_html = 1;
-  check();
-  var lastmodal;
-
   window.onclick = function(event) {
    var id = event.target.id.match(/t\d+/i);
    var nr = event.target.id.substr(1);
@@ -183,11 +177,12 @@ document.onreadystatechange = function () {
 }   // END - document.onreadystatechange = function ()
 
 
-function check(){
- if (status_html && status_websocket) {
-  websocket.send('detail');
- }
-}
+let stateCheck = setInterval(() => {
+  if (document.readyState === 'complete' && websocket.readyState == 1) {
+    websocket.send('detail');
+    clearInterval(stateCheck);
+  }
+}, 50);
 
 
 function validHEX(e) {

@@ -96,7 +96,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
       EEPROMwrite(EEPROM_ADDR_Prot, 0); // set ReceiveModeNr to Chip factory default
       ToggleCnt = 0;
       ReceiveModeNr = 0;
-      ReceiveModePKTLEN = 0;
+      //ReceiveModePKTLEN = 0;
       /* wenn Registerwerte geändert wurden beim compilieren */
       if (chk != chk_comp) {  // checksum over PKTLEN not OK
         Serial.println(F("ChipInit, reset togglebank and stop receiving (chk != chk registers.PKTLEN)"));
@@ -164,13 +164,13 @@ void Chip_writeRegFor(uint8_t regNr) { // write all registers
 #else
   const uint32_t ptr = pgm_read_ptr(&(Registers[regNr].regVal)); // Arduino, pointer to register values
 #endif
-  ReceiveModePKTLEN = pgm_read_word(&(Registers[regNr].PKTLEN));
+  //ReceiveModePKTLEN = pgm_read_word(&(Registers[regNr].PKTLEN));
   //ReceiveModeName = getModeName(regNr);
 #ifdef debug_chip
   Serial.print(F("[DB] Chip_writeRegFor register number: ")); Serial.println(regNr);
   Serial.print(F("[DB] Chip_writeRegFor register name:   ")); Serial.println(getModeName(regNr));
   Serial.print(F("[DB] Chip_writeRegFor register count:  ")); Serial.println(REGISTER_WR);
-  Serial.print(F("[DB] Chip_writeRegFor packet length:   ")); Serial.println(ReceiveModePKTLEN);
+  //Serial.print(F("[DB] Chip_writeRegFor packet length:   ")); Serial.println(ReceiveModePKTLEN);
   char hex[3];
 #endif
   for (byte i = 1; i <= REGISTER_WR; i++) {
