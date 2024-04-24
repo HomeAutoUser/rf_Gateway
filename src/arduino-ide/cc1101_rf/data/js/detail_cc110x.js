@@ -12,6 +12,81 @@ var color2 = value.getPropertyValue('--val_diff');
 var mod_list = false;
 var bw_list = false;
 
+document.onreadystatechange = function () {
+ if (document.readyState == 'complete') {
+  document.getElementById('p1').maxLength = 7;
+  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p2').maxLength = 6;
+  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p4').maxLength = 8;
+  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
+  document.getElementById('p5').maxLength = 7;
+  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
+
+  var hex;
+  var lastmodal;
+
+  for ( i=0; i<Explan.length; i++ ) {
+   if (i <= 15) {
+    hex = '0' + i.toString(16)
+   } else {
+    hex = i.toString(16)
+   }
+
+   let element = document.getElementsByName('r' + i)[0];
+   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
+   element.maxLength = 2;
+   element.onkeypress = validHEX;
+   element.setAttribute('size', '2');
+   element.title = "Input: 2 characters in hexadecimal";
+
+   document.getElementById('n' + i).innerHTML = Explan[i];
+   var id = 't' + i;
+
+   if (ExplanAdd[i] != '') {
+     document.getElementById(id).innerHTML = '&#128712;';
+
+    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
+    var div = document.createElement("div");
+    div.id = "Mo"+i;
+    div.className = "mod";
+    document.getElementById(id).appendChild(div);
+
+    var div2 = document.createElement("div");
+    div.appendChild(div2);
+    div2.className = "mod-cont";
+
+    var Span = document.createElement("span");
+    Span.className = "close";
+    Span.innerHTML = "&times;";
+    div2.appendChild(Span);
+
+    var p = document.createElement("p");
+    p.innerHTML = Explan_short[i];
+
+    div2.appendChild(p);
+    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
+   }
+  }
+
+  window.onclick = function(event) {
+   var id = event.target.id.match(/t\d+/i);
+   var nr = event.target.id.substr(1);
+   var cla = event.target.className;
+   var modal = document.getElementById("Mo" + nr);   // Get the modal
+
+   if (ExplanAdd[nr] != ''){
+    if(id && modal) {
+     modal.style.display = "block";    // When user clicks button, open the modal
+     lastmodal = modal;
+    }
+    if(cla && cla == 'close'){
+     lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
+    }
+   }
+  }
+ }
+}
 
 function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
@@ -99,97 +174,17 @@ function WebSocket_MSG(event) {
  }
 }
 
-
-document.onreadystatechange = function () {
- if (document.readyState == 'complete') {
-  document.getElementById('p1').maxLength = 7;
-  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
-  document.getElementById('p2').maxLength = 6;
-  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-  document.getElementById('p4').maxLength = 8;
-  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
-  document.getElementById('p5').maxLength = 7;
-  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
-
-  var hex;
-  var lastmodal;
-
-  for ( i=0; i<Explan.length; i++ ) {
-   if (i <= 15) {
-    hex = '0' + i.toString(16)
-   } else {
-    hex = i.toString(16)
-   }
-
-   let element = document.getElementsByName('r' + i)[0];
-   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
-   element.maxLength = 2;
-   element.onkeypress = validHEX;
-   element.setAttribute('size', '2');
-   element.title = "Input: 2 characters in hexadecimal";
-
-   document.getElementById('n' + i).innerHTML = Explan[i];
-   var id = 't' + i;
-
-   if (ExplanAdd[i] != '') {
-     document.getElementById(id).innerHTML = '&#128712;';
-
-    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
-    var div = document.createElement("div");
-    div.id = "Mo"+i;
-    div.className = "mod";
-    document.getElementById(id).appendChild(div);
-
-    var div2 = document.createElement("div");
-    div.appendChild(div2);
-    div2.className = "mod-cont";
-
-    var Span = document.createElement("span");
-    Span.className = "close";
-    Span.innerHTML = "&times;";
-    div2.appendChild(Span);
-
-    var p = document.createElement("p");
-    p.innerHTML = Explan_short[i];
-
-    div2.appendChild(p);
-    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
-   }
-  }
-
-  window.onclick = function(event) {
-   var id = event.target.id.match(/t\d+/i);
-   var nr = event.target.id.substr(1);
-   var cla = event.target.className;
-   var modal = document.getElementById("Mo" + nr);   // Get the modal
-
-   if (ExplanAdd[nr] != ''){
-    if(id && modal) {
-     modal.style.display = "block";    // When user clicks button, open the modal
-     lastmodal = modal;
-    }
-    if(cla && cla == 'close'){
-     lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
-    }
-   }
-  }
- }  // END - document.readyState == 'complete'
-}   // END - document.onreadystatechange = function ()
-
-
 let stateCheck = setInterval(() => {
-  if (document.readyState === 'complete' && websocket.readyState == 1) {
-    websocket.send('detail');
-    clearInterval(stateCheck);
-  }
+ if (document.readyState === 'complete' && websocket.readyState == 1) {
+  websocket.send('detail');
+  clearInterval(stateCheck);
+ }
 }, 50);
-
 
 function validHEX(e) {
  const pattern = /^[0-9a-fA-F]$/;
  return pattern.test(e.key)
 }
-
 
 const Explan = [
 'GDO2 Output Pin Configuration',

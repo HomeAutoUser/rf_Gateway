@@ -13,6 +13,79 @@ var mod_list = false;
 var bw_list = false;
 const SX1231_RegAddrTrans = ['58','59','5F','6F','71'];
 
+document.onreadystatechange = function () {
+ if (document.readyState == 'complete') {
+  document.getElementById('p1').maxLength = 7;
+  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p2').maxLength = 6;
+  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+  document.getElementById('p4').maxLength = 7;
+  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
+  document.getElementById('p5').maxLength = 7;
+  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
+
+  var hex;
+  var txt;
+
+  for ( i=0; i<Explan.length; i++ ) {
+   if (i <= 15) {
+    hex = '0' + i.toString(16)
+   } else {
+    hex = i.toString(16)
+   }
+   if (i>=80) {
+    hex = SX1231_RegAddrTrans[i-80];
+   }
+
+   let element = document.getElementsByName('r' + i)[0];
+   element.maxLength = 2;
+   element.onkeypress = validHEX;
+   element.setAttribute('size', '2');
+
+   txt = '0x' + hex.toUpperCase() + '&ensp;access ';
+   if(Explan_short[i] != '') {
+    document.getElementById('s' + i).innerHTML = txt + Explan_short[i];
+    element.disabled = true;
+   } else {
+    document.getElementById('s' + i).innerHTML = txt + '(rw)';
+   }
+
+   if(element.disabled == false) {
+    element.title = "Input: two hex characters";
+   } else {
+    element.title = "read only";
+   }
+   
+   document.getElementById('n' + i).innerHTML = Explan[i];
+   var id = 't' + i;
+
+   if (ExplanAdd[i] != '') {
+    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
+    var div = document.createElement("div");
+    div.id = "Mo"+i;
+    div.className = "mod";
+    document.getElementById(id).appendChild(div);
+
+    var div2 = document.createElement("div");
+    div.appendChild(div2);
+    div2.className = "mod-cont";
+
+    var Span = document.createElement("span");
+    Span.className = "close";
+    Span.innerHTML = "&times;";
+    div2.appendChild(Span);
+
+    var p = document.createElement("p");
+    p.innerHTML = Explan_short[i];
+
+    div2.appendChild(p);
+    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
+   } else {
+    document.getElementById(id).innerHTML = '';
+   }
+  }
+ }
+}
 
 function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
@@ -90,82 +163,6 @@ function WebSocket_MSG(event) {
  }
 }
 
-
-document.onreadystatechange = function () { // Website
- if (document.readyState == 'complete') {
-  document.getElementById('p1').maxLength = 7;
-  document.getElementById('p1').pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
-  document.getElementById('p2').maxLength = 6;
-  document.getElementById('p2').pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-  document.getElementById('p4').maxLength = 7;
-  document.getElementById('p4').pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
-  document.getElementById('p5').maxLength = 7;
-  document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
-
-  var hex;
-  var txt;
-
-  for ( i=0; i<Explan.length; i++ ) {
-   if (i <= 15) {
-    hex = '0' + i.toString(16)
-   } else {
-    hex = i.toString(16)
-   }
-   if (i>=80) {
-    hex = SX1231_RegAddrTrans[i-80];
-   }
-
-   let element = document.getElementsByName('r' + i)[0];
-   element.maxLength = 2;
-   element.onkeypress = validHEX;
-   element.setAttribute('size', '2');
-
-   txt = '0x' + hex.toUpperCase() + '&ensp;access ';
-   if(Explan_short[i] != '') {
-    document.getElementById('s' + i).innerHTML = txt + Explan_short[i];
-    element.disabled = true;
-   } else {
-    document.getElementById('s' + i).innerHTML = txt + '(rw)';
-   }
-
-   if(element.disabled == false) {
-    element.title = "Input: two hex characters";
-   } else {
-    element.title = "read only";
-   }
-   
-   document.getElementById('n' + i).innerHTML = Explan[i];
-   var id = 't' + i;
-
-   if (ExplanAdd[i] != '') {
-    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
-    var div = document.createElement("div");
-    div.id = "Mo"+i;
-    div.className = "mod";
-    document.getElementById(id).appendChild(div);
-
-    var div2 = document.createElement("div");
-    div.appendChild(div2);
-    div2.className = "mod-cont";
-
-    var Span = document.createElement("span");
-    Span.className = "close";
-    Span.innerHTML = "&times;";
-    div2.appendChild(Span);
-
-    var p = document.createElement("p");
-    p.innerHTML = Explan_short[i];
-
-    div2.appendChild(p);
-    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
-   } else {
-    document.getElementById(id).innerHTML = '';
-   }
-  }
- }  // END - document.readyState == 'complete'
-}   // END - document.onreadystatechange = function ()
-
-
 let stateCheck = setInterval(() => {
   if (document.readyState === 'complete' && websocket.readyState == 1) {
     websocket.send('detail');
@@ -173,12 +170,10 @@ let stateCheck = setInterval(() => {
   }
 }, 50);
 
-
 function validHEX(e) {
  const pattern = /^[0-9a-fA-F]$/;
  return pattern.test(e.key)
 }
-
 
 const Explan = [
 'RegFifo (FIFO read/write access)',

@@ -12,15 +12,14 @@ function WebSocket_MSG(event) {
 function inputfile() {
   const fileSelector = document.getElementById('inputfile');
   fileSelector.addEventListener('change', (event) => {
-    //console.log("change");
     const fileList = event.target.files;
-
     var reader = new FileReader();
     var regAdrPos = '';
     var regAdr = '';
     var regValTxt = '';
     var regVal = '';
     var regTxt = '';
+
     reader.onload = function(){
       var text = reader.result;
       const lines = reader.result.split('\n');
@@ -53,9 +52,8 @@ function inputfile() {
   });
 }
 
-
 function SXimpFromCC() {
-  var input = document.getElementsByName("imp")[0].value;
+  var input = document.getElementsByName('imp')[0].value;
   var inputTXT = '';
   const Sync = [];
   const Freq = [];
@@ -74,7 +72,7 @@ function SXimpFromCC() {
       if(adr == '04' || adr == '05') {
         Sync.push(reg[i].substring(1, 5));
       }
-      
+
       // all Frequency register, once failed = no Frequency set
       if(adr == '0D' || adr == '0E' || adr == '0F') {
         Freq.push(reg[i].substring(1, 5));
@@ -90,12 +88,11 @@ function SXimpFromCC() {
     }
   }
 
-  // for test ['01AB','0D21','0E65','0F6A','10AA','11FB'] / ['01AB','0D21','1511']
   if (Sync.length == 2) {
     inputTXT += Sync[0]+',';
     inputTXT += Sync[1]+',';
   }
-  
+
   if (Freq.length == 3) {
     var val = cCalFreq(Freq[0].substring(2, 4), Freq[1].substring(2, 4), Freq[2].substring(2, 4), 26);
     alert('freq cc110x: ' + val);
@@ -113,13 +110,13 @@ function SXimpFromCC() {
   if(Dev != '') {
     inputTXT += Dev;
   }
-  
+
   if(inputTXT.charAt(inputTXT.length-1) ==',') {
     inputTXT = inputTXT.slice(0, -1);
   }
 
   if (inputTXT != '') {
-    document.getElementsByName("imp")[0].value = inputTXT;
+    document.getElementsByName('imp')[0].value = inputTXT;
   }
   return true;
 };

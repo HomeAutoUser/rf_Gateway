@@ -2,12 +2,9 @@
 js.src = '/js/all.js';
 document.head.appendChild(js);
 
-function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
-
- if(event.data == 'Connected') {
-  var uptime = document.getElementById("uptime").textContent;
-  
+document.onreadystatechange = function () {
+ if (document.readyState == 'complete') {
+  var uptime = document.getElementById('uptime').textContent;
   const d = new Date();
   let now = d.getTime();
   var elms = document.querySelectorAll("[id='logtxt']");
@@ -18,7 +15,7 @@ function WebSocket_MSG(event) {
 
    if (found) {
     var timeNew = now - (uptime * 1000) + (found[1]*1000);
-    let res = line.replace(/^\d+ - /g, getDateTime(timeNew) + " - ");
+    let res = line.replace(/^\d+ - /g, getDateTime(timeNew) + ' - ');
     elms[i].innerText = res;
     elms[i].hidden = false;
    }

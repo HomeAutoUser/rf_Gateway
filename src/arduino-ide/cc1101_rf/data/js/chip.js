@@ -3,11 +3,9 @@ js.src = '/js/all.js';
 document.head.appendChild(js);
 const ts = document.title;
 
-function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
- if(event.data == 'Connected'){
-  websocket.send('chip');
-  const v=document.getElementById("cV").textContent;
+document.onreadystatechange = function () {
+ if (document.readyState == 'complete') {
+  const v=document.getElementById('cV').textContent;
   var c=v;
   if(ts=='cc1101_rf_Gateway'){
    if(v=='03'){
@@ -32,21 +30,28 @@ function WebSocket_MSG(event) {
     c+=' = SX1231H, RFM69HW or RFM69HCW';
    }
   }
-  document.getElementById("cV").innerHTML=c;
- }else{
-  const obj=event.data.split(',');
-  if(ts == 'cc1101_rf_Gateway') {
-   document.getElementById("MS").innerHTML = MARCSTATE[obj[1]];
-  } else if (ts == 'rfm69_rf_Gateway') {
-   document.getElementById("MS").innerHTML = RegOpMode[obj[1]];
-  }
-  document.getElementById("MODE").innerHTML = obj[0];
-  document.getElementById("toB").innerHTML = obj[2];
-  document.getElementById("Time").innerHTML = obj[3];
+  document.getElementById('cV').innerHTML=c;
  }
 }
 
-// CC110x //
+function WebSocket_MSG(event) {
+ console.log('received message: ' + event.data);
+
+ if(event.data == 'Connected'){
+  websocket.send('chip');
+ }else{
+  const obj=event.data.split(',');
+  if(ts == 'cc1101_rf_Gateway') {
+   document.getElementById('MS').innerHTML = MARCSTATE[obj[1]];
+  } else if (ts == 'rfm69_rf_Gateway') {
+   document.getElementById('MS').innerHTML = RegOpMode[obj[1]];
+  }
+  document.getElementById('MODE').innerHTML = obj[0];
+  document.getElementById('toB').innerHTML = obj[2];
+  document.getElementById('Time').innerHTML = obj[3];
+ }
+}
+
 const MARCSTATE = [
 '00 = SLEEP',
 '01 = IDLE',
@@ -73,7 +78,6 @@ const MARCSTATE = [
 '16 = TXFIFO_UNDERFLOW'
 ];
 
-// SX1231 //
 const RegOpMode = [
 '00 = Sleep mode (SLEEP)',
 '01 = Standby mode (STDBY)',

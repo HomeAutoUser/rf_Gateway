@@ -19,7 +19,6 @@ let stateCheck = setInterval(() => {
   }
 }, 50);
 
-
 function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
 
@@ -203,7 +202,6 @@ function WebSocket_MSG(event) {
   element.innerText = txt;
  }
 }
-
 
 function saveFile(variant) {
  let data;

@@ -7,30 +7,34 @@ var js = document.createElement("script");
 js.src = '/js/all.js';
 document.head.appendChild(js);
 
+document.onreadystatechange = function () {
+ if (document.readyState == 'complete') {
+  document.getElementsByName('sd')[0].maxLength = 128;
+  document.getElementsByName('sd')[0].pattern = "^[\\da-fA-F]{2,128}$";
+  document.getElementsByName('sd')[0].placeholder = 'hex data to send (max 128 characters)';
+  document.getElementsByName('sd')[0].title = 'Input: only hexadecimal characters';
+  document.getElementsByName('sd')[0].setAttribute('size', '60');
+  document.getElementsByName('rep')[0].max = 99;
+  document.getElementsByName('rep')[0].min = 0;
+  document.getElementsByName('rep')[0].setAttribute('size', '4');
+  document.getElementsByName('rep')[0].value = 0;
+  document.getElementsByName('rept')[0].max = 300000;
+  document.getElementsByName('rept')[0].min = 2;
+  document.getElementsByName('rept')[0].setAttribute('size', '7');
+  document.getElementsByName('rept')[0].value = 2;
+ }
+}
+
 function WebSocket_MSG(event) {
  console.log('received message: ' + event.data);
 
- if (event.data.includes('Connected') ) {
-  document.getElementsByName('sd')[0].maxLength = "128";
-  document.getElementsByName('sd')[0].pattern = "^[\\da-fA-F]{2,128}$";
-  document.getElementsByName('sd')[0].placeholder = "hex data to send (max 128 characters)";
-  document.getElementsByName('sd')[0].title = "Input: only hexadecimal characters";
-  document.getElementsByName('sd')[0].setAttribute('size', '60');
-  document.getElementsByName('rep')[0].max = "99";
-  document.getElementsByName('rep')[0].min = "0";
-  document.getElementsByName('rep')[0].setAttribute('size', '4');
-  document.getElementsByName('rep')[0].value = "0";
-  document.getElementsByName('rept')[0].max = "300000";
-  document.getElementsByName('rept')[0].min = "2";
-  document.getElementsByName('rept')[0].setAttribute('size', '7');
-  document.getElementsByName('rept')[0].value = "2";
- } else if (event.data.includes('RAW,') ) {
+ if (event.data.includes('RAW,')) {
   var time = new Date().toLocaleTimeString();
   const obj=event.data.split(',');
 
-  document.getElementById("MODE").innerHTML = obj[1];
+  document.getElementById('MODE').innerHTML = obj[1];
   // Update Data Table
-  var table = document.getElementById("dataTable");
+  var table = document.getElementById('dataTable');
   var row = table.insertRow(1);  // Add after headings
   var cell1 = row.insertCell(0);
   var cell2 = row.insertCell(1);
@@ -57,10 +61,10 @@ function WebSocket_MSG(event) {
   cell4.style.textAlign = "right";
  } else if (event.data.includes('MODE,')) {
   const obj=event.data.split(',');
-  document.getElementById("MODE").innerHTML = obj[1];
+  document.getElementById('MODE').innerHTML = obj[1];
  }else if (event.data.includes('TX_ready') ) {
   var today = new Date();
-  document.getElementById("val").innerHTML = "all data has been sent - " + today.toLocaleTimeString('de-DE');
+  document.getElementById('val').innerHTML = 'all data has been sent - ' + today.toLocaleTimeString('de-DE');
  }
 }
 
@@ -71,16 +75,16 @@ function msgSend() {
  let rept = document.getElementsByName('rept')[0].value;
 
  if(sd == '' || rep == '' || rept == '') {
-  document.getElementById("val").innerHTML = "Please input all data &#128521;"
+  document.getElementById('val').innerHTML = 'Please input all data &#128521;'
  } else {
   if(sd.length % 2 != 0) {
-   document.getElementById("val").innerHTML = "found odd number of nibbles, no send !!!"
-   document.getElementById("val").style.color = color2;
+   document.getElementById('val').innerHTML = 'found odd number of nibbles, no send !!!'
+   document.getElementById('val').style.color = color2;
   } else {
    if ((rep * rept / 1000) > 60) {
-    document.getElementById("val").innerHTML = "sending process active | finished in " + ((rep * rept / 1000) / 60).toFixed(0) + " minutes";
+    document.getElementById('val').innerHTML = 'sending process active | finished in ' + ((rep * rept / 1000) / 60).toFixed(0) + ' minutes';
    } else {
-    document.getElementById("val").innerHTML = "sending process active | finished in " + (rep * rept / 1000) + " seconds";
+    document.getElementById('val').innerHTML = 'sending process active | finished in ' + (rep * rept / 1000) + ' seconds';
    }
    websocket.send('send,' + sd + ',' + rep + ',' + rept);
   }
