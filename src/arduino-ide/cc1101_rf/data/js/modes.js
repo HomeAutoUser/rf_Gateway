@@ -35,25 +35,20 @@ function WebSocket_MSG(event) {
    document.getElementsByName('ta')[0].onkeypress = validNumber;
    onlyOne = true;
   }
-  /* erste Spalte | automatischer Farbwechsel aktiver Modus
-    Zählweise Tabellen ID
-    0,1,2 
-    ...
-    33,34,35
-    ...
-  */
-  const cell = document.getElementById("rec_mod").getElementsByTagName("td");
-  for (var i = 0; i < cell.length; i++) {
-   if (cell[i].innerHTML.indexOf(' - ' + obj[1]) >=0 && obj[2] < msgcnt.length) {
-    cell[i].style.backgroundColor = color1;
-    cell[i+1].style.backgroundColor = color1;
-    cell[i+2].style.backgroundColor = color1;
-    cell[i+3].style.backgroundColor = color1; /* count */
-    i = i + 3;
+
+  const tab = document.getElementById("rec_mod");
+  for (var i = 2; i < tab.rows.length - 1; i++){
+   if(tab.rows[i].cells[0].innerHTML.substring(5) === obj[1]){
+    for(let c = 0; c < 4; c++){
+     tab.rows[i].cells[c].style.backgroundColor = color1;
+    }
    } else {
-    cell[i].style.backgroundColor = color2;
+    for(let c = 0; c < 4; c++){
+     tab.rows[i].cells[c].style.backgroundColor = color2;
+    }
    }
   }
+
   if (document.getElementById('stat') && wsMsg > 1) {
     var today = new Date();
     document.getElementById('stat').innerHTML = 'last action: ' + today.toLocaleTimeString('de-DE');

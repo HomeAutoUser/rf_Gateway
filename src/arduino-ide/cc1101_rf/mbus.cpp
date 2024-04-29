@@ -23,11 +23,6 @@ TXinfoDescr TXinfo;
 
 void mbus_init(uint8_t wmBusMode) {
   mbus_mode = wmBusMode;
-#ifdef CC110x
-  Chip_writeReg(CC1100_TEST2, 0x81);
-  Chip_writeReg(CC1100_TEST1, 0x35);
-  Chip_writeReg(CC1100_TEST0, 0x09);
-#endif
   memset( &RXinfo, 0, sizeof( RXinfo ));
 #ifdef debug_mbus
   Serial.print(F("mbus_init ")); Serial.println(mbus_mode);

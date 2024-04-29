@@ -9,19 +9,22 @@ document.head.appendChild(js);
 
 document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
-  document.getElementsByName('sd')[0].maxLength = 128;
-  document.getElementsByName('sd')[0].pattern = "^[\\da-fA-F]{2,128}$";
-  document.getElementsByName('sd')[0].placeholder = 'hex data to send (max 128 characters)';
-  document.getElementsByName('sd')[0].title = 'Input: only hexadecimal characters';
-  document.getElementsByName('sd')[0].setAttribute('size', '60');
-  document.getElementsByName('rep')[0].max = 99;
-  document.getElementsByName('rep')[0].min = 0;
-  document.getElementsByName('rep')[0].setAttribute('size', '4');
-  document.getElementsByName('rep')[0].value = 0;
-  document.getElementsByName('rept')[0].max = 300000;
-  document.getElementsByName('rept')[0].min = 2;
-  document.getElementsByName('rept')[0].setAttribute('size', '7');
-  document.getElementsByName('rept')[0].value = 2;
+  const sd = document.getElementsByName('sd')[0];
+  sd.maxLength = 128;
+  sd.pattern = "^[\\da-fA-F]{2,128}$"; // ToDo
+  sd.placeholder = 'hex data to send (max 128 characters)';
+  sd.title = `Input: only hexadecimal characters`;
+  sd.setAttribute('size', '60');  
+  const rep = document.getElementsByName('rep')[0];
+  rep.max = 99;
+  rep.min = 0;
+  rep.setAttribute('size', '4');
+  rep.value = 0;
+  const rept = document.getElementsByName('rept')[0];
+  rept.max = 300000;
+  rept.min = 2;
+  rept.setAttribute('size', '7');
+  rept.value = 2;
  }
 }
 
@@ -74,19 +77,19 @@ function msgSend() {
  let rep = document.getElementsByName('rep')[0].value;
  let rept = document.getElementsByName('rept')[0].value;
 
- if(sd == '' || rep == '' || rept == '') {
+ if(sd === '' || rep === '' || rept === '') {
   document.getElementById('val').innerHTML = 'Please input all data &#128521;'
  } else {
   if(sd.length % 2 != 0) {
-   document.getElementById('val').innerHTML = 'found odd number of nibbles, no send !!!'
+   document.getElementById('val').innerHTML = `found odd number of nibbles, no send !!!`
    document.getElementById('val').style.color = color2;
   } else {
    if ((rep * rept / 1000) > 60) {
-    document.getElementById('val').innerHTML = 'sending process active | finished in ' + ((rep * rept / 1000) / 60).toFixed(0) + ' minutes';
+    document.getElementById('val').innerHTML = `sending process active | finished in ${((rep * rept / 1000) / 60).toFixed(0)} minutes`;
    } else {
-    document.getElementById('val').innerHTML = 'sending process active | finished in ' + (rep * rept / 1000) + ' seconds';
+    document.getElementById('val').innerHTML = `sending process active | finished in ${(rep * rept / 1000)} seconds`;
    }
-   websocket.send('send,' + sd + ',' + rep + ',' + rept);
+   websocket.send(`send,${sd},${rep},${rept}`);
   }
  }
 }

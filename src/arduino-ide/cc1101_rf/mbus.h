@@ -46,8 +46,8 @@ void mbus_send(int8_t startdata);
 
 #define WMBUS_NONE 0
 
-#define RX_FIFO_THRESHOLD         0x07
-#define RX_FIFO_START_THRESHOLD   0x00
+#define RX_FIFO_THRESHOLD         0x47
+#define RX_FIFO_START_THRESHOLD   0x40
 #define RX_FIFO_SIZE              64
 #define RX_OCCUPIED_FIFO          32    // Occupied space
 #define RX_AVAILABLE_FIFO         32    // Free space
@@ -100,11 +100,6 @@ typedef struct TXinfoDescr {
   uint8_t  format;              // Infinite or fixed length packet mode
   uint8_t  complete;            // Packet Send
 } TXinfoDescr;
-
-// Various test settings
-#define CC1100_TEST2            0x2C
-#define CC1100_TEST1            0x2D
-#define CC1100_TEST0            0x2E
 
 /***********************************************************************************
     Filename: mbus_defs.h

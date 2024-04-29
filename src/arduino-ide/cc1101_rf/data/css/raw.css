@@ -1,6 +1,7 @@
 ﻿a:link.RAW, a:visited.RAW { color: #cc00cc; }
 .td1,.inp,input[type="number"]{text-align: center;}
-.dd {width: 53px;}
+.dc {width: 60px;}
+.dd {width: 50px;}
 select {text-align: right;}
 
 /* color of rssi value */
@@ -33,7 +34,6 @@ select {text-align: right;}
 }
 
 table#dataTable {
- width: 870px;
  table-layout: fixed;
  word-wrap: break-word;
 }

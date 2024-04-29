@@ -32,14 +32,14 @@ void ChipInit() { /* Init CC110x - Set default´s */
     delay(10);
   }
 
-  uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
+  ChipFound = Chip_readReg(CHIP_VERSION, READ_BURST);
   //chipVersion = 0x14; // for test without chip
-  if (chipVersion == 0x14 || chipVersion == 0x04 || chipVersion == 0x03 || chipVersion == 0x05 || chipVersion == 0x07 || chipVersion == 0x17) {  // found CC110x
+  if (ChipFound == 0x14 || ChipFound == 0x04 || ChipFound == 0x03 || ChipFound == 0x05 || ChipFound == 0x07 || ChipFound == 0x17) {  // found CC110x
     CC110x_CmdStrobe(CC110x_SIDLE);                                                                                                              /* Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable */
-    ChipFound = true;
+    // ChipFound = true;
 #ifdef debug_chip
     Serial.print(F("[DB] CC110x_PARTNUM                  ")); Serial.println(Chip_readReg(CC110x_PARTNUM, READ_BURST), HEX);        // PARTNUM – Chip ID
-    Serial.print(F("[DB] CHIP_VERSION                    ")); Serial.println(chipVersion, HEX);                                       // VERSION – Chip ID
+    Serial.print(F("[DB] CHIP_VERSION                    ")); Serial.println(ChipFound, HEX);                                       // VERSION – Chip ID
     // Serial.print(F("[DB] CC110x_FREQEST                  ")); Serial.println(Chip_readReg(CC110x_FREQEST, READ_BURST), HEX);        // FREQEST – Frequency Offset Estimate from Demodulator
     // Serial.print(F("[DB] CC110x_LQI                      ")); Serial.println(Chip_readReg(CC110x_LQI, READ_BURST), HEX);            // LQI – Demodulator Estimate for Link Quality
     // Serial.print(F("[DB] CC110x_RSSI                     ")); Serial.println(Chip_readReg(CC110x_RSSI, READ_BURST), HEX);           // RSSI – Received Signal Strength Indication
@@ -166,7 +166,6 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #else
           EEPROMwrite(i, pgm_read_byte_near(ptr + i)); // Arduino write value to EEPROM
 #endif
-          // EEPROMwrite(i, pgm_read_byte_near(myArraySRAM.regVal + i));  // Config_Default
         }
       }  // Ende EEPROM wurde gelöscht
 
@@ -180,7 +179,7 @@ void ChipInit() { /* Init CC110x - Set default´s */
 #endif
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
   } else { /* NO CC110x found */
-    ChipFound = false;
+    ChipFound = 0;
 #ifdef debug_chip
     Serial.println(F("[DB] Chip NOT recognized"));
 #endif

@@ -14,10 +14,10 @@ void ChipInit() { /* Init RFM69 - Set default´s */
   ChipDeselect();
   SPI.begin();
   SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0)); // SCLK frequency, burst access max. 10 MHz
-  uint8_t chipVersion = Chip_readReg(CHIP_VERSION, READ_BURST);
-  if (chipVersion >= 0x21 && chipVersion <= 0x24) {                 // found SX1231/SX1231H
+  ChipFound = Chip_readReg(CHIP_VERSION, READ_BURST);
+  if (ChipFound >= 0x21 && ChipFound <= 0x24) {                 // found SX1231/SX1231H
     SX1231_setIdleMode();
-    ChipFound = true;
+    //ChipFound = true;
 #ifdef debug_chip
     delay(10000);
     Serial.print(F("[DB] Chip VERSION SX1231           ")); Serial.println(chipVersion, HEX); // VERSION – Chip ID
@@ -151,7 +151,7 @@ void ChipInit() { /* Init RFM69 - Set default´s */
 #endif
     }      // Ende ERROR EEPROM oder Registeranzahl geändert
   } else { /* NO RFM69 found */
-    ChipFound = false;
+    ChipFound = 0;
 #ifdef debug_chip
     Serial.println(F("[DB] SX1231 NOT recognized"));
 #endif

@@ -24,8 +24,8 @@
 //                                   loop-benchmark (höher=besser           = ProMini 8 MHz, CC1101, LaCrosse 74200, WMBUS ca. 26500
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
-#define FWVer             "V 2.1.4pre"
-#define FWVerDate         "2024-04-24"
+#define FWVer             "V 2.1.5pre"
+#define FWVerDate         "2024-04-29"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM

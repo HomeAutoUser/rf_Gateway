@@ -1,8 +1,4 @@
-﻿var js = document.createElement("script");
-js.src = '/js/all.js';
-document.head.appendChild(js);
-
-document.onreadystatechange = function () {
+﻿document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
   var uptime = document.getElementById('uptime').textContent;
   const d = new Date();

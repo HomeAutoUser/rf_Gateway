@@ -69,7 +69,7 @@ extern IRAM_ATTR void Interupt();     /* Pulseauswertung */
 extern void Interupt();
 #endif
 
-extern boolean ChipFound;
+extern uint8_t ChipFound;
 //extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 //extern byte ReceiveModePKTLEN;
@@ -199,7 +199,8 @@ const uint8_t Config_Avantek[] PROGMEM = { // ToDo - kein Empfang
   0x01,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
   0x46,  // IOCFG0              GDO0 Output Pin Configuration
-  0x01,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x41,  // FIFOTHR             RX and TX FIFO Thresholds, RX filter bandwidth > 325 kHz, FIFOTHR = 0x07, RX filter bandwidth ≤ 325 kHz, FIFOTHR = 0x47
+  //  0x01,  // FIFOTHR             RX and TX FIFO Thresholds, RX filter bandwidth > 325 kHz, FIFOTHR = 0x07, RX filter bandwidth ≤ 325 kHz, FIFOTHR = 0x47
   0x08,  // SYNC1               Sync Word, High Byte
   0x69,  // SYNC0               Sync Word, Low Byte
   0xFF,  // PKTLEN              Packet Length
@@ -229,7 +230,8 @@ const uint8_t Config_Avantek[] PROGMEM = { // ToDo - kein Empfang
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -301,13 +303,14 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
   0x07,  // AGCCTRL2            AGC Control (15 per minute) - SIGNALduino: 0x1B  AGCCTRL2 - 0x07 - 0x43
-//  0x43,  // AGCCTRL2            AGC Control (10 per minute)
+  //  0x43,  // AGCCTRL2            AGC Control (from SmartRF Studio 7)
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
-  0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xFB,  // WORCTRL             Wake On Radio Control - SIGNALduino 0xF8
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xE9,  // FSCAL3              Frequency Synthesizer Calibration (from SmartRF Studio)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -315,12 +318,12 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0x1F,  // FSCAL0              Frequency Synthesizer Calibration (x)
   0x41,  // RCCTRL1             RC Oscillator Configuration       (x)
   0x00,  // RCCTRL0             RC Oscillator Configuration       (x)
-  //0x59,  // FSTEST              Frequency Synthesizer Calibration Control
-  //0x7F,  // PTEST               Production Test
-  //0xBE,  // AGCTEST             AGC Test
-  //0x88,  // TEST2               Various Test Settings
-  //0x31,  // TEST1               Various Test Settings
-  //0x0B,  // TEST0               Various Test Settings
+  //  0x59,  // FSTEST              Frequency Synthesizer Calibration Control (For test only. Do not write to this register.)
+  //  0x7F,  // PTEST               Production Test (Writing 0xBF to this register makes the on-chip temperature sensor available in the IDLE state.)
+  //  0xBE,  // AGCTEST             AGC Test (For test only. Do not write to this register.)
+  //  0x88,  // TEST2               Various Test Settings (This register will be forced to 0x88 or 0x81 when it wakes up from SLEEP mode, depending on the configuration of FIFOTHR.ADC_RETENTION.)
+  //  0x31,  // TEST1               Various Test Settings (This register will be forced to 0x31 or 0x35 when it wakes up from SLEEP mode, depending on the configuration of FIFOTHR.ADC_RETENTION.)
+  //  0x0B,  // TEST0               Various Test Settings
 };
 #endif
 
@@ -379,13 +382,14 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
   0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -457,13 +461,14 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
   0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -535,8 +540,8 @@ const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   0x15,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, 8 von 8 MSG in 30 Sekunden)
   //  0x0E,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode1 gut)
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x07,  // AGCCTRL2            AGC Control
+  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -611,13 +616,13 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x07,  // MCSM2               Main Radio Control State Machine Configuration
   0x00,  // MCSM1               Main Radio Control State Machine Configuration
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
-  //0x0E,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 schlecht)
-  //0x1D,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
-  //0x15,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
+  //  0x0E,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 schlecht)
+  //  0x1D,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
+  //  0x15,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration (SIGNALduino, Lacrosse_mode2 gut) ++
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x07,  // AGCCTRL2            AGC Control
+  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -700,7 +705,8 @@ const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -777,7 +783,8 @@ const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -854,7 +861,8 @@ const uint8_t Config_Fine_Offset_WH57_434[] PROGMEM = {
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
-  0x56,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   0x11,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -925,8 +933,8 @@ const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x07,  // AGCCTRL2            AGC Control
+  0x43,  // AGCCTRL2            AGC Control
   0x68,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -1003,8 +1011,8 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
   0x18,  // MCSM0               Main Radio Control State Machine Configuration
   0x16,  // FOCCFG              Frequency Offset Compensation Configuration
   0x6C,  // BSCFG               Bit Synchronization Configuration
-  0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x07,  // AGCCTRL2            AGC Control
+  0x43,  // AGCCTRL2            AGC Control
   0x48,  // AGCCTRL1            AGC Control
   0x91,  // AGCCTRL0            AGC Control
   0x87,  // WOREVT1             High Byte Event0 Timeout
@@ -1287,7 +1295,8 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
   0x07,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
   0x2E,  // IOCFG0              GDO0 Output Pin Configuration
-  0x02,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x42,  // FIFOTHR             RX and TX FIFO Thresholds, RX filter bandwidth > 325 kHz, FIFOTHR = 0x07, RX filter bandwidth ≤ 325 kHz, FIFOTHR = 0x47
+  //  0x02,  // FIFOTHR             RX and TX FIFO Thresholds, RX filter bandwidth > 325 kHz, FIFOTHR = 0x07, RX filter bandwidth ≤ 325 kHz, FIFOTHR = 0x47
   0xD3,  // SYNC1               Sync Word, High Byte
   0x91,  // SYNC0               Sync Word, Low Byte
   0x0C,  // PKTLEN              Packet Length
@@ -1675,14 +1684,14 @@ const uint8_t Config_WMBus_S[] PROGMEM = {
   0x06,  // 0x00 IOCFG2   GDO2 Output Pin Configuration - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
   0x2E,  // 0x01 IOCFG1   GDO1 Output Pin Configuration - High impedance (3-state)
   0x00,  // 0x02 IOCFG0   GDO0 Output Pin Configuration - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+  0x47,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
   //  0x40,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 1: TEST1 = 0x35 and TEST2 = 0x81 when waking up from SLEEP, FIFO_THR[3:0] 0 = 4 Bytes in RX FIFO
-  0x07,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
   0x76,  // 0x04 SYNC1    Sync Word, High Byte
   0x96,  // 0x05 SYNC0    Sync Word, Low Byte
   0xFF,  // 0x06 PKTLEN   Packet Length
   0x04,  // 0x07 PKTCTRL1 Packet Automation Control - APPEND_STATUS When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.
-  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
   0x00,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Fixed packet length mode. Length configured in PKTLEN register
+  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
   0x00,  // 0x09 ADDR     Device Address
   0x00,  // 0x0A CHANNR   Channel Number
   0x08,  // 0x0B FSCTRL1  Frequency Synthesizer Control
@@ -1754,14 +1763,14 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x06,  // 0x00 IOCFG2   GDO2 Output Pin Configuration - Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
   0x2E,  // 0x01 IOCFG1   GDO1 Output Pin Configuration - High impedance (3-state)
   0x00,  // 0x02 IOCFG0   GDO0 Output Pin Configuration - Associated to the RX FIFO: Asserts when RX FIFO is filled at or above the RX FIFO threshold. De-asserts when RX FIFO is drained below the same threshold.
+  0x47,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
   //  0x40,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 1: TEST1 = 0x35 and TEST2 = 0x81 when waking up from SLEEP, FIFO_THR[3:0] 0 = 4 Bytes in RX FIFO
-  0x07,  // 0x03 FIFOTHR  RX FIFO and TX FIFO Thresholds - ADC_RETENTION 0: TEST1 = 0x31 and TEST2= 0x88 when waking up from SLEEP, FIFO_THR[3:0] 7 = 32 Bytes in RX FIFO
   0x54,  // 0x04 SYNC1         Sync Word, High Byte
   0x3D,  // 0x05 SYNC0         Sync Word, Low Byte
   0xFF,  // 0x06 PKTLEN        Packet Length
   0x04,  // 0x07 PKTCTRL1 Packet Automation Control - APPEND_STATUS When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.
-  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
   0x00,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Fixed packet length mode. Length configured in PKTLEN register
+  //  0x02,  // 0x08 PKTCTRL0 Packet Automation Control - LENGTH_CONFIG[1:0] Infinite packet length mode
   0x00,  // 0x09 ADDR          Device Address
   0x00,  // 0x0A CHANNR        Channel Number
   0x08,  // 0x0B FSCTRL1       Frequency Synthesizer Control
@@ -1780,10 +1789,14 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   0x18,  // 0x18 MCSM0         Main Radio Control State Machine Configuration
   0x2E,  // 0x19 FOCCFG        Frequency Offset Compensation Configuration
   0xBF,  // 0x1A BSCFG         Bit Synchronization Configuration
-  0x07,  // AGCCTRL2            AGC Control
-//  0x43,  // AGCCTRL2            AGC Control
+  //  0x07,  // 0x1B AGCCTRL2            AGC Control
+  //  0x43,  // 0x1B AGCCTRL2            AGC Control
+  0xC7,  // 0x1B AGCCTRL2      AGC Control (from SmartRF Studio 7)
+  //0x87,  // 0x1B AGCCTRL2            AGC Control
   0x09,  // 0x1C AGCCTRL1      AGC Control
-  0xB5,  // 0x1D AGCCTRL0      AGC Control
+  //  0x00,  // 0x1C AGCCTRL1      AGC Control (from SmartRF Studio 7) - kein Empfang
+  //  0xB5,  // 0x1D AGCCTRL0      AGC Control
+  0xB2,  // 0x1D AGCCTRL0      AGC Control (from SmartRF Studio 7)
   0x87,  // 0x1E WOREVT1       High Byte Event0 Timeout
   0x6B,  // 0x1F WOREVT0       Low Byte Event0 Timeout
   0xF8,  // 0x20 WORCTRL       Wake On Radio Control

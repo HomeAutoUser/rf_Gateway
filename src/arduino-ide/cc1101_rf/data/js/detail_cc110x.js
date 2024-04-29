@@ -25,28 +25,24 @@ document.onreadystatechange = function () {
 
   var hex;
   var lastmodal;
+  var element;
 
-  for ( i=0; i<Explan.length; i++ ) {
-   if (i <= 15) {
-    hex = '0' + i.toString(16)
-   } else {
-    hex = i.toString(16)
-   }
+  for (let i=0; i<C_Exp.length; i++) {
+   hex = (i <= 15 ? '0' : '') + i.toString(16);
 
-   let element = document.getElementsByName('r' + i)[0];
-   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + Explan_short[i];
+   element = document.getElementsByName('r' + i)[0];
+   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + C_RegN[i];
    element.maxLength = 2;
    element.onkeypress = validHEX;
    element.setAttribute('size', '2');
    element.title = "Input: 2 characters in hexadecimal";
 
-   document.getElementById('n' + i).innerHTML = Explan[i];
+   document.getElementById('n' + i).innerHTML = C_Exp[i];
    var id = 't' + i;
 
-   if (ExplanAdd[i] != '') {
-     document.getElementById(id).innerHTML = '&#128712;';
+   if (C_Add[i] !== '') {
+    document.getElementById(id).innerHTML = '&#128712;';
 
-    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
     var div = document.createElement("div");
     div.id = "Mo"+i;
     div.className = "mod";
@@ -62,10 +58,10 @@ document.onreadystatechange = function () {
     div2.appendChild(Span);
 
     var p = document.createElement("p");
-    p.innerHTML = Explan_short[i];
+    p.innerHTML = C_RegN[i];
 
     div2.appendChild(p);
-    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
+    div2.insertAdjacentHTML( 'beforeend', C_Add[i] );
    }
   }
 
@@ -75,7 +71,7 @@ document.onreadystatechange = function () {
    var cla = event.target.className;
    var modal = document.getElementById("Mo" + nr);   // Get the modal
 
-   if (ExplanAdd[nr] != ''){
+   if (C_Add[nr] !== ''){
     if(id && modal) {
      modal.style.display = "block";    // When user clicks button, open the modal
      lastmodal = modal;
@@ -110,23 +106,24 @@ function WebSocket_MSG(event) {
 
   // 0x06: PKTLEN 0x08: PKTCTRL0
   var val = parseInt(obj[8], 16) & 0b00000011;
-  document.getElementById('PKTCTRL0').innerHTML = LENGTH_CONFIG[val];
-  let span = document.getElementById("PKTLEN");
-  if(val == 0) {
-   span.textContent = "current: bytes " + parseInt(obj[6], 16) + "  |  nibbles " + parseInt(obj[6], 16) * 2 + "  |  bits " + parseInt(obj[6], 16) * 8;
+  document.getElementById('PKTCTRL0').innerHTML = C_Length[val];
+  let span = document.getElementById("PKTCTRL0");
+  if (val === 0) {
+    let bytes = parseInt(obj[6], 16);
+    span.textContent = `current: bytes ${bytes}  |  nibbles ${bytes * 2}  |  bits ${bytes * 8}`;
   } else {
-   span.textContent = "current: disabled";
+    span.textContent = "current: disabled";
   }
 
   // 0x0C: FSCTRL0 
   if(document.getElementsByName('afc')[0].checked) {
-   document.getElementById('n' + 12).innerHTML = Explan[12] + ' (Freq. offset ' + (C_FREQOFFread(obj[12]) / 1000).toFixed(0) + ' kHz)';	// ToDo
+   document.getElementById('n12').innerHTML = `${C_Exp[12]} (Freq. offset ${(C_FREQOFFread(obj[12]) / 1000).toFixed(0)} kHz)`;	// ToDo
   }
 
   // 0x0D: FREQ2 0x0E: FREQ1 0x0F: FREQ0
   var Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  Freq = Freq - (obj[REGISTER_MAX + 3] * 1);
+  Freq -= obj[REGISTER_MAX + 3] * 1;
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
@@ -135,14 +132,15 @@ function WebSocket_MSG(event) {
   var selectElement = document.getElementById('bandw');
   if(!bw_list) {
    bw_list = true;
-   for (let i = 0; i < C_BWsteps().length; i++) {
-    selectElement.add( new Option( (C_BWsteps()[i] / 1000).toFixed(3) ) ); // ToDo
+   const bwSteps = C_BWsteps();
+   for (let i = 0; i < bwSteps.length; i++) {
+     selectElement.add(new Option((bwSteps[i] / 1000).toFixed(3)));
    }
   }
   selectElement.value = RxBwComp;
-  document.getElementById('CHANBW').innerHTML = RxBwComp + ' kHz';
+  document.getElementById('CHANBW').innerHTML = `${RxBwComp} kHz`;
   var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(3); // ToDo
-  document.getElementById('DRATE').innerHTML = DRATE + ' kBaud';
+  document.getElementById('DRATE').innerHTML = `${DRATE} kBaud`;
   document.getElementsByName('datarate')[0].value = DRATE;
 
   // 0x12: MDMCFG2
@@ -150,20 +148,20 @@ function WebSocket_MSG(event) {
    mod_list = true;
    var selectElement = document.getElementById('modulation');
    for (var j = 0; j<=7; j++) {
-    if (MOD[j] != '') {
-     selectElement.add(new Option(MOD[j]));
+    if (C_Mod[j] != '') {
+     selectElement.add(new Option(C_Mod[j]));
     }
    }
   }
   val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
-  document.getElementById('MOD_FORMAT').innerHTML = MOD[val];
-  document.getElementById('modulation').value = MOD[val];
+  document.getElementById('MOD_FORMAT').innerHTML = C_Mod[val];
+  document.getElementById('modulation').value = C_Mod[val];
   val = (parseInt(obj[18], 16) & 0b00000111);
-  document.getElementById('SYNC_MODE').innerHTML = SYNC_MODE[val];
+  document.getElementById('SYNC_MODE').innerHTML = C_Sync[val];
 
   // 0x13: MDMCFG1
   val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
-  document.getElementById('MDMCFG1').innerHTML = 'minimum ' + NUM_PREAMBLE[val] + ' preamble bytes to be transmitted configured in MDMCFG1 register';
+  document.getElementById('MDMCFG1').innerHTML = 'minimum ' + C_NumP[val] + ' preamble bytes to be transmitted configured in MDMCFG1 register';
 
   // 0x15: DEVIATN
   var DEVIATN = C_DEVread(obj[21]) / 1000; // ToDo
@@ -186,7 +184,7 @@ function validHEX(e) {
  return pattern.test(e.key)
 }
 
-const Explan = [
+const C_Exp = [
 'GDO2 Output Pin Configuration',
 'GDO1 Output Pin Configuration',
 'GDO0 Output Pin Configuration',
@@ -236,60 +234,10 @@ const Explan = [
 'Various Test Settings 0'
 ];
 
-const Explan_short = [
-'IOCFG2',
-'IOCFG1',
-'IOCFG0',
-'FIFOTHR',
-'SYNC1',
-'SYNC0',
-'PKTLEN',
-'PKTCTRL1',
-'PKTCTRL0',
-'ADDR',
-'CHANNR',
-'FSCTRL1',
-'FSCTRL0',
-'FREQ2',
-'FREQ1',
-'FREQ0',
-'MDMCFG4',
-'MDMCFG3',
-'MDMCFG2',
-'MDMCFG1',
-'MDMCFG0',
-'DEVIATN',
-'MCSM2',
-'MCSM1',
-'MCSM0',
-'FOCCFG',
-'BSCFG',
-'AGCCTRL2',
-'AGCCTRL1',
-'AGCCTRL0',
-'WOREVT1',
-'WOREVT0',
-'WORCTRL',
-'FREND1',
-'FREND0',
-'FSCAL3',
-'FSCAL2',
-'FSCAL1',
-'FSCAL0',
-'RCCTRL1',
-'RCCTRL0',
-'FSTEST',
-'PTEST',
-'AGCTEST',
-'TEST2',
-'TEST1',
-'TEST0',
-];
-
 const tabPre = '<table><tr><td>Bit No.</td><td>Name</td><td>Reset</td><td>R/W</td><td>Description</td></tr><tr><td>';
 const tabEnd = '</td></tr></table>';
 
-const ExplanAdd = [
+const C_Add = [
 tabPre + '7</td><td>&nbsp;</td><td>0x00</td><td>R0</td><td>Not used</td></tr><tr><td>6</td><td>GDO2_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td>5</td><td>GDO2_CFG[5:0]</td><td>0x29</td><td>R/W</td><td>Default is CHP_RDYn.' + tabEnd,
 tabPre + '7</td><td>GDO_DS</td><td>0x00</td><td>R/W</td><td>Set high (1) or low (0) output drive strength on the GDO pins.</td></tr><tr><td>6</td><td>GDO1_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td> 5:0</td><td>GDO1_CFG[5:0]</td><td>0x2e</td><td>R/W</td><td>Default is 3-state.' + tabEnd,
 tabPre + '7</td><td>TEMP_SENSOR_ENABLE</td><td>0x00</td><td>R/W</td><td>Enable analog temperature sensor. Write 0 in all other register bits when using temperature sensor.</td></tr><tr><td>6</td><td>GDO0_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td>5:0</td><td>GDO0_CFG[5:0]</td><td>0x3f</td><td>R/W</td><td>Default is CLK_XOSC/192. It is recommended to disable the clock output in initialization, in order to optimize RF performance.' + tabEnd,
@@ -339,17 +287,17 @@ tabPre + '7</td><td>FEC_EN</td><td>0x00</td><td>R/W</td><td>Enable Forward Error
 ''
 ];
 
-const LENGTH_CONFIG = [
+const C_Length = [
 'Fixed packet length. Length configured in PKTLEN register',
 'Variable packet length. Length configured by the first byte after sync word',
 'Infinite packet length',
 'Reserved'
 ];
 
-const MOD = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
-const NUM_PREAMBLE = ['2', '3', '4', '6', '8', '12', '16', '24'];
+const C_Mod = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
+const C_NumP = ['2', '3', '4', '6', '8', '12', '16', '24'];
 
-const SYNC_MODE = [
+const C_Sync = [
 'No preamble/sync',
 '15/16 sync word bits detected',
 '16/16 sync word bits detected',

@@ -56,7 +56,7 @@ void SX1231_setTransmitMode();    // SX1231 start transmit mode
 String getModeName(const uint8_t modeNr);
 void Interupt_Variant(byte nr);    // Empfangsvariante & Register einstellen
 
-extern boolean ChipFound;
+extern uint8_t ChipFound;
 //extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
 //extern byte ReceiveModePKTLEN;

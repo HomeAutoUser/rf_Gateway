@@ -50,7 +50,6 @@ int16_t first;                                // Zeiger auf den ersten Pufferein
 int16_t last;                                 // Zeiger auf den letzten Puffereintrag
 byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
 byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
-//bool valid;
 #include "SimpleFIFO.h"
 SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;        // store FIFO_LENGTH # ints
 #endif
@@ -100,14 +99,12 @@ byte ToggleCnt = 0;                           // Toggle, Anzahl aktiver Modi
 byte MOD_FORMAT;                              // Marker - Modulation
 volatile byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
 byte ReceiveModeNr;                           // activated protocol
-//byte ReceiveModePKTLEN;
-boolean ChipFound = false;                    // against not clearly defined entrances (if flicker)
+uint8_t ChipFound;                            // chip VERSION
 
 /* predefinitions of the functions */
 inline void doDetect();
 void NO_Chip();
 void Interupt_Variant(byte nr);
-//void PatReset(); // only MU
 void decode(const int pulse); // only MU
 void findpatt(int val); // only MU
 void InputCommand(String input);
@@ -120,7 +117,6 @@ int8_t freqOffAcc = 0;                        // CC110x automatic Frequency Synt
 float freqErrAvg = 0;                         // CC110x automatic Frequency Synthesizer Control
 uint8_t freqAfc = 0;                          // CC110x AFC an oder aus
 int16_t freqOffset;                           // Frequency offset
-//String ReceiveModeName;                       // name of active mode from array
 uint32_t msgCount;                            // Nachrichtenzähler über alle empfangenen Nachrichten
 uint32_t msgCountMode[NUMBER_OF_MODES];       // Nachrichtenzähler pro Mode, Größe anpassen nach Anzahl Modes in cc110x.h/rfm69.h!
 byte client_now;                              // aktueller Telnet-Client, wo Daten empfangen werden
@@ -248,7 +244,6 @@ void Interupt_Variant(byte nr) {
   if (nr != 1) {  // all other Modes except user setting
     Chip_writeRegFor(nr); // write all registers
   } else {        // only Chip user setting
-    //ReceiveModeName = getModeName(nr);
     for (byte i = 1; i < REGISTER_MAX; i++) {
       uint8_t addr = i;
 #ifdef RFM69
@@ -263,13 +258,6 @@ void Interupt_Variant(byte nr) {
 #ifdef debug_chip
   Serial.print(F("[DB] Interupt_Variant ReceiveModeName: ")); Serial.println(ReceiveModeName);
 #endif
-//  if (ReceiveModePKTLEN == 0) {                    // by user and factory setting
-//    ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_BURST);  // direct PKTLEN register
-//  }
-//#ifdef debug_chip
-//  Serial.print(F("[DB] Interupt_Variant ReceiveModePKTLEN: ")); Serial.println(ReceiveModePKTLEN);
-//#endif
-
 #ifdef CC110x
   if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
@@ -303,12 +291,34 @@ void Interupt_Variant(byte nr) {
   Serial.print(F("[DB] Interupt_Variant FSK_RAW: ")); Serial.println(FSK_RAW);
 #endif
 #ifdef CC110x
+  // With the CC1100, the TEST registers had to be written after wakeup in order to accomplish this.
+  if (ChipFound == 0x03) { // CC1100
+    if ((Chip_readReg(CC110x_FIFOTHR, READ_BURST) & 0b01000000) >> 6) { // CC1101 ADC_RETENTION - The ADC_RETENTION bit should be set to 1 before going into SLEEP mode if settings with an RX filter bandwidth below 325 kHz are wanted at time of wake-up.
+      Chip_writeReg(CC110x_FIFOTHR, Chip_readReg(CC110x_FIFOTHR, READ_BURST) & 0b00001111); // Bit 7:4 Reserved, Write 0 for compatibility with possible future extensions.
+      Chip_writeReg(CC110x_TEST2, 0x81); // RX filter bandwidth ≤ 325 kHz, TEST2 = 0x81
+      Chip_writeReg(CC110x_TEST1, 0x35); // RX filter bandwidth ≤ 325 kHz, TEST1 = 0x35
+      Chip_writeReg(CC110x_TEST0, 0x09); // after reset 0x0B - Enable VCO selection calibration stage when 1
+#ifdef debug_chip
+      char hex[3];
+      onlyDecToHex2Digit(Chip_readReg(CC110x_FIFOTHR, READ_BURST) & 0b00001111, hex);
+      Serial.print(F("[DB] Interupt_Variant writeReg: CC1100 FIFOTHR=0x")); Serial.println(hex);
+      Serial.println(F("[DB] Interupt_Variant writeReg: CC1100 TEST2=0x81, TEST1=0x35, TEST0=0x09"));
+#endif
+    } else {
+      Chip_writeReg(CC110x_TEST2, 0x88); // RX filter bandwidth > 325 kHz, TEST2 = 0x88
+      Chip_writeReg(CC110x_TEST1, 0x31); // RX filter bandwidth > 325 kHz, TEST1 = 0x31
+      Chip_writeReg(CC110x_TEST0, 0x09); // after reset 0x0B - Enable VCO selection calibration stage when 1
+#ifdef debug_chip
+      Serial.println(F("[DB] Interupt_Variant writeReg: CC1100 TEST2=0x88, TEST1=0x31, TEST0=0x09"));
+#endif
+    }
+  }
   CC110x_CmdStrobe(CC110x_SFRX); // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
 #elif RFM69
-  Chip_writeReg(0x28, 0x10);      // FIFO are cleared when this bit is set.
+  Chip_writeReg(0x28, 0x10);     // FIFO are cleared when this bit is set.
   SX1231_CrcOn = (Chip_readReg(0x37, READ_BURST) & 0b00010000) >> 4; // RegPacketConfig1, CrcOn - Enables CRC calculation/check (Tx/Rx).
 #endif
-  Chip_setReceiveMode();            // start receive mode
+  Chip_setReceiveMode();         // start receive mode
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   WebSocket_chip();
   WebSocket_detail(1);
@@ -494,6 +504,11 @@ void setup() {
 #endif
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+  // start heartbeat (optional)
+  // ping server every 15000 ms
+  // expect pong from server within 3000 ms
+  // consider connection disconnected if pong is not received 2 times
+  webSocket.enableHeartbeat(15000, 3000, 2);
 #endif
 
 #ifdef debug
@@ -623,7 +638,7 @@ void loop() {
 #endif
 
   /* not OOK */
-  if ( (FSK_RAW == 1) && (ChipFound == true) ) { /* Received data | RX (not OOK !!!) */
+  if ( (FSK_RAW == 1) && (ChipFound) ) { /* Received data | RX (not OOK !!!) */
     FSK_RAW = 0;
     digitalWriteFast(LED, HIGH);    /* LED on */
     rssi = Chip_readRSSI();
@@ -831,7 +846,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
       break;             /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'f':            /* command f */
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else {
 
@@ -870,7 +885,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       }
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
     case 'e': /* command e - set registers to default*/
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else { // ToDo - Toggle läuft weiter - evtl. zurück setzen?
         for (byte i = 0; i < NUMBER_OF_MODES; i++) {
@@ -898,7 +913,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       } else {
 
         if (input[1] && input[1] == 'o' && input[2]) { /* command tob<mm><n> & tot<mm><nnn> */
-          if (ChipFound == false) {
+          if (ChipFound == 0) {
             NO_Chip();
           } else {
             if (input[2] == 't') { // command tot<mm><nnn> - toggletime
@@ -1031,7 +1046,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 
 #ifdef CC110x // TODO SX1231
     case 'x': /* command x - write patable*/
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else {
         if (input[1] && input[2] && !input[3]) {
@@ -1057,7 +1072,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif  // END - CC110x
 
     case 'C':
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else {
         if (!input[1]) { /* command C - Read all values from Register */
@@ -1219,14 +1234,14 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       if (!input[1]) {
         MSG_BUILD(F("# # #   current status   # # #\n"));
         String ReceiveModeName = "";
-        if (ReceiveModeNr > NUMBER_OF_MODES && ChipFound == true) {         // ReceiveModeName if uC restart
+        if (ReceiveModeNr > NUMBER_OF_MODES && ChipFound) {         // ReceiveModeName if uC restart
           ReceiveModeName = F("Chip configuration");
-        } else if (ReceiveModeNr < NUMBER_OF_MODES && ChipFound == true) {  // ReceiveModeName is set with command m<n>
+        } else if (ReceiveModeNr < NUMBER_OF_MODES && ChipFound) {  // ReceiveModeName is set with command m<n>
           ReceiveModeName = getModeName(ReceiveModeNr);
-        } else if (ChipFound == false) {                          // ReceiveModeName if no chip
+        } else if (ChipFound == 0) {                          // ReceiveModeName if no chip
           ReceiveModeName = F("Chip NOT recognized");
         }
-        if (ChipFound == true) {
+        if (ChipFound) {
 #ifdef CC110x
           onlyDecToHex2Digit((Chip_readReg(CC110x_MARCSTATE, READ_BURST)), chHex); // convert 1 byte to 2 hex char
           MSG_BUILD(F("CC110x MARCSTATE:  ")); MSG_BUILD_LF(chHex);
@@ -1301,7 +1316,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
 
     case 'S': /* command S */
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else {
         if (input[1] && input[1] == 'N' && input[2] == ';') { /* command SN | SN;R=5;D=9A46036AC8D3923EAEB470AB; */
@@ -1409,7 +1424,7 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
       break;  /* -#-#-#-#- - - next case - - - #-#-#-#- */
 
     case 'W': /* command W - write register*/
-      if (ChipFound == false) {
+      if (ChipFound == 0) {
         NO_Chip();
       } else {
         if (input[1] && input[1] != 'S' && input[1] > 47 && input[1] < CMD_W_REG_MAX && input[2] && input[3] && input[4] && !input[5]) {

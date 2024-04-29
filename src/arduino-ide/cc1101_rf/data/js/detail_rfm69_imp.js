@@ -67,7 +67,7 @@ function SXimpFromCC() {
   for ( let i=0; i<reg.length; i++ ){
     // Examination of specific registers
     var adr = reg[i].substring(1, 3);
-    if(SXallowedRegFromCC.includes(adr)) {
+    if(SX_allowCC.includes(adr)) {
       // all Sync register, once failed = no Sync set
       if(adr == '04' || adr == '05') {
         Sync.push(reg[i].substring(1, 5));
@@ -121,7 +121,7 @@ function SXimpFromCC() {
   return true;
 };
 
-const SXallowedRegFromCC = [
+const SX_allowCC = [
  // Sync
  '04',
  '05',

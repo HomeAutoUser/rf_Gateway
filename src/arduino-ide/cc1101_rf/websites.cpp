@@ -94,7 +94,7 @@ void web_chip() {           // ########## web_chip ##########
     website += F("</td></tr>");
 #endif
     website += F("<tr><td>chip VERSION</td><td colspan=\"2\"><span id=\"cV\">");
-    onlyDecToHex2Digit(Chip_readReg(CHIP_VERSION, READ_BURST), chHex); // convert 1 byte to 2 hex char
+    onlyDecToHex2Digit(ChipFound, chHex); // convert 1 byte to 2 hex char
     website += chHex;
     website += F("</span></td></tr><tr><td>chip STATE</td><td colspan=\"2\"><span id=\"MS\">");
 #ifdef CC110x
@@ -320,7 +320,8 @@ void web_detail_export() {  // ########## web_detail_export ##########
   }
   website += F("<br>");
   website += website_p2;
-  website += F("]<br><br>File to import on program SmartRF Studio 7<br>[development]<br>");
+  website += F("]<br><br>File to import on program SmartRF Studio 7"
+               "<br><button id=\"save-btn\" onclick=\"saveData('C')\">save current registers in \"SmartRF Studio 7\" format</button><br>");
 
 #elif RFM69                   // #### web_detail_export - RFM69 #### //
   website += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/detail_exp.css\">"
@@ -329,14 +330,14 @@ void web_detail_export() {  // ########## web_detail_export ##########
                "<br>FHEM - SIGNALduino Format | SD_ProtocolData.pm, entry register =>"
                "<br>[<span id=\"REGs\"></span>]<br>"
                "<br>File to import on program SX1231SKB"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
+               "<br><button id=\"save-btn\" onclick=\"saveData('SX')\">save current register in \"SX1231 Starter Kit\" format</button><br>"
                "<br>File to import on program SmartRF Studio 7"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>"
-               "<br>File in C++ header format"
-               "<br><button id=\"save-btn\" onclick=\"saveFile('h')\">save current registers in C++ header file</button><br>");
+               "<br><button id=\"save-btn\" onclick=\"saveData('C')\">save a part of the registers in \"SmartRF Studio 7\" format</button><br>");
 #endif
 
-  website += F("<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
+  website += F("<br>File in C++ header format"
+               "<br><button id=\"save-btn\" onclick=\"saveData('h')\">save current registers in C++ header file</button><br>"
+               "<br><a class=\"back\" href=\"/detail\">&crarr; back to detail information</a>"
                "</body></html>");
   sendHtml(website);
 }                             // #### web_detail_export - END #### //
@@ -898,7 +899,7 @@ void web_raw() {            // ########## web_raw ##########
                "<td class=\"td1\"><input class=\"btn\" type=\"submit\" value=\"set\" id=\"set\"></td>" // Button set Output Power setting
                "</tr></table><br>"
                "<div><table id = \"dataTable\">"
-               "<tr><th class=\"dd\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
+               "<tr><th class=\"dc\">Time</th><th>current RAW, received data on mode &rarr;&nbsp;<span id=\"MODE\">");
   website += getModeName(ReceiveModeNr);
   website += F("</span></th><th class=\"dd\">RSSI<br>dB</th><th class=\"dd\">Offset<br>kHz</th></tr>"
                "</table></div>"
@@ -1317,7 +1318,7 @@ void WebSocket_help() {
   if (webSocket.connectedClients() > 0) {
     String website = CHIP_NAME;
     website += ',';
-    website += ChipFound == true ? F("yes") : F("no");
+    website += ChipFound ? F("yes") : F("no");
     for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
       if (webSocketSite[num] == "/html/rfm69_help.html" || webSocketSite[num] == "/html/rfm69_help.html" || webSocketSite[num] == "/html/rfm69_help.html") {
         webSocket.sendTXT(num, website);
@@ -1484,7 +1485,7 @@ void routing_websites() {
 }
 
 void HTML_mod(String & str) { // replace "RAW data" when no chip found
-  if (ChipFound != true) {
+  if (ChipFound == 0) {
     str.replace(F("<a href=\"raw\" class=\"RAW\">RAW data</a>"), F(""));
   }
 }

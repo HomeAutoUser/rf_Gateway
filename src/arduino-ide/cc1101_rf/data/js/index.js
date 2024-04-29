@@ -13,8 +13,7 @@ function WebSocket_MSG(event) {
   var hh = ~~( (obj[2]/60/60) % 24 );
   var mm = ~~( (obj[2]/60) % 60 );
   var ss = (obj[2] % 60);
-  var UptTxt = dd + ' day(s)&emsp;' + hh + ' hour(s)&emsp;' + mm + ' minute(s)&emsp;' + ss + ' second(s)';
-  document.getElementById('UptimeTxT').innerHTML = UptTxt;
+  document.getElementById('UptimeTxT').innerHTML = `${dd} day(s)&emsp;${hh} hour(s)&emsp;${mm} minute(s)&emsp;${ss} second(s)`;
   var timeDiff=obj[2]-obj[3];
   if (timeDiff>=3600) {
    var MSGcntCal = obj[4] / (timeDiff / 3600);

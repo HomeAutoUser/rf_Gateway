@@ -83,8 +83,7 @@ function SX_DRATEread(RegBitrateMsb, RegBitrateLsb) {
 }
 
 function C_DRATEset(DRATE,RxBw) {
- // need CHANBW_E & CHANBW_M so set MDMCFG4 complete
- // unchecked -> detail_rfm69.js
+ /* need CHANBW_E & CHANBW_M so set MDMCFG4 complete */
  var ret = [];
  var bits1 = 0;
  var bits2 = 0;
@@ -93,32 +92,32 @@ function C_DRATEset(DRATE,RxBw) {
  var c10 = 0;
 
  if(RxBw == undefined) {
-	RxBw = 0; // min value check or 0 
+  return ret;
  }
 
  exit_loops:
-	for (var e = 0; e < 4; e++) {
-		for (var m = 0; m < 4; m++) {
+  for (var e = 0; e < 4; e++) {
+    for (var m = 0; m < 4; m++) {
       bits2 = bits1;
       bits1 = (e << 6) + (m << 4);
       bw2 = bw1;
-      bw1 = (FXOSC_C / 1000) / (8 * (4 + m) * (1 << e));
+      bw1 = FXOSC_C / (8 * (4 + m) * (1 << e));
       if (RxBw >= bw1) {
         break exit_loops;
       }
-		}
-	}
+    }
+  }
 
- if((~(RxBw - bw1) + 1) > (~(RxBw - bw2) + 1)) {
-	c10 = bits1;
+ if(Math.abs(RxBw - bw1) > Math.abs(RxBw - bw2)) {
+  c10 = bits2;
  } else {
-	c10 = bits2;
+  c10 = bits1;
  }
- 
+
  if (DRATE < 24.7955) {
-	DRATE = 24.7955;
+  DRATE = 24.7955;
  } else if (DRATE > 1621830) {
-	DRATE = 1621830;
+  DRATE = 1621830;
  }
 
  var DRATE_E = DRATE * ( 2**20 ) / FXOSC_C * 1.0;
@@ -131,17 +130,35 @@ function C_DRATEset(DRATE,RxBw) {
  var DRATE_E1 = DRATE_E;
 
  if (DRATE_M1 == 256) {
-	DRATE_M1 = 0;
-	DRATE_E1++;
+  DRATE_M1 = 0;
+  DRATE_E1++;
  }
 
  if (DRATE_Mr != DRATE_M) {
-	DRATE_M = DRATE_M1;
-	DRATE_E = DRATE_E1;
+  DRATE_M = DRATE_M1;
+  DRATE_E = DRATE_E1;
  }
- c10 += DRATE_E;
- ret.push(DRATE_E.toString(16));
- ret.push(DRATE_M.toString(16));
+
+ /* Check closest value */
+ var val1 = C_DRATEread(DRATE_E.toString(16),DRATE_M.toString(16));
+ var DRATE_E2 = DRATE_E;
+ var DRATE_M2 = DRATE_M + 1;
+
+  if (DRATE_M2 == 256) {
+  DRATE_M2 = 0;
+  DRATE_E2++;
+ }
+ var val2 = C_DRATEread(DRATE_E2.toString(16),DRATE_M2.toString(16));
+
+ if(Math.abs(DRATE - val1) > Math.abs(DRATE - val2)) {
+  c10 += DRATE_E;
+  ret.push(c10.toString(16));
+  ret.push(DRATE_M.toString(16));
+ } else {
+  c10 += DRATE_E2;
+  ret.push(c10.toString(16));
+  ret.push(DRATE_M2.toString(16));
+ }
  return ret;
 }
 
@@ -161,7 +178,7 @@ function SX_DEVread(RegFdevMsb, RegFdevLsb) {
 function C_FREQOFFread(FSCTRL0) {
  var off = ( parseInt(FSCTRL0, 16) );
  if (off > 127) {
-	off -= 255;
+  off -= 255;
  }
  off = (FXOSC_C / 16384 * off);
  return off;
@@ -176,3 +193,167 @@ function SX_FIFOread(FIFOTHR) {
  // ToDO needed ???
  return parseInt(FIFOTHR, 16) & 0b00001111;
 }
+
+function saveFile(data,filename) {
+ console.log('saveFile');
+
+ // Convert the text to BLOB.
+ const textToBLOB = new Blob([data], { type: 'text/plain' });
+
+ let newLink = document.createElement("a");
+ newLink.download = filename;
+
+ if (window.webkitURL != null) {
+  newLink.href = window.webkitURL.createObjectURL(textToBLOB);
+ } else {
+  newLink.href = window.URL.createObjectURL(textToBLOB);
+  newLink.style.display = "none";
+  document.body.appendChild(newLink);
+ }
+
+ newLink.click();
+}
+
+function dec2hex(i) {  // fix two places
+ return (i+0x100).toString(16).substr(-2).toUpperCase();
+}
+
+const C_RegN = [
+'IOCFG2',
+'IOCFG1',
+'IOCFG0',
+'FIFOTHR',
+'SYNC1',
+'SYNC0',
+'PKTLEN',
+'PKTCTRL1',
+'PKTCTRL0',
+'ADDR',
+'CHANNR',
+'FSCTRL1',
+'FSCTRL0',
+'FREQ2',
+'FREQ1',
+'FREQ0',
+'MDMCFG4',
+'MDMCFG3',
+'MDMCFG2',
+'MDMCFG1',
+'MDMCFG0',
+'DEVIATN',
+'MCSM2',
+'MCSM1',
+'MCSM0',
+'FOCCFG',
+'BSCFG',
+'AGCCTRL2',
+'AGCCTRL1',
+'AGCCTRL0',
+'WOREVT1',
+'WOREVT0',
+'WORCTRL',
+'FREND1',
+'FREND0',
+'FSCAL3',
+'FSCAL2',
+'FSCAL1',
+'FSCAL0',
+'RCCTRL1',
+'RCCTRL0',
+'FSTEST',
+'PTEST',
+'AGCTEST',
+'TEST2',
+'TEST1',
+'TEST0',
+];
+
+const SX_RegN = [
+'RegFifo',
+'RegOpMode',
+'RegDataModul',
+'RegBitrateMsb',
+'RegBitrateLsb',
+'RegFdevMsb',
+'RegFdevLsb',
+'RegFrfMsb',
+'RegFrfMid',
+'RegFrfLsb',
+'RegOsc1',
+'RegAfcCtrl',
+'RegLowBat',
+'RegListen1',
+'RegListen2',
+'RegListen3',
+'RegVersion',
+'RegPaLevel',
+'RegPaRamp',
+'RegOcp',
+'Reserved14',
+'Reserved15',
+'Reserved16',
+'Reserved17',
+'RegLna',
+'RegRxBw',
+'RegAfcBw',
+'RegOokPeak',
+'RegOokAvg',
+'RegOokFix',
+'RegAfcFei',
+'RegAfcMsb',
+'RegAfcLsb',
+'RegFeiMsb',
+'RegFeiLsb',
+'RegRssiConfig',
+'RegRssiValue',
+'RegDioMapping1',
+'RegDioMapping2',
+'RegIrqFlags1',
+'RegIrqFlags2',
+'RegRssiThresh',
+'RegRxTimeout1',
+'RegRxTimeout2',
+'RegPreambleMsb',
+'RegPreambleLsb',
+'RegSyncConfig',
+'RegSyncValue1',
+'RegSyncValue2',
+'RegSyncValue3',
+'RegSyncValue4',
+'RegSyncValue5',
+'RegSyncValue6',
+'RegSyncValue7',
+'RegSyncValue8',
+'RegPacketConfig1',
+'RegPayloadLength',
+'RegNodeAdrs',
+'RegBroadcastAdrs',
+'RegAutoModes',
+'RegFifoThresh',
+'RegPacketConfig2',
+'RegAesKey1',
+'RegAesKey2',
+'RegAesKey3',
+'RegAesKey4',
+'RegAesKey5',
+'RegAesKey6',
+'RegAesKey7',
+'RegAesKey8',
+'RegAesKey9',
+'RegAesKey10',
+'RegAesKey11',
+'RegAesKey12',
+'RegAesKey13',
+'RegAesKey14',
+'RegAesKey15',
+'RegAesKey16',
+'RegTemp1',
+'RegTemp2',
+'RegTestLna',
+'RegTestTcxo',
+'RegTestllBw',
+'RegTestDagc',
+'RegTestAfc'
+];
+
+const C_XML = ['        <Register>', '        </Register>','            <Name>','</Name>','            <Value>','</Value>'];

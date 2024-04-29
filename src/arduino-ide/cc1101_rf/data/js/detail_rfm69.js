@@ -24,10 +24,9 @@ document.onreadystatechange = function () {
   document.getElementById('p5').maxLength = 7;
   document.getElementById('p5').pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
 
-  var hex;
-  var txt;
-
-  for ( i=0; i<Explan.length; i++ ) {
+  for (let i=0; i<SX_Exp1.length; i++ ) {
+   let hex;
+   let txt;
    if (i <= 15) {
     hex = '0' + i.toString(16)
    } else {
@@ -43,8 +42,8 @@ document.onreadystatechange = function () {
    element.setAttribute('size', '2');
 
    txt = '0x' + hex.toUpperCase() + '&ensp;access ';
-   if(Explan_short[i] != '') {
-    document.getElementById('s' + i).innerHTML = txt + Explan_short[i];
+   if(SX_Exp2[i] != '') {
+    document.getElementById('s' + i).innerHTML = txt + SX_Exp2[i];
     element.disabled = true;
    } else {
     document.getElementById('s' + i).innerHTML = txt + '(rw)';
@@ -56,11 +55,10 @@ document.onreadystatechange = function () {
     element.title = "read only";
    }
    
-   document.getElementById('n' + i).innerHTML = Explan[i];
+   document.getElementById('n' + i).innerHTML = SX_Exp1[i];
    var id = 't' + i;
 
-   if (ExplanAdd[i] != '') {
-    /* <!-- The Modal -->     https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_modal */
+   if (SX_Add[i] != '') {
     var div = document.createElement("div");
     div.id = "Mo"+i;
     div.className = "mod";
@@ -76,10 +74,10 @@ document.onreadystatechange = function () {
     div2.appendChild(Span);
 
     var p = document.createElement("p");
-    p.innerHTML = Explan_short[i];
+    p.innerHTML = SX_Exp2[i];
 
     div2.appendChild(p);
-    div2.insertAdjacentHTML( 'beforeend', ExplanAdd[i] );
+    div2.insertAdjacentHTML( 'beforeend', SX_Add[i] );
    } else {
     document.getElementById(id).innerHTML = '';
    }
@@ -94,10 +92,10 @@ function WebSocket_MSG(event) {
   const obj=event.data.split(',');
   var REGISTER_MAX = 84;
 
-  for (i=0; i<= REGISTER_MAX; i++) {
+  for (let i=0; i<= REGISTER_MAX; i++) {
    let element = document.getElementsByName('r' + i)[0];
    element.placeholder = element.value.replace(element.value, obj[i]);
-   if (element.value != obj[i]) {
+   if (element.value !== obj[i]) {
     element.value = element.value.replace(element.value, obj[i]);
     element.placeholder = obj[i];
     element.style.color = color2;
@@ -109,11 +107,11 @@ function WebSocket_MSG(event) {
   if (!mod_list) {
    mod_list = true;
    var selectElement = document.getElementById('modulation');
-   selectElement.add(new Option(MOD[0]));
-   selectElement.add(new Option(MOD[1]));
+   selectElement.add(new Option(SX_Mod[0]));
+   selectElement.add(new Option(SX_Mod[1]));
 
-   document.getElementById('MOD_FORMAT').innerHTML = MOD[ModType];
-   document.getElementById('modulation').value = MOD[ModType];
+   document.getElementById('MOD_FORMAT').innerHTML = SX_Mod[ModType];
+   document.getElementById('modulation').value = SX_Mod[ModType];
   }
 
   // 0x03 RegBitrateMsb 0x04 RegBitrateLsb
@@ -129,7 +127,7 @@ function WebSocket_MSG(event) {
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
 	var Freq = SX_FREQread(obj[7], obj[8], obj[9]) / 1000000;	// ToDO
   document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  Freq = Freq - (obj[REGISTER_MAX + 3] * 1);
+  Freq -= obj[REGISTER_MAX + 3] * 1;
   document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
   document.getElementsByName('freq')[0].value = Freq.toFixed(3);
 
@@ -157,7 +155,7 @@ function WebSocket_MSG(event) {
   // 0x37 RegPacketConfig1 0x38 RegPayloadLength
   var PacketFormat = (parseInt(obj[55], 16) & 0b10000000) >> 7;
   var PayloadLength = parseInt(obj[56], 16);
-  document.getElementById('PKTCTRL0').innerHTML = RegPacketConfig1[PacketFormat] +' with PayloadLength ' + PayloadLength;
+  document.getElementById('PKTCTRL0').innerHTML = SX_PacketC[PacketFormat] +' with PayloadLength ' + PayloadLength;
 
   document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
  }
@@ -175,7 +173,7 @@ function validHEX(e) {
  return pattern.test(e.key)
 }
 
-const Explan = [
+const SX_Exp1 = [
 'RegFifo (FIFO read/write access)',
 'RegOpMode (Operating modes transceiver)',
 'RegDataModul (DataMode, Modulation)',
@@ -263,7 +261,7 @@ const Explan = [
 'RegTestAfc',
 ];
 
-const Explan_short = [
+const SX_Exp2 = [
 '(nothing)',
 '',
 '',
@@ -351,7 +349,7 @@ const Explan_short = [
 ''
 ];
 
-const ExplanAdd = [
+const SX_Add = [
 '',
 '',
 '',
@@ -439,5 +437,5 @@ const ExplanAdd = [
 '',
 ];
 
-const MOD = ['FSK', 'OOK', 'reserved', 'reserved'];
-const RegPacketConfig1 = ['fixed', 'variable'];
+const SX_Mod = ['FSK', 'OOK', 'reserved', 'reserved'];
+const SX_PacketC = ['fixed', 'variable'];
