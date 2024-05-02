@@ -181,8 +181,8 @@ boolean WLAN_AP = false;                      // WiFi AP opened
 #define SENDDATA_LENGTH     129               // Weboberfläche | senden - max Länge
 char senddata_esp[SENDDATA_LENGTH];           // Weboberfläche | senden - Daten
 uint8_t msgRepeats;                           // Weboberfläche | senden - Wiederholungszähler RAW von Einstellung
-uint32_t msgSendInterval = 0;                 // Weboberfläche | senden - Intervall Zeit
-unsigned long msgSendStart = 0;               // Weboberfläche | senden - Startpunkt Zeit
+uint32_t msgSendInterval;                     // Weboberfläche | senden - Intervall Zeit
+unsigned long msgSendStart;                   // Weboberfläche | senden - Startpunkt Zeit
 
 IPAddress eip;                                // static IP - IP-Adresse
 IPAddress esnm;                               // static IP - Subnetzmaske
@@ -693,6 +693,7 @@ void loop() {
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
   if (msgRepeats > 0) {
     if (millis() >= msgSendStart) {
+      digitalWriteFast(LED, HIGH);    // LED on
       uint8_t PKTLENis = Chip_readReg(CHIP_PKTLEN, READ_BURST); // old packet length
       uint8_t len = strlen(senddata_esp) / 2;
       Chip_writeReg(CHIP_PKTLEN, len);
@@ -702,7 +703,7 @@ void loop() {
       Chip_sendFIFO(senddata_esp);
 #ifdef CC110x
       for (uint8_t i = 0; i < 255; i++) {
-        if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x01) {  /* 1 (0x01) IDLE IDLE */
+        if (Chip_readReg(CC110x_MARCSTATE, READ_BURST) == 0x01) {  // 1 (0x01) IDLE
           break;
         }
         delay(1);
@@ -715,13 +716,18 @@ void loop() {
       Chip_writeReg(0x3C, PKTLENis - 1);    // restore FifoThreshold setting
 #endif
       Chip_setReceiveMode();                // start receive mode
-      if (msgRepeats == 0) {
+      if (webSocket.connectedClients() > 0) {
+        String txt = F("TX,");
+        txt += msgRepeats;
+        txt += ',';
+        txt += msgSendInterval;
         for (uint8_t num = 0; num < WEBSOCKETS_SERVER_CLIENT_MAX; num++) {
           if (webSocketSite[num] == "/raw") {
-            webSocket.sendTXT(num, "TX_ready");
+            webSocket.sendTXT(num, txt);
           }
         }
       }
+      digitalWriteFast(LED, LOW);    // LED off
     }
   }
 #endif

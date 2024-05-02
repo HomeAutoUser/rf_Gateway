@@ -259,7 +259,7 @@ void SX1231_setTransmitMode() { // start transmit mode
   uint8_t Mode = (RegOpMode & 0b00011100) >> 2;       // Transceiver’s operating modes
   Mode = SX1231_setOperatingMode(3, Mode, RegOpMode); // 3 = Transmitter
 #ifdef debug_chip
-  Serial.println(F("[DB] SX1231 Set RegOpMode to 0b100 = Transmitter mode (TX)"));
+  Serial.println(F("[DB] SX1231 Set RegOpMode to 0b011 = Transmitter mode (TX)"));
 #endif
 }
 

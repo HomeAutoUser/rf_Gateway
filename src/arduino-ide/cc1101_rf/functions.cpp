@@ -291,7 +291,6 @@ uint8_t * EEPROMread_ipaddress(int address) {             /* read IP-Address fro
   return (EEPROMret);
 }
 
-
 /* Speicherbereich auslesen
    gibt einen Dump des Speicherinhalts in tabellarischer Form über den seriellen Port aus. */
 void EEPROMread_table() {

@@ -834,7 +834,8 @@ void web_raw() {            // ########## web_raw ##########
 
   String website = FPSTR(html_meta);
   website.reserve(3072);
-  website += F("<body><form method=\"post\">" /* form method wichtig für Daten von Button´s !!! */
+  website += F("<body>" /* form method wichtig für Daten von Button´s !!! */
+               //  website += F("<body><form method=\"get\">" /* form method wichtig für Daten von Button´s !!! */
                "<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/raw.css\">"
                "<script src=\"/js/raw.js\"></script>"
                "</head>");
@@ -847,26 +848,28 @@ void web_raw() {            // ########## web_raw ##########
                "<td class=\"td1\">pause (ms) <input aria-label=\"n2\" name=\"rept\" type=\"number\" onkeypress=\"if(this.value.length==6) return false;\"></td>"
                "<td class=\"td1\"><input class=\"btn\" type=\"button\" value=\"send\" onclick=\"msgSend()\"></td>"
                "</tr><tr><td class=\"td1\"><span id=\"val\">");
-  if (msgRepeats != 0) {
-    website += F("sending process active (");
-    website += msgRepeats;
-    website += F(" repeats with ");
-    website += msgSendInterval;
-    website += F(" ms pause) | finished in ");
-    if ((msgRepeats * msgSendInterval / 1000) > 60) {
-      website += (msgRepeats * msgSendInterval / 1000) / 60;
-      website += F(" minutes");
-    } else {
-      website += (msgRepeats * msgSendInterval / 1000);
-      website += F(" seconds");
-    }
-  } else {
-    website += F("ready to broadcast");
-  }
+  if (msgRepeats > 0) {
+    // `Sending process active, ${rep} more repeats, finished in ${hh}h ${mm}m ${ss}s`
+    uint32_t sec = msgRepeats * msgSendInterval / 1000;
+    //   const hh = ~~((sec/60/60)%24);
+    //   const mm = ~~((sec/60)%60);
+    //   const ss = ~~(sec%60);
 
+    website += F("Sending process active, ");
+    website += msgRepeats;
+    website += F(" more repeats, finished in ");
+    website += (sec / 60 / 60) % 24; // hours
+    website += F("h ");
+    website += (sec / 60) % 60; // minutes
+    website += F("m ");
+    website += sec % 60; // seconds
+    website += 's';
+  } else {
+    website += F("Ready to broadcast.");
+  }
   website += F("</span></td>"
-               "<td class=\"td1\" colspan=\"2\">" // Output Power setting
-               "Output Power&ensp;<select id=\"pow\" name=\"pow\">");
+               "<form method=\"get\"><td class=\"td1\" colspan=\"2\">" // Output Power setting
+               "Output power&ensp;<select id=\"pow\" name=\"pow\">");
 #ifdef CC110x
   float freq = Chip_readFreq(); // kHz
   if (freq < 615000) {          // Half between 433 and 868 MHz
