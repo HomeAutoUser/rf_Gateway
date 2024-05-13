@@ -11,7 +11,7 @@ function Website_ready(event) {
 }
 
 function WebSocket_Init() {
- console.log('Trying to open a WebSocket connection…');
+ console.log(`Trying to open a WebSocket connection…`);
  websocket = new WebSocket(wsurl);
  websocket.onopen = WebSocket_open;
  websocket.onclose = WebSocket_close;
@@ -19,15 +19,15 @@ function WebSocket_Init() {
 }
 
 function WebSocket_open(event) {
- console.log('Connected ' + window.location.host);
+ console.log(`Connected ` + window.location.host);
 
  if (document.getElementById('FXc')) {
-   FXOSC_C = document.getElementById('FXc').textContent;
-   FXOSC_SX = document.getElementById('FXr').textContent;
-   Fstep_SX = FXOSC_SX / 524288;
+  FXOSC_C = document.getElementById('FXc').textContent;
+  FXOSC_SX = document.getElementById('FXr').textContent;
+  Fstep_SX = FXOSC_SX / 524288;
  }
 }
 
 function WebSocket_close(event) {
- console.log('Disconnected ' + window.location.host);
+ console.log(`Disconnected ` + window.location.host);
 }

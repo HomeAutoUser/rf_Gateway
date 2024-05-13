@@ -159,6 +159,7 @@
   - V 2.1.4pre SIGNALduino compatible cc1101_rf_Gateway (2024-04-14) - compiled at Apr 14 2024 14:02:23
   Der Sketch verwendet 951689 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 52584 Bytes (16%) des dynamischen Speichers, 275096 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  ---------- 2024-05-08 - Arduino Release v2.0.16 based on ESP-IDF v4.4.7 ----------
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 

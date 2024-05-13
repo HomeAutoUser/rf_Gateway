@@ -1,35 +1,35 @@
 ﻿function C_FREQread(reg1,reg2,reg3) {
- var ret = parseInt(reg1, 16) * 256;
- ret = (ret + parseInt(reg2, 16) ) * 256;
- ret = (ret + parseInt(reg3, 16) );
- ret = parseInt(FXOSC_C * ret / 65536);
- return ret;
+ var r = parseInt(reg1, 16) * 256;
+ r = (r + parseInt(reg2, 16) ) * 256;
+ r = (r + parseInt(reg3, 16) );
+ r = parseInt(FXOSC_C * r / 65536);
+ return r;
 }
 
 function SX_FREQread(RegFrfMsb,RegFrfMid,RegFrfLsb) {
- var ret = parseInt(RegFrfMsb, 16) * 256;
- ret = (ret + parseInt(RegFrfMid, 16) ) * 256;
- ret = (ret + parseInt(RegFrfLsb, 16) );
- ret = parseInt(Fstep_SX * ret);
- return ret;
+ var r = parseInt(RegFrfMsb, 16) * 256;
+ r = (r + parseInt(RegFrfMid, 16) ) * 256;
+ r = (r + parseInt(RegFrfLsb, 16) );
+ r = parseInt(Fstep_SX * r);
+ return r;
 }
 
 function C_FREQset(freq) {
- var ret = ['','',''];
+ var r = ['','',''];
  var val = parseInt(Math.round(freq / FXOSC_C * 65536));
- ret[0] = parseInt(freq / FXOSC_C).toString(16);
- ret[1] = parseInt((val % 65536) / 256).toString(16);
- ret[2] = parseInt(val % 256).toString(16);
- return ret;
+ r[0] = parseInt(freq / FXOSC_C).toString(16);
+ r[1] = parseInt((val % 65536) / 256).toString(16);
+ r[2] = parseInt(val % 256).toString(16);
+ return r;
 }
 
 function SX_FREQset(freq) {
- var ret = ['','',''];
+ var r = ['','',''];
  var f = parseInt(freq / Fstep_SX);
- ret[0] = (parseInt( f / 65536 )).toString(16);
- ret[1] = (parseInt((f % 65536) / 256 )).toString(16);
- ret[2] = (parseInt( f % 256 )).toString(16);
- return ret;
+ r[0] = (parseInt( f / 65536 )).toString(16);
+ r[1] = (parseInt((f % 65536) / 256 )).toString(16);
+ r[2] = (parseInt( f % 256 )).toString(16);
+ return r;
 }
 
 function C_BWread(MDMCFG4) {
@@ -47,25 +47,25 @@ function SX_BWread(RegRxBw, RegDataModul) {
 }
 
 function C_BWsteps() {
- var ret = [];
+ var r = [];
  for (var bwExp = 3; bwExp >= 0; bwExp--) {
   for (var bwMant = 3; bwMant >= 0; bwMant--) {
    var RxBw = (FXOSC_C / (8 * (4 + bwMant) * (2 ** bwExp)));
-   ret.push(RxBw);
+   r.push(RxBw);
   }
  }
- return ret;
+ return r;
 }
 
 function SX_BWsteps(RegDataModul) {
- var ret = [];
+ var r = [];
  for (var bwExp = 7; bwExp >= 0; bwExp--) {
   for (var bwMant = 2; bwMant >= 0; bwMant--) {
    var RxBw = FXOSC_SX / ((16 + bwMant * 4) * (2 ** (bwExp + 2 + ((parseInt(RegDataModul, 16) & 0b00011000) >> 3) )));
-   ret.push(RxBw);
+   r.push(RxBw);
   }
  }
- return ret;
+ return r;
 }
 
 function C_DRATEread(MDMCFG4, MDMCFG3) {
@@ -84,7 +84,7 @@ function SX_DRATEread(RegBitrateMsb, RegBitrateLsb) {
 
 function C_DRATEset(DRATE,RxBw) {
  /* need CHANBW_E & CHANBW_M so set MDMCFG4 complete */
- var ret = [];
+ var r = [];
  var bits1 = 0;
  var bits2 = 0;
  var bw1 = 0;
@@ -92,12 +92,12 @@ function C_DRATEset(DRATE,RxBw) {
  var c10 = 0;
 
  if(RxBw == undefined) {
-  return ret;
+  return r;
  }
 
  exit_loops:
   for (var e = 0; e < 4; e++) {
-    for (var m = 0; m < 4; m++) {
+   for (var m = 0; m < 4; m++) {
       bits2 = bits1;
       bits1 = (e << 6) + (m << 4);
       bw2 = bw1;
@@ -152,14 +152,15 @@ function C_DRATEset(DRATE,RxBw) {
 
  if(Math.abs(DRATE - val1) > Math.abs(DRATE - val2)) {
   c10 += DRATE_E;
-  ret.push(c10.toString(16));
-  ret.push(DRATE_M.toString(16));
+  r.push(c10.toString(16));
+  r.push(DRATE_M.toString(16));
  } else {
   c10 += DRATE_E2;
-  ret.push(c10.toString(16));
-  ret.push(DRATE_M2.toString(16));
+  r.push(c10.toString(16));
+  r.push(DRATE_M2.toString(16));
  }
- return ret;
+ console.log(r); // ToDo not complete
+ return r;
 }
 
 function C_DEVread(DEVIATN) {
@@ -173,6 +174,29 @@ function SX_DEVread(RegFdevMsb, RegFdevLsb) {
  RegFdevLsb = parseInt(RegFdevLsb, 16);
  var Fdev = Fstep_SX * (RegFdevLsb + RegFdevMsb * 256);
  return Fdev;
+}
+
+function C_DEVset(DEV) {
+ // ToDO check again
+ if (DEV > 380.859375) DEV = 380.859375;
+ if (DEV < 1.586914) DEV = 1.586914;
+
+ var deviatn_val;
+ var bits;
+ var devlast = 0;
+ var bitlast = 0;
+
+ for (let DEV_E = 0; DEV_E < 8; DEV_E++) {
+  for (let DEV_M = 0; DEV_M < 8; DEV_M++) {
+   deviatn_val = (8 + DEV_M) * (Math.pow(2, DEV_E)) * FXOSC_C / 1000 / (Math.pow(2, 17));
+   bits = DEV_M + (DEV_E << 4);
+   if (DEV > deviatn_val || ((deviatn_val - DEV)) < (DEV - devlast)) {
+     devlast = deviatn_val;
+     bitlast = bits;
+   }
+  }
+ }
+ return dec2hex(bitlast);
 }
 
 function C_FREQOFFread(FSCTRL0) {
@@ -192,6 +216,13 @@ function C_FIFOread(FIFOTHR) {
 function SX_FIFOread(FIFOTHR) {
  // ToDO needed ???
  return parseInt(FIFOTHR, 16) & 0b00001111;
+}
+
+function SX_SyncToC(S1,S2,S3,S4,S5,S6,S7,S8) {
+ const SyncIn=[S1,S2,S3,S4,S5,S6,S7,S8],SyncOut=["",""];
+ var SyncCnt=0;
+ for(let n=0;n<SyncIn.length;n++)"AA"!==SyncIn[n]&&(1==++SyncCnt?SyncOut[0]=SyncIn[n]:2==SyncCnt&&(SyncOut[1]=SyncIn[n]));
+ return SyncOut;
 }
 
 function saveFile(data,filename) {
@@ -218,142 +249,6 @@ function dec2hex(i) {  // fix two places
  return (i+0x100).toString(16).substr(-2).toUpperCase();
 }
 
-const C_RegN = [
-'IOCFG2',
-'IOCFG1',
-'IOCFG0',
-'FIFOTHR',
-'SYNC1',
-'SYNC0',
-'PKTLEN',
-'PKTCTRL1',
-'PKTCTRL0',
-'ADDR',
-'CHANNR',
-'FSCTRL1',
-'FSCTRL0',
-'FREQ2',
-'FREQ1',
-'FREQ0',
-'MDMCFG4',
-'MDMCFG3',
-'MDMCFG2',
-'MDMCFG1',
-'MDMCFG0',
-'DEVIATN',
-'MCSM2',
-'MCSM1',
-'MCSM0',
-'FOCCFG',
-'BSCFG',
-'AGCCTRL2',
-'AGCCTRL1',
-'AGCCTRL0',
-'WOREVT1',
-'WOREVT0',
-'WORCTRL',
-'FREND1',
-'FREND0',
-'FSCAL3',
-'FSCAL2',
-'FSCAL1',
-'FSCAL0',
-'RCCTRL1',
-'RCCTRL0',
-'FSTEST',
-'PTEST',
-'AGCTEST',
-'TEST2',
-'TEST1',
-'TEST0',
-];
-
-const SX_RegN = [
-'RegFifo',
-'RegOpMode',
-'RegDataModul',
-'RegBitrateMsb',
-'RegBitrateLsb',
-'RegFdevMsb',
-'RegFdevLsb',
-'RegFrfMsb',
-'RegFrfMid',
-'RegFrfLsb',
-'RegOsc1',
-'RegAfcCtrl',
-'RegLowBat',
-'RegListen1',
-'RegListen2',
-'RegListen3',
-'RegVersion',
-'RegPaLevel',
-'RegPaRamp',
-'RegOcp',
-'Reserved14',
-'Reserved15',
-'Reserved16',
-'Reserved17',
-'RegLna',
-'RegRxBw',
-'RegAfcBw',
-'RegOokPeak',
-'RegOokAvg',
-'RegOokFix',
-'RegAfcFei',
-'RegAfcMsb',
-'RegAfcLsb',
-'RegFeiMsb',
-'RegFeiLsb',
-'RegRssiConfig',
-'RegRssiValue',
-'RegDioMapping1',
-'RegDioMapping2',
-'RegIrqFlags1',
-'RegIrqFlags2',
-'RegRssiThresh',
-'RegRxTimeout1',
-'RegRxTimeout2',
-'RegPreambleMsb',
-'RegPreambleLsb',
-'RegSyncConfig',
-'RegSyncValue1',
-'RegSyncValue2',
-'RegSyncValue3',
-'RegSyncValue4',
-'RegSyncValue5',
-'RegSyncValue6',
-'RegSyncValue7',
-'RegSyncValue8',
-'RegPacketConfig1',
-'RegPayloadLength',
-'RegNodeAdrs',
-'RegBroadcastAdrs',
-'RegAutoModes',
-'RegFifoThresh',
-'RegPacketConfig2',
-'RegAesKey1',
-'RegAesKey2',
-'RegAesKey3',
-'RegAesKey4',
-'RegAesKey5',
-'RegAesKey6',
-'RegAesKey7',
-'RegAesKey8',
-'RegAesKey9',
-'RegAesKey10',
-'RegAesKey11',
-'RegAesKey12',
-'RegAesKey13',
-'RegAesKey14',
-'RegAesKey15',
-'RegAesKey16',
-'RegTemp1',
-'RegTemp2',
-'RegTestLna',
-'RegTestTcxo',
-'RegTestllBw',
-'RegTestDagc',
-'RegTestAfc'
-];
-
+const C_RegN = ['IOCFG2','IOCFG1','IOCFG0','FIFOTHR','SYNC1','SYNC0','PKTLEN','PKTCTRL1','PKTCTRL0','ADDR','CHANNR','FSCTRL1','FSCTRL0','FREQ2','FREQ1','FREQ0','MDMCFG4','MDMCFG3','MDMCFG2','MDMCFG1','MDMCFG0','DEVIATN','MCSM2','MCSM1','MCSM0','FOCCFG','BSCFG','AGCCTRL2','AGCCTRL1','AGCCTRL0','WOREVT1','WOREVT0','WORCTRL','FREND1','FREND0','FSCAL3','FSCAL2','FSCAL1','FSCAL0','RCCTRL1','RCCTRL0','FSTEST','PTEST','AGCTEST','TEST2','TEST1','TEST0'];
+const SX_RegN = ['RegFifo','RegOpMode','RegDataModul','RegBitrateMsb','RegBitrateLsb','RegFdevMsb','RegFdevLsb','RegFrfMsb','RegFrfMid','RegFrfLsb','RegOsc1','RegAfcCtrl','RegLowBat','RegListen1','RegListen2','RegListen3','RegVersion','RegPaLevel','RegPaRamp','RegOcp','Reserved14','Reserved15','Reserved16','Reserved17','RegLna','RegRxBw','RegAfcBw','RegOokPeak','RegOokAvg','RegOokFix','RegAfcFei','RegAfcMsb','RegAfcLsb','RegFeiMsb','RegFeiLsb','RegRssiConfig','RegRssiValue','RegDioMapping1','RegDioMapping2','RegIrqFlags1','RegIrqFlags2','RegRssiThresh','RegRxTimeout1','RegRxTimeout2','RegPreambleMsb','RegPreambleLsb','RegSyncConfig','RegSyncValue1','RegSyncValue2','RegSyncValue3','RegSyncValue4','RegSyncValue5','RegSyncValue6','RegSyncValue7','RegSyncValue8','RegPacketConfig1','RegPayloadLength','RegNodeAdrs','RegBroadcastAdrs','RegAutoModes','RegFifoThresh','RegPacketConfig2','RegAesKey1','RegAesKey2','RegAesKey3','RegAesKey4','RegAesKey5','RegAesKey6','RegAesKey7','RegAesKey8','RegAesKey9','RegAesKey10','RegAesKey11','RegAesKey12','RegAesKey13','RegAesKey14','RegAesKey15','RegAesKey16','RegTemp1','RegTemp2','RegTestLna','RegTestTcxo','RegTestllBw','RegTestDagc','RegTestAfc'];
 const C_XML = ['        <Register>', '        </Register>','            <Name>','</Name>','            <Value>','</Value>'];

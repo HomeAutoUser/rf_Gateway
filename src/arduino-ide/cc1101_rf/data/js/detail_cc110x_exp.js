@@ -16,7 +16,7 @@ let stateCheck = setInterval(() => {
 }, 50);
 
 function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
+ console.log(`received message: ` + event.data);
  
   if(event.data.includes(',detail,')) {
    obj=event.data.split(',');
@@ -28,27 +28,31 @@ function saveData(variant){
  var fns;
  var txt;
  if (variant == 'h') {
-  txt = 'const uint8_t ' + fileName + '[] PROGMEM = {\n';
-  txt += '  // CC110x register values for ' + obj[obj.length - 2] + '\n';
+  txt = `const uint8_t ` + fileName + `[] PROGMEM = {\n`;
+  txt += `  // CC110x register values for ` + obj[obj.length - 2] + `\n`;
   for (let i=0; i<= 46; i++) {
-    txt += '  0x' + obj[i] + ', // 0x' + dec2hex(i) + ' - ' + C_RegN[i] + '\n';
+    txt += `  0x` + obj[i] + `, // 0x` + dec2hex(i) + ` - ` + C_RegN[i] + `\n`;
   }
-  txt += '}; // END CC110x ' +  fileName + ' register values\n';
-  fns = 'CC110x_' + fileName + '.h';
+  txt += `}; // END CC110x ` +  fileName + ` register values\n`;
+  fns = `CC110x_` + fileName + `.h`;
  } else if (variant == 'C') {
-  txt = '<dcpanelconfiguration>\n';
-  txt += '    <registersettings>\n';
+  txt = `<dcpanelconfiguration>\n`;
+  txt += `    <registersettings>\n`;
   for (i=0; i<= 46; i++) {
-    txt += C_XML[0] + '\n';
-    txt += C_XML[2] + C_RegN[i] + C_XML[3] + '\n';
-    txt += C_XML[4] + '0x' + obj[i] + C_XML[5] + '\n';
-    txt += C_XML[1] + '\n';
+    txt += C_XML[0] + `\n`;
+    txt += C_XML[2] + C_RegN[i] + C_XML[3] + `\n`;
+    txt += C_XML[4] + `0x` + obj[i] + C_XML[5] + `\n`;
+    txt += C_XML[1] + `\n`;
   }
-  txt += '    </registersettings>\n';
-  txt += '</dcpanelconfiguration>\n';
-  fns = 'SmarfRF_' + fileName + '.xml';
+  txt += C_XML[0] + `\n`;
+  txt += C_XML[2] + `PA_TABLE0` + C_XML[3] + `\n`;  // ToDo automatically ?
+  txt += C_XML[4] + `0x86` + C_XML[5] + `\n`;
+  txt += C_XML[1] + `\n`;
+  txt += `    </registersettings>\n`;
+  txt += `</dcpanelconfiguration>\n`;
+  fns = `SmarfRF_` + fileName + `.xml`;
  } else {
-  alert('development');
+  alert(`development`);
   return;
  }
 

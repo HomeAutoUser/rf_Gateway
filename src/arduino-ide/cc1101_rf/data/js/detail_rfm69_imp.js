@@ -6,7 +6,7 @@ js2.src = '/js/functions.js';
 document.head.appendChild(js2);
 
 function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
+ console.log(`received message: ` + event.data);
 }
 
 function inputfile() {
@@ -29,19 +29,18 @@ function inputfile() {
 
       for (let i = 0; i < lines.length; i++) {
         if (lines[i].match(/REG/g)) {
-          regAdrPos = lines[i].search("0x");
-          regAdr = lines[i].substr(regAdrPos+2,2);
-          regValTxt = lines[i].substr(regAdrPos+4);
-          regVal = regValTxt.search("0x");
-          regVal = regValTxt.substr(regVal+2,2)
-          regTxt += regAdr;
-          regTxt += regVal;
+         regAdrPos = lines[i].search("0x");
+         regAdr = lines[i].substr(regAdrPos+2,2);
+         regValTxt = lines[i].substr(regAdrPos+4);
+         regVal = regValTxt.search("0x");
+         regVal = regValTxt.substr(regVal+2,2)
+         regTxt += regAdr;
+         regTxt += regVal;
         }
         if (i == 85) {  // security point | software export 85 registers
           break;
         }
       }
-      //console.log(regTxt);
       websocket.send('imp,SX,'+regTxt);
     };
     reader.readAsText(fileList[0]);
@@ -72,7 +71,6 @@ function SXimpFromCC() {
       if(adr == '04' || adr == '05') {
         Sync.push(reg[i].substring(1, 5));
       }
-
       // all Frequency register, once failed = no Frequency set
       if(adr == '0D' || adr == '0E' || adr == '0F') {
         Freq.push(reg[i].substring(1, 5));
@@ -89,22 +87,18 @@ function SXimpFromCC() {
   }
 
   if (Sync.length == 2) {
-    inputTXT += Sync[0]+',';
-    inputTXT += Sync[1]+',';
+    inputTXT += Sync[0]+',' + Sync[1]+',';
   }
 
   if (Freq.length == 3) {
     var val = cCalFreq(Freq[0].substring(2, 4), Freq[1].substring(2, 4), Freq[2].substring(2, 4), 26);
     alert('freq cc110x: ' + val);
     alert('cal rfm register');
-    inputTXT += Freq[0]+',';
-    inputTXT += Freq[1]+',';
-    inputTXT += Freq[2]+',';
+    inputTXT += Freq[0]+',' + Freq[1]+',' + Freq[2]+',';
   }
 
   if (Drate.length == 2) {
-    inputTXT += Drate[0]+',';
-    inputTXT += Drate[1]+',';
+    inputTXT += Drate[0]+',' + Drate[1]+',';
   }
 
   if(Dev != '') {
@@ -123,15 +117,11 @@ function SXimpFromCC() {
 
 const SX_allowCC = [
  // Sync
- '04',
- '05',
+ '04','05',
  // Frequency
- '0D',
- '0E',
- '0F',
+ '0D','0E','0F',
  // Datarate & Bandwidth
- '10',
- '11',
+ '10','11',
  // Deviation
  '15',
 ];

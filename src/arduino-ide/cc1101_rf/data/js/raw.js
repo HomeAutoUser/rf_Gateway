@@ -1,4 +1,5 @@
-﻿var store = document.querySelector(':root');  /* Get the CSS root element */
+﻿// https://stackoverflow.com/questions/16206322/how-to-get-js-variable-to-retain-value-after-page-refresh
+var store = document.querySelector(':root');  /* Get the CSS root element */
 var value = getComputedStyle(store);          /* Get the styles (properties and values) for the root */
 var color1 = value.getPropertyValue('--rssi_good');
 var color2 = value.getPropertyValue('--rssi_bad');
@@ -9,14 +10,11 @@ document.head.appendChild(js);
 
 document.onreadystatechange = function () {
  if (document.readyState == 'complete') {
-   // var test = localStorage.getItem("someVarKey");
-   // console.log('test');
-   // console.log(test);
   const sd = document.getElementsByName('sd')[0];
   sd.maxLength = 128;
   sd.placeholder = 'Hex data to send (max 128 characters).';
   sd.title = 'Input: only hexadecimal characters.';
-  sd.size = 60;  
+  sd.size = 60;
   const rep = document.getElementsByName('rep')[0];
   rep.max = 99;
   rep.min = 0;
@@ -31,7 +29,7 @@ document.onreadystatechange = function () {
 }
 
 function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
+ console.log(`received message: ` + event.data);
  if (event.data.includes('RAW,')) {
   var time = new Date().toLocaleTimeString();
   const obj=event.data.split(',');
@@ -63,18 +61,19 @@ function WebSocket_MSG(event) {
   document.getElementById('MODE').innerHTML = obj[1];
  } else if (event.data.includes('TX,')) {
   const obj=event.data.split(',');
-	if (obj[1]==0) {
+  let ob = document.getElementById('val');
+  if (obj[1]==0) {
    var today = new Date();
-   document.getElementById('val').innerHTML = 'All messages has been sent, finished at ' + today.toLocaleTimeString('de-DE');
-	} else {
+   ob.innerHTML = `All messages has been sent, finished at ` + today.toLocaleTimeString('de-DE');
+  } else {
    const rep = obj[1];
    const pause = obj[2];
-	 const dur = rep*pause/1000;
+   const dur = rep*pause/1000;
    const hh = ~~((dur/60/60)%24);
    const mm = ~~((dur/60)%60);
    const ss = ~~(dur%60);
-   document.getElementById('val').innerHTML = `Sending process active, ${rep} more repeats, finished in ${hh}h ${mm}m ${ss}s`;
-	}
+   ob.innerHTML = `Sending process active, ${rep} more repeats, finished in ${hh}h ${mm}m ${ss}s`;
+  }
  }
 }
 
@@ -82,19 +81,21 @@ function msgSend() {
  let sd = document.getElementsByName('sd')[0].value;
  let rep = document.getElementsByName('rep')[0].value;
  let rept = document.getElementsByName('rept')[0].value;
+ let obj = document.getElementById('val');
  if (sd === '' || rep === '' || rept === '') {
-  document.getElementById('val').innerHTML = 'Please input all data, will not be sent!';
-  document.getElementById('val').style.color = color2;
+  obj.innerHTML = `Please input all data, will not be sent!`;
+  obj.style.color = color2;
  } else if (!sd.match('^[\\da-fA-F]{1,128}$')) {
-  document.getElementById('val').innerHTML = 'Data part is not hexadecimal, will not be sent!';
-  document.getElementById('val').style.color = color2;
+  obj.innerHTML = `Data part is not hexadecimal, will not be sent!`;
+  obj.style.color = color2;
  } else if (sd.length % 2 != 0) {
-  document.getElementById('val').innerHTML = 'Number of nibbles in data is odd, will not be sent!';
-  document.getElementById('val').style.color = color2;
+  obj.innerHTML = `Number of nibbles in data is odd, will not be sent!`;
+  obj.style.color = color2;
  } else {
   websocket.send(`send,${sd},${rep},${rept}`);
-// var someVarName = rep;
-// localStorage.setItem("someVarKey", someVarName); }
+  // var someVarName = rep;
+  // localStorage.setItem("someVarKey", someVarName); }
+ }
 }
 
 function TableHandlers() {
@@ -104,7 +105,7 @@ function TableHandlers() {
     if (!cell) {return;} // Quit, not clicked on a cell
     const row = cell.parentElement;
     if(cell.cellIndex == 1) {
-      console.log('copyToClipboard ' + cell.innerHTML);
+      console.log(`copyToClipboard ` + cell.innerHTML);
 
       const el = document.createElement('textarea');
       el.value = cell.innerHTML;

@@ -7,30 +7,38 @@ document.head.appendChild(js2);
 
 const tab = '	';
 const SX1231_RegAddrTrans = ['0x58','0x59','0x5F','0x6F','0x71'];
+
+/* const SX1231_RegAddrTrans = [
+  ['0x58','0x59','0x5F','0x6F','0x71'], // v2.1 ???
+  ['0x58','0x59','0x5F','0x6F','0x71'], // v2.2 ???
+  ['0x58','0x59','0x5F','0x6F','0x71'], // v2.3 ???
+  ['0x58','0x5A','0x5C','0x6F','0x71'], // v2.4
+]; */
+
 var obj;
 var fileName;
 
 let stateCheck = setInterval(() => {
   if (document.readyState === 'complete' && websocket.readyState == 1) {
-    websocket.send('detail');
-    clearInterval(stateCheck);  // document ready
+   websocket.send('detail');
+   clearInterval(stateCheck);  // document ready
   }
 }, 50);
 
 function WebSocket_MSG(event) {
- console.log('received message: ' + event.data);
+ console.log(`received message: ` + event.data);
 
  if(event.data.includes(',detail,')) {
   obj=event.data.split(',');
   fileName=obj[obj.length - 2].replaceAll(' ','_');
 
   let element = document.getElementById("REGs");
-  var txt = "'0001','012E','022E',";
+  var txt = `'0001','012E','022E',`;
 
   // 0x38 RegPayloadLength
   var FIFO_THR = parseInt(obj[56], 16) / 4;
   FIFO_THR = parseInt(FIFO_THR);
-  txt += "'034" + FIFO_THR.toString(16) + "',";
+  txt += `'034` + FIFO_THR.toString(16) + `',`;
 
   // 0x02 RegDataModul | TODO
   var ModType = (parseInt(obj[2], 16) & 0b00011000) >> 3;
@@ -42,48 +50,20 @@ function WebSocket_MSG(event) {
   var r06 = parseInt(obj[6], 16);
   var Fdev = ( Fstep_SX * (r06 + r05 * 256) ) / 1000;
   // cc1101 DEVIATN (0x15)
-  if (Fdev > 380.859375) Fdev = 380.859375;
-  if (Fdev < 1.586914) Fdev = 1.586914;
-  Fdev*=2;
+  Fdev = C_DEVset(Fdev);
 
-  var Fdev_val;
-  var devlast = 0;
-  var bitlast = 0;
-
-  for (var DEVIATION_E = 0; DEVIATION_E < 8; DEVIATION_E++) {
-    for (var DEVIATION_M = 0; DEVIATION_M < 8; DEVIATION_M++) {
-      Fdev_val = (8 + DEVIATION_M) * (2 ** DEVIATION_E) * 26000.0 / (2 ** 17);
-      var bits = DEVIATION_M + (DEVIATION_E << 4);
-      if (Fdev > Fdev_val || ((Fdev_val - Fdev) < (Fdev - devlast))) {
-        devlast = Fdev_val;
-        bitlast = bits;
-      }
-    }
-  }
-
-  // 0x2F RegSyncValue1 0x30 RegSyncValue2 0x31 RegSyncValue2 ...
-  const Sync = [obj[47], obj[48], obj[49]];
-  var SyncCnt = 0;
-  // cc1101 SYNC0 (0x05) | SYNC1 (0x04)
-  for (let i = 0; i < Sync.length; i++) {
-   if(Sync[i] !== 'AA') {
-     SyncCnt ++;
-     if(SyncCnt == 1) {
-      txt += "'04" + Sync[i] + "',";
-     } else if (SyncCnt == 2) {
-      txt += "'05" + Sync[i] +"',";
-     }
-   }
-  }
+  // 0x2F RegSyncValue1 ... to 0x36 RegSyncValue8 | cc110x SYNC
+  const out = SX_SyncToC(obj[47],obj[48],obj[49],obj[50],obj[51],obj[52],obj[53],obj[54]);
+  txt += `'04` + out[0] + `',` + `'05` + out[1] + `',`;
 
   // 0x38 RegPayloadLength
-  txt += "'06" + obj[56] + "',";
+  txt += `'06` + obj[56] + `',`;
   // non-existent on RFM
-  txt += "'0780',";
+  txt += `'0780',`;
 
   // 0x37 RegPacketConfig1
   var r37_7 = obj[55] >> 7;
-  txt += "'080" + r37_7 + "',";
+  txt += `'080` + r37_7 + `',`;
 
   // 0x07 RegFrfMsb 0x08 RegFrfMid 0x09 RegFrfLsb
   var r07to09 = SX_FREQread(obj[7], obj[8], obj[9]);
@@ -98,7 +78,7 @@ function WebSocket_MSG(event) {
   // 0x03 RegBitrateMsb 0x04 RegBitrateLsb
   var rBitRate = (FXOSC_SX / ((parseInt(obj[3], 16) * 256) + parseInt(obj[4], 16)));
   arr = C_DRATEset(rBitRate,RxBw);
-  txt += `'10${arr[0].toString(16)}','11${arr[1].toString(16)}','12${r02}','1322','14F8','15${bitlast.toString(16)}','1916','1B43','1C68'`;
+  txt += `'10${arr[0].toString(16)}','11${arr[1].toString(16)}','12${r02}','1322','14F8','15${Fdev}','1916','1B43','1C68'`;
   txt = txt.toUpperCase();
   element.innerText = txt;
  }
@@ -110,37 +90,55 @@ function saveData(variant){
  if (variant == 'SX') {
   txt = '#Type	Register Name	Address[Hex]	Value[Hex]\n';
   for (i=0; i<= 84; i++) {
-   if (i>=80) {
-    txt += 'REG	' + SX_RegN[i] + tab + SX1231_RegAddrTrans[i-80] + tab + '0x' + obj[i] + '\n';
-   } else {
-    txt += 'REG	' + SX_RegN[i] + tab + '0x' + dec2hex(i) + tab + '0x' + obj[i] + '\n';
-   }
+   txt += 'REG	' + SX_RegN[i] + tab;
+   i>=80 ? txt+=SX1231_RegAddrTrans[i-80] : txt+=`0x`+dec2hex(i);
+   txt += tab + `0x` + obj[i] + `\n`;
   }
-  txt += 'PKT\tFalse;False;0;0;\n';
-  fns = 'SX1231SKB_' + fileName + '.cfg';
+  txt += `PKT\tFalse;False;0;0;\n`;
+  fns = `SX1231SKB_` + fileName + `.cfg`;
  } else if (variant == 'h') {
-  txt = 'const uint8_t ' + fileName + '[] PROGMEM = {\n';
-  txt += '  // SX1231 register values for ' + obj[obj.length - 2] + '\n';
+  txt = `const uint8_t ` + fileName + `[] PROGMEM = {\n`;
+  txt += `  // SX1231 register values for ` + obj[obj.length - 2] + `\n`;
   for (i=0; i<= 84; i++) {
-   if (i>=80) {
-    txt += '  0x' + obj[i] + ', // ' + SX1231_RegAddrTrans[i-80] + ' - ' + SX_RegN[i] + '\n';
-   } else {
-    txt += '  0x' + obj[i] + ', // ' + '0x' + dec2hex(i) + ' - ' + SX_RegN[i] + '\n';
-   }
+   txt += `  0x` + obj[i] + `, // `;
+   i>=80 ? txt+=SX1231_RegAddrTrans[i-80] : txt+=`0x`+dec2hex(i);
+   txt +=  ` - ` + SX_RegN[i] + `\n`;
   }
-  txt += '}; // END SX1231 ' +  fileName + ' register values\n';
-  fns = 'SX1231_' + fileName + '.h';
+  txt += `}; // END SX1231 ` +  fileName + ` register values\n`;
+  fns = `SX1231_` + fileName + `.h`;
  } else if (variant == 'C') {
-  txt = '<dcpanelconfiguration>\n';
-  txt += '    <registersettings>\n';
+  txt = `<dcpanelconfiguration>\n` + `    <registersettings>\n`;
+  const sy = SX_SyncToC(obj[47],obj[48],obj[49],obj[50],obj[51],obj[52],obj[53],obj[54]);
+  var fr = ['','',''];
+  fr = C_FREQset( SX_FREQread(obj[7], obj[8], obj[9]) );
+  var mdm = ['',''];
+  mdm = C_DRATEset(SX_DRATEread(obj[3],obj[4]),(SX_BWread(obj[25], obj[2])*2));
 
-  txt += '    </registersettings>\n';
-  txt += '</dcpanelconfiguration>\n';
-  fns = 'SmarfRF_' + fileName + '.xml';
+  for(let r=0; r<=6; r++) {
+   txt += C_XML[0] + `\n` + C_XML[2];
+   if(r<=1) {  // Sync
+    txt += C_RegN[r + 4] + C_XML[3] + `\n` + C_XML[4] + `0x` + sy[r];
+   } else if (r>1 && r<=4) { // Frequency
+    txt += C_RegN[r + 11] + C_XML[3] + `\n` + C_XML[4] + `0x` + fr[r - 2];
+   } else if (r>4 && r<=6) { // DataRate
+    txt += C_RegN[r + 11] + C_XML[3] + `\n` + C_XML[4] + `0x` + mdm[r - 5];
+   }
+   txt += C_XML[5] + `\n` + C_XML[1] + `\n`;
+  }
+
+  // Deviation
+  let Fdev = SX_DEVread(obj[5], obj[6]) / 1000;	// ToDo
+  txt += C_XML[0] + `\n` + C_XML[2] + C_RegN[21] + C_XML[3] + `\n`;
+  txt += C_XML[4] + `0x` + C_DEVset(Fdev) + C_XML[5] + `\n` + C_XML[1] + `\n`;
+
+  txt += C_XML[0] + `\n` + C_XML[2] + `PA_TABLE0` + C_XML[3] + `\n`;
+  txt += C_XML[4] + `0x86` + C_XML[5] + `\n` + C_XML[1] + `\n`;
+  txt += `    </registersettings>\n` + `</dcpanelconfiguration>\n`;
+  fns = `SmarfRF_` + fileName + `.xml`;
  } else {
-  alert('development');
+  alert(`development`);
   return;
  }
 
- saveFile(txt,fns); 
+ saveFile(txt,fns);
 }
