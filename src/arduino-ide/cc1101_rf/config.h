@@ -25,7 +25,7 @@
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
 #define FWVer             "V 2.1.5pre"
-#define FWVerDate         "2024-05-13"
+#define FWVerDate         "2024-05-15"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM

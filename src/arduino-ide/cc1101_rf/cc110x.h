@@ -232,7 +232,7 @@ const uint8_t Config_Avantek[] PROGMEM = { // ToDo - kein Empfang
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -311,7 +311,7 @@ const uint8_t Config_Bresser_5in1[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control - SIGNALduino 0xF8
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xE9,  // FSCAL3              Frequency Synthesizer Calibration (from SmartRF Studio)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -390,7 +390,7 @@ const uint8_t Config_Bresser_6in1[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -469,7 +469,7 @@ const uint8_t Config_Bresser_7in1[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -548,7 +548,7 @@ const uint8_t Config_Lacrosse_mode1[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -629,7 +629,7 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -707,7 +707,7 @@ const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -785,7 +785,7 @@ const uint8_t Config_Fine_Offset_WH51_868[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -863,7 +863,7 @@ const uint8_t Config_Fine_Offset_WH57_434[] PROGMEM = {
   0xFB,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
   //  0x56,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -941,7 +941,7 @@ const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xFB,  // WORCTRL             Wake On Radio Control
   0x56,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1019,7 +1019,7 @@ const uint8_t Config_Inkbird_IBS_P01R[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEF,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2C,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x18,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1096,7 +1096,7 @@ const uint8_t Config_KOPP_FC[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0x56,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1249,7 +1249,7 @@ const uint8_t Config_PCA301[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0x56,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1327,7 +1327,7 @@ const uint8_t Config_Rojaflex[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0x56,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1404,7 +1404,7 @@ const uint8_t Config_X_Sense[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEF,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2B,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x14,  // FSCAL1              Frequency Synthesizer Calibration (x)
@@ -1562,7 +1562,7 @@ const uint8_t Config_Lacrosse_mode3[] PROGMEM = {
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
   0xB6,  // FREND1              Front End RX Configuration
-  0x11,  // FREND0              Front End TX Configuration
+  0x10,  // FREND0              Front End TX Configuration
   0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
   0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)

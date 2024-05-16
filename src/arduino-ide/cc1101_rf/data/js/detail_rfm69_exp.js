@@ -107,7 +107,7 @@ function saveData(variant){
   txt += `}; // END SX1231 ` +  fileName + ` register values\n`;
   fns = `SX1231_` + fileName + `.h`;
  } else if (variant == 'C') {
-  txt = `<dcpanelconfiguration>\n` + `    <registersettings>\n`;
+  txt = '<dcpanelconfiguration>\n    <registersettings>\n';
   const sy = SX_SyncToC(obj[47],obj[48],obj[49],obj[50],obj[51],obj[52],obj[53],obj[54]);
   var fr = ['','',''];
   fr = C_FREQset( SX_FREQread(obj[7], obj[8], obj[9]) );
@@ -130,10 +130,12 @@ function saveData(variant){
   let Fdev = SX_DEVread(obj[5], obj[6]) / 1000;	// ToDo
   txt += C_XML[0] + `\n` + C_XML[2] + C_RegN[21] + C_XML[3] + `\n`;
   txt += C_XML[4] + `0x` + C_DEVset(Fdev) + C_XML[5] + `\n` + C_XML[1] + `\n`;
-
+  // PA_TABLE0
   txt += C_XML[0] + `\n` + C_XML[2] + `PA_TABLE0` + C_XML[3] + `\n`;
-  txt += C_XML[4] + `0x86` + C_XML[5] + `\n` + C_XML[1] + `\n`;
-  txt += `    </registersettings>\n` + `</dcpanelconfiguration>\n`;
+  txt += C_XML[4] + `0xC0` + C_XML[5] + `\n` + C_XML[1] + `\n`;
+  txt += `    </registersettings>\n`
+  txt += `    <rfparameters>\n        <Property name="Xtal Frequency" role="46">${(FXOSC_C/1000000).toFixed(6)}</Property>\n    </rfparameters>\n`;
+  txt += `</dcpanelconfiguration>\n`;
   fns = `SmarfRF_` + fileName + `.xml`;
  } else {
   alert(`development`);

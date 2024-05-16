@@ -45,10 +45,17 @@ function saveData(variant){
     txt += C_XML[1] + `\n`;
   }
   txt += C_XML[0] + `\n`;
-  txt += C_XML[2] + `PA_TABLE0` + C_XML[3] + `\n`;  // ToDo automatically ?
-  txt += C_XML[4] + `0x86` + C_XML[5] + `\n`;
+  txt += C_XML[2] + `PA_TABLE`;
+  if(((parseInt(obj[18], 16) & 0b01110000) >> 4)==3) {
+    txt += 1;
+  } else {
+    txt += 0;
+  }
+  txt += C_XML[3] + `\n`;
+  txt += C_XML[4] + `0xC0` + C_XML[5] + `\n`;
   txt += C_XML[1] + `\n`;
-  txt += `    </registersettings>\n`;
+  txt += `    </registersettings>\n`
+  txt += `    <rfparameters>\n        <Property name="Xtal Frequency" role="46">${(FXOSC_C/1000000).toFixed(6)}</Property>\n    </rfparameters>\n`;
   txt += `</dcpanelconfiguration>\n`;
   fns = `SmarfRF_` + fileName + `.xml`;
  } else {

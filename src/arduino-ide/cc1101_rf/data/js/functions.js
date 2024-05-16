@@ -17,18 +17,18 @@ function SX_FREQread(RegFrfMsb,RegFrfMid,RegFrfLsb) {
 function C_FREQset(freq) {
  var r = ['','',''];
  var val = parseInt(Math.round(freq / FXOSC_C * 65536));
- r[0] = parseInt(freq / FXOSC_C).toString(16);
- r[1] = parseInt((val % 65536) / 256).toString(16);
- r[2] = parseInt(val % 256).toString(16);
+ r[0] = dec2hex(parseInt(freq / FXOSC_C));
+ r[1] = dec2hex(parseInt((val % 65536) / 256));
+ r[2] = dec2hex(parseInt(val % 256));
  return r;
 }
 
 function SX_FREQset(freq) {
  var r = ['','',''];
  var f = parseInt(freq / Fstep_SX);
- r[0] = (parseInt( f / 65536 )).toString(16);
- r[1] = (parseInt((f % 65536) / 256 )).toString(16);
- r[2] = (parseInt( f % 256 )).toString(16);
+ r[0] = dec2hex(parseInt( f / 65536 ));
+ r[1] = dec2hex(parseInt((f % 65536) / 256 ));
+ r[2] = dec2hex(parseInt( f % 256 ));
  return r;
 }
 
@@ -85,29 +85,27 @@ function SX_DRATEread(RegBitrateMsb, RegBitrateLsb) {
 function C_DRATEset(DRATE,RxBw) {
  /* need CHANBW_E & CHANBW_M so set MDMCFG4 complete */
  var r = [];
- var bits1 = 0;
- var bits2 = 0;
- var bw1 = 0;
- var bw2 = 0;
- var c10 = 0;
+ var bits1=0;
+ var bits2=0;
+ var bw1=0;
+ var bw2=0;
+ var c10=0;
 
  if(RxBw == undefined) {
   return r;
  }
-
  exit_loops:
   for (var e = 0; e < 4; e++) {
    for (var m = 0; m < 4; m++) {
-      bits2 = bits1;
-      bits1 = (e << 6) + (m << 4);
-      bw2 = bw1;
-      bw1 = FXOSC_C / (8 * (4 + m) * (1 << e));
-      if (RxBw >= bw1) {
-        break exit_loops;
-      }
+    bits2 = bits1;
+    bits1 = (e << 6) + (m << 4);
+    bw2 = bw1;
+    bw1 = FXOSC_C / (8 * (4 + m) * (1 << e));
+    if (RxBw >= bw1) {
+     break exit_loops;
     }
+   }
   }
-
  if(Math.abs(RxBw - bw1) > Math.abs(RxBw - bw2)) {
   c10 = bits2;
  } else {
@@ -119,38 +117,31 @@ function C_DRATEset(DRATE,RxBw) {
  } else if (DRATE > 1621830) {
   DRATE = 1621830;
  }
-
- var DRATE_E = DRATE * ( 2**20 ) / FXOSC_C * 1.0;
+ var DRATE_E = DRATE * ( 2**20 ) / FXOSC_C;
  DRATE_E = Math.log(DRATE_E) / Math.log(2);
  DRATE_E = Math.trunc(DRATE_E);
- var DRATE_M = (DRATE * (2**28) / (FXOSC_C * 1.0 * (2**DRATE_E))) - 256;
+ var DRATE_M = (DRATE * (2**28) / (FXOSC_C * (2**DRATE_E))) - 256;
  DRATE_M = Math.trunc(DRATE_M);
  var DRATE_Mr = Math.round(DRATE_M);
  var DRATE_M1 = DRATE_M + 1;
  var DRATE_E1 = DRATE_E;
-
  if (DRATE_M1 == 256) {
   DRATE_M1 = 0;
   DRATE_E1++;
  }
-
  if (DRATE_Mr != DRATE_M) {
   DRATE_M = DRATE_M1;
   DRATE_E = DRATE_E1;
  }
-
- /* Check closest value */
  var val1 = C_DRATEread(DRATE_E.toString(16),DRATE_M.toString(16));
  var DRATE_E2 = DRATE_E;
  var DRATE_M2 = DRATE_M + 1;
-
-  if (DRATE_M2 == 256) {
+ if (DRATE_M2 == 256) {
   DRATE_M2 = 0;
   DRATE_E2++;
  }
  var val2 = C_DRATEread(DRATE_E2.toString(16),DRATE_M2.toString(16));
-
- if(Math.abs(DRATE - val1) > Math.abs(DRATE - val2)) {
+ if(Math.abs(DRATE - val1) < Math.abs(DRATE - val2)) {
   c10 += DRATE_E;
   r.push(c10.toString(16));
   r.push(DRATE_M.toString(16));
@@ -159,7 +150,6 @@ function C_DRATEset(DRATE,RxBw) {
   r.push(c10.toString(16));
   r.push(DRATE_M2.toString(16));
  }
- console.log(r); // ToDo not complete
  return r;
 }
 
@@ -177,15 +167,12 @@ function SX_DEVread(RegFdevMsb, RegFdevLsb) {
 }
 
 function C_DEVset(DEV) {
- // ToDO check again
  if (DEV > 380.859375) DEV = 380.859375;
  if (DEV < 1.586914) DEV = 1.586914;
-
  var deviatn_val;
  var bits;
  var devlast = 0;
  var bitlast = 0;
-
  for (let DEV_E = 0; DEV_E < 8; DEV_E++) {
   for (let DEV_M = 0; DEV_M < 8; DEV_M++) {
    deviatn_val = (8 + DEV_M) * (Math.pow(2, DEV_E)) * FXOSC_C / 1000 / (Math.pow(2, 17));
