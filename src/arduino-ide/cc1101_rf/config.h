@@ -168,6 +168,7 @@ const static char Name_Fine_Offset_WH51_868[] PROGMEM = "Fine Offset_WH51 868 MH
 const static char Name_Fine_Offset_WH57_434[] PROGMEM = "Fine Offset WH57 434 MHz";
 const static char Name_Fine_Offset_WH57_868[] PROGMEM = "Fine Offset WH57 868 MHz";
 const static char Name_Inkbird_IBS_P01R[] PROGMEM = "Inkbird IBS-P01R";
+const static char Name_Inverter_CMT2300A[] PROGMEM = "Hoymiles Inverter HMS_HMT";
 const static char Name_KOPP_FC[] PROGMEM = "KOPP FC";
 const static char Name_Lacrosse_mode1[] PROGMEM = "LaCrosse mode 1";
 const static char Name_Lacrosse_mode2[] PROGMEM = "LaCrosse mode 2";
@@ -176,7 +177,6 @@ const static char Name_Rojaflex[] PROGMEM = "Rojaflex";
 const static char Name_WMBus_S[] PROGMEM = "WMBus S";
 const static char Name_WMBus_T[] PROGMEM = "WMBus T";
 const static char Name_X_Sense[] PROGMEM = "X-Sense XS01-WR";
-const static char Name_Inverter_CMT2300A[] PROGMEM = "_DEV_ Inverter CMT2300A";
 
 /* varible´s for Serial & TelNet TimeOut´s | sets the maximum milliseconds to wait for data. */
 #define Timeout_Serial          125

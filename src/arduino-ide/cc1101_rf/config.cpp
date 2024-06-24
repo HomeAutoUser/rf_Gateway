@@ -48,6 +48,13 @@ const struct Data Registers[] PROGMEM = {
 #ifdef Inkbird_IBS_P01R
   { Config_Inkbird_IBS_P01R, Name_Inkbird_IBS_P01R, 18 },
 #endif
+
+#ifdef RFM69
+#ifdef Inverter_CMT2300A_comp
+  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 27 }, /* under development | RFM69 */
+#endif
+#endif
+
 #ifdef KOPP_FC
   { Config_KOPP_FC, Name_KOPP_FC, 15 },
 #endif
@@ -57,6 +64,7 @@ const struct Data Registers[] PROGMEM = {
 #ifdef Lacrosse_mode2
   { Config_Lacrosse_mode2, Name_Lacrosse_mode2, 5 },
 #endif
+
 #ifdef PCA301
   { Config_PCA301, Name_PCA301, 32 },
 #endif
@@ -84,13 +92,6 @@ const struct Data Registers[] PROGMEM = {
 #endif
 #ifdef Max
   { Config_MAX, Name_MAX, 12  },
-#endif
-#endif
-
-  /* under development | RFM69 */
-#ifdef RFM69
-#ifdef Inverter_CMT2300A_comp
-  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 27 },
 #endif
 #endif
   /* under development END */
