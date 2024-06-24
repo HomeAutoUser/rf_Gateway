@@ -14,157 +14,157 @@ var mod_list = false;
 var bw_list = false;
 
 document.onreadystatechange = function () {
- if (document.readyState == 'complete') {
-  let obj = document.getElementById('p1');
-  obj.maxLength = 7;
-  obj.pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
-  obj = document.getElementById('p2');
-  obj.maxLength = 6;
-  obj.pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
-  obj = document.getElementById('p4');
-  obj.maxLength = 8;
-  obj.pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
-  obj = document.getElementById('p5');
-  obj.maxLength = 7;
-  obj.pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
-  var hex;
-  var lastmodal;
-  var element;
-  let l = C_Exp.length;
-  for (let i=0; i<l; i++) {
-   hex = (i <= 15 ? '0' : '') + i.toString(16);
-   element = document.getElementsByName('r' + i)[0];
-   element.maxLength = 2;
-   element.size=2;
-   element.title = "Input: 2 characters in hexadecimal";
-   element.onkeypress = validHEX;
-   document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + C_RegN[i];
-   document.getElementById('n' + i).innerHTML = C_Exp[i];
-   var id = 't' + i;
-   if (C_Add[i] !== '') {
-    document.getElementById(id).innerHTML = '&#128712;';
-    var div = document.createElement("div");
-    div.id = "Mo"+i;
-    div.className = "mod";
-    document.getElementById(id).appendChild(div);
-    var div2 = document.createElement("div");
-    div.appendChild(div2);
-    div2.className = "mod-cont";
-    var Span = document.createElement("span");
-    Span.className = "close";
-    Span.innerHTML = "&times;";
-    div2.appendChild(Span);
-    var p = document.createElement("p");
-    p.innerHTML = C_RegN[i];
-    div2.appendChild(p);
-    div2.insertAdjacentHTML( 'beforeend', C_Add[i] );
-   }
-  }
-  window.onclick = function(event) {
-   var id = event.target.id.match(/t\d+/i);
-   var nr = event.target.id.substr(1);
-   var cla = event.target.className;
-   var modal = document.getElementById("Mo" + nr); // Get the modal
-   if (C_Add[nr] !== ''){
-    if(id && modal) {
-     modal.style.display = "block"; // When user clicks button, open the modal
-     lastmodal = modal;
-    }
-    if(cla && cla == 'close'){
-     lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
-    }
-   }
-  }
- }
+if (document.readyState == 'complete') {
+let obj = document.getElementById('p1');
+obj.maxLength = 7;
+obj.pattern = "^[\\d]{3}(\\.[\\d]{1,3})?$";
+obj = document.getElementById('p2');
+obj.maxLength = 6;
+obj.pattern = "^-?[\\d]{1,3}(\\.[\\d]{1,3})?$";
+obj = document.getElementById('p4');
+obj.maxLength = 8;
+obj.pattern = "^[\\d]{1,4}(\\.[\\d]{1,3})?$";
+obj = document.getElementById('p5');
+obj.maxLength = 7;
+obj.pattern = "^[\\d]{1,3}(\\.[\\d]{1,3})?$";
+var hex;
+var lastmodal;
+var element;
+let l = C_Exp.length;
+for (let i=0; i<l; i++) {
+hex = (i <= 15 ? '0' : '') + i.toString(16);
+element = document.getElementsByName('r' + i)[0];
+element.maxLength = 2;
+element.size=2;
+element.title = "Input: 2 characters in hexadecimal";
+element.onkeypress = validHEX;
+document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + C_RegN[i];
+document.getElementById('n' + i).innerHTML = C_Exp[i];
+var id = 't' + i;
+if (C_Add[i] !== '') {
+document.getElementById(id).innerHTML = '&#128712;';
+var div = document.createElement("div");
+div.id = "Mo"+i;
+div.className = "mod";
+document.getElementById(id).appendChild(div);
+var div2 = document.createElement("div");
+div.appendChild(div2);
+div2.className = "mod-cont";
+var Span = document.createElement("span");
+Span.className = "close";
+Span.innerHTML = "&times;";
+div2.appendChild(Span);
+var p = document.createElement("p");
+p.innerHTML = C_RegN[i];
+div2.appendChild(p);
+div2.insertAdjacentHTML( 'beforeend', C_Add[i] );
+}
+}
+window.onclick = function(event) {
+var id = event.target.id.match(/t\d+/i);
+var nr = event.target.id.substr(1);
+var cla = event.target.className;
+var modal = document.getElementById("Mo" + nr); // Get the modal
+if (C_Add[nr] !== ''){
+if(id && modal) {
+modal.style.display = "block"; // When user clicks button, open the modal
+lastmodal = modal;
+}
+if(cla && cla == 'close'){
+lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
+}
+}
+}
+}
 }
 
 function WebSocket_MSG(event) {
- console.log(`received message: ` + event.data);
- if(event.data.includes(',detail,')) {
-  const obj=event.data.split(',');
-  var REGISTER_MAX = 46;
-  for (let i=0; i<= REGISTER_MAX; i++) {
-   let element = document.getElementsByName('r' + i)[0];
-   element.placeholder = element.value.replace(element.value, obj[i]);
-   if (element.value != obj[i]) {
-    element.value = element.value.replace(element.value, obj[i]);
-    element.placeholder = obj[i];
-    element.style.color = color2;
-   } else {
-    element.style.color = color1;
-   }
-  }
-  // 0x06: PKTLEN 0x08: PKTCTRL0
-  var val = parseInt(obj[8], 16) & 0b00000011;
-  document.getElementById('PKTCTRL0').innerHTML = C_Length[val];
-  let span = document.getElementById("PKTCTRL0");
-  if (val === 0) {
-    let bytes = parseInt(obj[6], 16);
-    span.textContent = `current: bytes ${bytes}  |  nibbles ${bytes * 2}  |  bits ${bytes * 8}`;
-  } else {
-    span.textContent = `current: disabled`;
-  }
-  // 0x0C: FSCTRL0 
-  if(document.getElementsByName('afc')[0].checked) {
-   document.getElementById('n12').innerHTML = `${C_Exp[12]} (Freq. offset ${(C_FREQOFFread(obj[12]) / 1000).toFixed(0)} kHz)`;	// ToDo
-  }
-  // 0x0D: FREQ2 0x0E: FREQ1 0x0F: FREQ0
-  var Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
-  document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
-  Freq -= obj[REGISTER_MAX + 3] * 1;
-  document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
-  document.getElementsByName('freq')[0].value = Freq.toFixed(3);
-  // 0x10: MDMCFG4 0x11: MDMCFG3
-  var RxBwComp = (C_BWread(obj[16]) / 1000).toFixed(3); // ToDO
-  var selectElement = document.getElementById('bandw');
-  if(!bw_list) {
-   bw_list = true;
-   const bwSteps = C_BWsteps();
-   for (let i = 0; i < bwSteps.length; i++) {
-     selectElement.add(new Option((bwSteps[i] / 1000).toFixed(3)));
-   }
-  }
-  selectElement.value = RxBwComp;
-  document.getElementById('CHANBW').innerHTML = `${RxBwComp} kHz`;
-  var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(3); // ToDo
-  document.getElementById('DRATE').innerHTML = `${DRATE} kBaud`;
-  document.getElementsByName('datarate')[0].value = DRATE;
-  // 0x12: MDMCFG2
-  if (!mod_list) {
-   mod_list = true;
-   var selectElement = document.getElementById('modulation');
-   for (var j = 0; j<=7; j++) {
-    if (C_Mod[j] != '') {
-     selectElement.add(new Option(C_Mod[j]));
-    }
-   }
-  }
-  val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
-  document.getElementById('MOD_FORMAT').innerHTML = C_Mod[val];
-  document.getElementById('modulation').value = C_Mod[val];
-  val = (parseInt(obj[18], 16) & 0b00000111);
-  document.getElementById('SYNC_MODE').innerHTML = C_Sync[val];
-  // 0x13: MDMCFG1
-  val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
-  document.getElementById('MDMCFG1').innerHTML = `minimum ` + C_NumP[val] + ` preamble bytes to be transmitted configured in MDMCFG1 register`;
-  // 0x15: DEVIATN
-  var DEVIATN = (C_DEVread(obj[21]) / 1000).toFixed(3); // ToDo
-  document.getElementById('DEVIATN').innerHTML = DEVIATN + ` kHz`;
-  document.getElementsByName('deviation')[0].value = DEVIATN;
-  document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
- }
+console.log(`received message: ` + event.data);
+if(event.data.includes(',detail,')) {
+const obj=event.data.split(',');
+var REGISTER_MAX = 46;
+for (let i=0; i<= REGISTER_MAX; i++) {
+let element = document.getElementsByName('r' + i)[0];
+element.placeholder = element.value.replace(element.value, obj[i]);
+if (element.value != obj[i]) {
+element.value = element.value.replace(element.value, obj[i]);
+element.placeholder = obj[i];
+element.style.color = color2;
+} else {
+element.style.color = color1;
+}
+}
+// 0x06 0x08
+var val = parseInt(obj[8], 16) & 0b00000011;
+document.getElementById('PKTCTRL0').innerHTML = C_Length[val];
+let span = document.getElementById("PKTCTRL0");
+if (val === 0) {
+let bytes = parseInt(obj[6], 16);
+span.textContent = `current: bytes ${bytes}  |  nibbles ${bytes * 2}  |  bits ${bytes * 8}`;
+} else {
+span.textContent = `current: disabled`;
+}
+// 0x0C
+if(document.getElementsByName('afc')[0].checked) {
+document.getElementById('n12').innerHTML = `${C_Exp[12]} (Freq. offset ${(C_FREQOFFread(obj[12]) / 1000).toFixed(0)} kHz)`;	// ToDo
+}
+// 0x0D 0x0E 0x0F
+var Freq = C_FREQread(obj[13], obj[14], obj[15]) / 1000000; // ToDO
+document.getElementById('FREQis').innerHTML = Freq.toFixed(3);
+Freq -= obj[REGISTER_MAX + 3] * 1;
+document.getElementById('FREQ').innerHTML = Freq.toFixed(3);
+document.getElementsByName('freq')[0].value = Freq.toFixed(3);
+// 0x10 0x11
+var RxBwComp = (C_BWread(obj[16]) / 1000).toFixed(3); // ToDO
+var selectElement = document.getElementById('bandw');
+if(!bw_list) {
+bw_list = true;
+const bwSteps = C_BWsteps();
+for (let i = 0; i < bwSteps.length; i++) {
+selectElement.add(new Option((bwSteps[i] / 1000).toFixed(3)));
+}
+}
+selectElement.value = RxBwComp;
+document.getElementById('CHANBW').innerHTML = `${RxBwComp} kHz`;
+var DRATE = (C_DRATEread(obj[16], obj[17]) / 1000.0).toFixed(3); // ToDo
+document.getElementById('DRATE').innerHTML = `${DRATE} kBaud`;
+document.getElementsByName('datarate')[0].value = DRATE;
+// 0x12
+if (!mod_list) {
+mod_list = true;
+var selectElement = document.getElementById('modulation');
+for (var j = 0; j<=7; j++) {
+if (C_Mod[j] != '') {
+selectElement.add(new Option(C_Mod[j]));
+}
+}
+}
+val = (parseInt(obj[18], 16) & 0b01110000) >> 4;
+document.getElementById('MOD_FORMAT').innerHTML = C_Mod[val];
+document.getElementById('modulation').value = C_Mod[val];
+val = (parseInt(obj[18], 16) & 0b00000111);
+document.getElementById('SYNC_MODE').innerHTML = C_Sync[val];
+// 0x13
+val = (parseInt(obj[19], 16) & 0b01110000) >> 4;
+document.getElementById('MDMCFG1').innerHTML = `minimum ` + C_NumP[val] + ` preamble bytes to be transmitted configured in MDMCFG1 register`;
+// 0x15
+var DEVIATN = (C_DEVread(obj[21]) / 1000).toFixed(3); // ToDo
+document.getElementById('DEVIATN').innerHTML = DEVIATN + ` kHz`;
+document.getElementsByName('deviation')[0].value = DEVIATN;
+document.getElementById('state').innerHTML = obj[obj.length - 2] + ' values readed &#10004;';
+}
 }
 
 let stateCheck = setInterval(() => {
- if (document.readyState === 'complete' && websocket.readyState == 1) {
-  websocket.send('detail');
-  clearInterval(stateCheck);
- }
+if (document.readyState === 'complete' && websocket.readyState == 1) {
+websocket.send('detail');
+clearInterval(stateCheck);
+}
 }, 50);
 
 function validHEX(e) {
- const pattern = /^[0-9a-fA-F]$/;
- return pattern.test(e.key)
+const pattern = /^[0-9a-fA-F]$/;
+return pattern.test(e.key)
 }
 
 const C_Exp = ['GDO2 Output Pin Configuration','GDO1 Output Pin Configuration','GDO0 Output Pin Configuration','RX FIFO and TX FIFO Thresholds','Sync Word, High Byte','Sync Word, Low Byte','Packet Length','Packet Automation Control (Preamble quality, ...)','Packet Automation Control (Packet length config, ...)','Device Address','Channel Number','Frequency Synthesizer Control','Frequency Synthesizer Control','Frequency Control Word, High Byte','Frequency Control Word, Middle Byte','Frequency Control Word, Low Byte','Modem Configuration 4 (Datarate, Bandwidth)','Modem Configuration 3 (Datarate)','Modem Configuration 2 (Modulation, Sync_Mod, ...)','Modem Configuration 1 (Num_Preamble, ...)','Modem Configuration 0','Modem Deviation Setting','Main Radio Control State Machine Configuration 2','Main Radio Control State Machine Configuration 1','Main Radio Control State Machine Configuration 0','Frequency Offset Compensation Configuration','Bit Synchronization Configuration','AGC Control 2','AGC Control 1','AGC Control 0','High Byte Event0 Timeout','Low Byte Event0 Timeout','Wake On Radio Control','Front End RX Configuration','Front End TX Configuration','Frequency Synthesizer Calibration 3','Frequency Synthesizer Calibration 2','Frequency Synthesizer Calibration 1','Frequency Synthesizer Calibration 0','RC Oscillator Configuration 1','RC Oscillator Configuration 0','Frequency Synthesizer Calibration Control','Production Test','AGC Test','Various Test Settings 2','Various Test Settings 1','Various Test Settings 0'];
