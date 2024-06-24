@@ -25,11 +25,8 @@
 
 #define maxSendEcho 100
 
-extern String cmdstring;
-extern uint8_t radionr;
-extern volatile bool blinkLED;
-extern bool LEDenabled;
-extern bool FSKdebug;
+// extern String cmdstring; // for send
+// extern uint8_t radionr; // for send nur bei mehreren CC110x
 extern String msg;                                  // RAW (nur für serial/telnet, keine HTML Ausgabe) & Serial Input
 extern uint32_t msgCount;                           // Nachrichtenzähler über alle empfangenen Nachrichten
 extern int8_t freqErr;                              // CC110x automatic Frequency Synthesizer Control

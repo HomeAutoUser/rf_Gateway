@@ -25,7 +25,7 @@
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
 #define FWVer             "V 2.1.5pre"
-#define FWVerDate         "2024-05-15"
+#define FWVerDate         "2024-06-24"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -121,6 +121,11 @@
 //#define Max                     1   // only CC110x inside
 #endif
 
+#ifdef RFM69
+/* under development */
+#define Inverter_CMT2300A_comp  1   // only RFM69 inside
+#endif
+
 /* Configuration for WLAN devices */
 #define TELNET_CLIENTS_MAX      3                       // maximum number of Telnet clients
 #define TELNET_PORT             23                      // Telnet Port
@@ -147,7 +152,7 @@
 //#define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define WMBus_S                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
 #define WMBus_T                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
-//#define X_Sense                 1
+#define X_Sense                 1
 #endif
 
 // Names of the modes
@@ -171,6 +176,7 @@ const static char Name_Rojaflex[] PROGMEM = "Rojaflex";
 const static char Name_WMBus_S[] PROGMEM = "WMBus S";
 const static char Name_WMBus_T[] PROGMEM = "WMBus T";
 const static char Name_X_Sense[] PROGMEM = "X-Sense XS01-WR";
+const static char Name_Inverter_CMT2300A[] PROGMEM = "_DEV_ Inverter CMT2300A";
 
 /* varible´s for Serial & TelNet TimeOut´s | sets the maximum milliseconds to wait for data. */
 #define Timeout_Serial          125

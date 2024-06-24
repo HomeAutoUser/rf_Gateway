@@ -373,60 +373,42 @@ void web_detail_import() {  // ########## web_detail_import ##########
 #endif
 
     if (submit == "registers") {  // register processing from String imp ['01AB','11FB']
-#ifdef CC110x
-      ToggleCnt = 1; // stop toggle
-      detachInterrupt(digitalPinToInterrupt(GDO2));
-      CC110x_CmdStrobe(CC110x_SIDLE); // Exit RX / TX, turn off frequency synthesizer and exit Wake-On-Radio mode if applicable
-      CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
-#ifdef debug_html
-      char chHex[3];
-#endif
+      // current register values ​​in user settings
+      for (byte i = 0; i < REGISTER_MAX; i++) {
+        EEPROMwrite(i, Chip_readReg(i, READ_BURST)); // ESP write value to EEPROM
+      }
+
       for (uint16_t i = 2; i < imp.length(); i += 7) {
         Adr = hexToDec(imp.substring(i, i + 2));
         Val = hexToDec(imp.substring(i + 2, i + 4));
 #ifdef debug_html
         onlyDecToHex2Digit(Adr, chHex);
-        Serial.print(F("[DB] web_detail_import, cc110x adr: 0x")); Serial.print(chHex);
+        Serial.print(F("[DB] web_detail_import, chip adr: 0x")); Serial.print(chHex);
         onlyDecToHex2Digit(Val, chHex);
         Serial.print(F(" | val: 0x")); Serial.println(chHex);
 #endif
-        if (Adr > 0x2E) {
+        if (Adr > REGISTER_MAX) {
           break;
         }
-        Chip_writeReg(Adr, Val);    // write in cc110x
         EEPROMwrite(Adr, Val);      // write in flash
       }
-      if (Adr > 0x2E) {
-        website += F("ERROR: wrong cc110x adress, writing aborted! - ");
+
+      if (Adr > REGISTER_MAX) {
+        website += F("ERROR: wrong chip adress, writing aborted! - ");
         char chHex[3]; // for hex output
         onlyDecToHex2Digit(Adr, chHex); // convert 1 byte to 2 hex char
         website += chHex;
       } else {
         website += F("Import of the register values closed​​");
       }
-      // ToDo - könnten wir hier vieleicht gleich Interupt_Variant(1) aufrufen?
-      CC110x_CmdStrobe(CC110x_SFRX);  // Flush the RX FIFO buffer. Only issue SFRX in IDLE or RXFIFO_OVERFLOW states
-      MOD_FORMAT = ( Chip_readReg(0x12, READ_SINGLE) & 0b01110000 ) >> 4;
-      if (MOD_FORMAT != 3) {
-        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, RISING);
-      } else {
-        attachInterrupt(digitalPinToInterrupt(GDO2), Interupt, CHANGE);
-      }
-      //ReceiveModePKTLEN = Chip_readReg(CHIP_PKTLEN, READ_SINGLE); // only if fixed packet length
-      ReceiveModeNr = 1;
-      Chip_setReceiveMode();  // start receive mode
-      // END - CC110x - submit == "registers"
-#elif RFM69
-      Adr += 0;
-      Val += 0;
-      for (uint16_t i = 0; i < imp.length(); i += 5) {
-        Adr = hexToDec(imp.substring(i, i + 2));
-        Val = hexToDec(imp.substring(i + 2, i + 4));
-      }
 
-      // ToDO - Further processing after JAVA completion
-      website += F("<br>- read all actionable registers -");
-#endif  // END - RFM69 - submit == "registers"
+      ReceiveModeNr = 1;
+      ToggleArray[1] = 1;
+      ToggleCnt = 0;
+      for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+        ToggleCnt += ToggleArray[modeNr]; // count enabled modes
+      }
+      Interupt_Variant(1);
     }
   } else {
     website += F("Import current register values<br><br>"
@@ -824,10 +806,10 @@ void web_raw() {            // ########## web_raw ##########
       RegPaLevel = (RegPaLevel & 0b11100000) | (OutputPowerNew);
       Chip_writeReg(0x11 , RegPaLevel); // PA selection and Output Power control
       OutputPower = OutputPowerNew;
-#ifdef debug_chip
+      //#ifdef debug_chip
       Serial.print(F("[DB] SX1231 write RegPaLevel 0x11: 0x")); Serial.println(RegPaLevel, HEX);
       Serial.print(F("[DB] SX1231 new OutputPower: "));  Serial.println(OutputPower);
-#endif
+      //#endif
     }
 #endif // END - #ifdef RFM69
   }
@@ -1405,6 +1387,10 @@ void WebSocket_imp(const String values) {
   }
   ReceiveModeNr = 1;
   ToggleArray[1] = 1;
+  ToggleCnt = 0;
+  for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
+    ToggleCnt += ToggleArray[modeNr]; // count enabled modes
+  }
   Interupt_Variant(1);
 #ifdef debug_websocket
   Serial.println(F("[DB] WebSocket_imp END"));

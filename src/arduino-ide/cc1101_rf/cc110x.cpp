@@ -370,7 +370,6 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
   SPI.transfer(CHIP_RXFIFO | READ_BURST);    // send register address
   for (uint8_t i = 0; i < length; i++)
     data[i] = SPI.transfer(0);        // read result
-
   // Optionally, two status bytes (see Table 27 and Table 28) with RSSI value, Link Quality Indication, and CRC status can be appended in the RX FIFO.
   if (rssi) {
     *rssi = SPI.transfer(0);

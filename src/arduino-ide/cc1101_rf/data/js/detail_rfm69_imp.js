@@ -44,6 +44,7 @@ function inputfile() {
       websocket.send('imp,SX,'+regTxt);
     };
     reader.readAsText(fileList[0]);
+    alert('Register taken over');
   });
 
   fileSelector.addEventListener('cancel', (event) => {

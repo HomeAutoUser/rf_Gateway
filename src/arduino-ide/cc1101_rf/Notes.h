@@ -160,6 +160,9 @@
   Der Sketch verwendet 951689 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 52584 Bytes (16%) des dynamischen Speichers, 275096 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
   ---------- 2024-05-08 - Arduino Release v2.0.16 based on ESP-IDF v4.4.7 ----------
+  ---------- 2024-06-13 - Arduino Release v3.0.1 based on ESP-IDF v5.1.4 ----------
+  Der Sketch verwendet 1116233 Bytes (85%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 50776 Bytes (15%) des dynamischen Speichers, 276904 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 

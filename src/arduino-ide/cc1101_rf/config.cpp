@@ -77,13 +77,20 @@ const struct Data Registers[] PROGMEM = {
   /* under development | CC110x */
 #ifdef CC110x
 #ifdef HomeMatic
-  { Config_HomeMatic, REGISTER_MAX, "under dev - HomeMatic", 12  },
+  { Config_HomeMatic, Name_HomeMatic, 12 },
 #endif
 #ifdef Lacrosse_mode3
-  { Config_Lacrosse_mode3, REGISTER_MAX, "Lacrosse_mode3", 5   },
+  { Config_Lacrosse_mode3, Name_Lacrosse_mode3, 5 },
 #endif
 #ifdef Max
-  { Config_MAX, REGISTER_MAX, "under dev - MAX", 12  },
+  { Config_MAX, Name_MAX, 12  },
+#endif
+#endif
+
+  /* under development | RFM69 */
+#ifdef RFM69
+#ifdef Inverter_CMT2300A_comp
+  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 27 },
 #endif
 #endif
   /* under development END */

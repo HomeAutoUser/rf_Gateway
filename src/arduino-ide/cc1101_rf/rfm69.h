@@ -16,7 +16,7 @@ const float fStep = fxOsc / pow(2, 19);            // Frequency synthesizer step
 #define CMD_W_REG_MAX         56                   // command W address max 0x80 (ASCII 56 = 8)
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES       16                   // ESP - Anzahl Datensätze in struct Data, defined in config.h
+#define NUMBER_OF_MODES       17                   // ESP - Anzahl Datensätze in struct Data, defined in config.h
 #else
 #define NUMBER_OF_MODES       5                    // AVR - Anzahl Datensätze in struct Data, defined in config.h
 #endif
@@ -1747,6 +1747,97 @@ const uint8_t Config_X_Sense[] PROGMEM = {
   0x30, // Address 0x6F - RegTestDagc
   0x00, // Address 0x71 - RegTestAfc
 }; // END SX1231 X_Sense register values
+#endif
+
+#ifdef Inverter_CMT2300A_comp
+const uint8_t Config_Inverter_CMT2300A[] PROGMEM = {
+  // SX1231 register values for Inverter with CMT2300A receiver
+0x00, // 0x00 - RegFifo
+  0x10, // 0x01 - RegOpMode
+  0x00, // 0x02 - RegDataModul
+  0x06, // 0x03 - RegBitrateMsb
+  0x40, // 0x04 - RegBitrateLsb
+  0x01, // 0x05 - RegFdevMsb
+  0x48, // 0x06 - RegFdevLsb
+  0xD9, // 0x07 - RegFrfMsb
+  0x00, // 0x08 - RegFrfMid
+  0x00, // 0x09 - RegFrfLsb
+  0x41, // 0x0A - RegOsc1
+  0x40, // 0x0B - RegAfcCtrl
+  0x02, // 0x0C - RegLowBat
+  0x92, // 0x0D - RegListen1
+  0xF5, // 0x0E - RegListen2
+  0x20, // 0x0F - RegListen3
+  0x24, // 0x10 - RegVersion
+  0x9F, // 0x11 - RegPaLevel
+  0x09, // 0x12 - RegPaRamp
+  0x1A, // 0x13 - RegOcp
+  0x40, // 0x14 - Reserved14
+  0xB0, // 0x15 - Reserved15
+  0x7B, // 0x16 - Reserved16
+  0x9B, // 0x17 - Reserved17
+  0x89, // 0x18 - RegLna
+  0x4A, // 0x19 - RegRxBw
+  0x91, // 0x1A - RegAfcBw
+  0x40, // 0x1B - RegOokPeak
+  0x80, // 0x1C - RegOokAvg
+  0x06, // 0x1D - RegOokFix
+  0x10, // 0x1E - RegAfcFei
+  0x00, // 0x1F - RegAfcMsb
+  0x00, // 0x20 - RegAfcLsb
+  0x00, // 0x21 - RegFeiMsb
+  0x00, // 0x22 - RegFeiLsb
+  0x00, // 0x23 - RegRssiConfig
+  0xC3, // 0x24 - RegRssiValue
+  0x00, // 0x25 - RegDioMapping1
+  0x07, // 0x26 - RegDioMapping2
+  0xD8, // 0x27 - RegIrqFlags1
+  0x00, // 0x28 - RegIrqFlags2
+  0xE4, // 0x29 - RegRssiThresh
+  0x00, // 0x2A - RegRxTimeout1
+  0x00, // 0x2B - RegRxTimeout2
+  0x00, // 0x2C - RegPreambleMsb
+  0x03, // 0x2D - RegPreambleLsb
+  0x98, // 0x2E - RegSyncConfig
+  0x4D, // 0x2F - RegSyncValue1
+  0x48, // 0x30 - RegSyncValue2
+  0x5A, // 0x31 - RegSyncValue3
+  0x48, // 0x32 - RegSyncValue4
+  0x00, // 0x33 - RegSyncValue5
+  0x00, // 0x34 - RegSyncValue6
+  0x00, // 0x35 - RegSyncValue7
+  0x00, // 0x36 - RegSyncValue8
+  0x00, // 0x37 - RegPacketConfig1
+  0x35, // 0x38 - RegPayloadLength
+  0x00, // 0x39 - RegNodeAdrs
+  0x00, // 0x3A - RegBroadcastAdrs
+  0x00, // 0x3B - RegAutoModes
+  0x34, // 0x3C - RegFifoThresh
+  0x02, // 0x3D - RegPacketConfig2
+  0x00, // 0x3E - RegAesKey1
+  0x00, // 0x3F - RegAesKey2
+  0x00, // 0x40 - RegAesKey3
+  0x00, // 0x41 - RegAesKey4
+  0x00, // 0x42 - RegAesKey5
+  0x00, // 0x43 - RegAesKey6
+  0x00, // 0x44 - RegAesKey7
+  0x00, // 0x45 - RegAesKey8
+  0x00, // 0x46 - RegAesKey9
+  0x00, // 0x47 - RegAesKey10
+  0x00, // 0x48 - RegAesKey11
+  0x00, // 0x49 - RegAesKey12
+  0x00, // 0x4A - RegAesKey13
+  0x00, // 0x4B - RegAesKey14
+  0x00, // 0x4C - RegAesKey15
+  0x00, // 0x4D - RegAesKey16
+  0x01, // 0x4E - RegTemp1
+  0x00, // 0x4F - RegTemp2
+  0x1B, // 0x58 - RegTestLna
+  0x09, // 0x59 - RegTestTcxo
+  0x08, // 0x5F - RegTestllBw
+  0x30, // 0x6F - RegTestDagc
+  0x00, // 0x71 - RegTestAfc
+}; // END SX1231 Inverter_CMT2300A_comp register values
 #endif
 
 #endif  // END - #ifdef RFM69

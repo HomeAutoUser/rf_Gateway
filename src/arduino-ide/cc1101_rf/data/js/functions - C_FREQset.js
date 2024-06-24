@@ -1,34 +1,48 @@
-﻿function C_FREQread(Msb,Mid,Lsb) {
- var r=parseInt(Msb,16)*65536;
- r+=parseInt(Mid,16)*256;
- r+=parseInt(Lsb,16);
- r=parseInt(FXOSC_C*r/ 65536);
+﻿function C_FREQread(reg1,reg2,reg3) {
+	// ToDo Multiplikation kann keine Nachkommastellen ergeben
+ var r = parseInt(reg1, 16) * 256;
+ r = (r + parseInt(reg2, 16) ) * 256;
+ r = (r + parseInt(reg3, 16) );
+ r = parseInt(FXOSC_C * r / 65536);
  return r;
 }
 
-function SX_FREQread(Msb,Mid,Lsb) {
- var r=parseInt(Msb,16)*65536;
- r+=parseInt(Mid,16)*256;
- r+=parseInt(Lsb,16);
- r=parseInt(Fstep_SX*r);
+function SX_FREQread(RegFrfMsb,RegFrfMid,RegFrfLsb) {
+	// ToDo Multiplikation kann keine Nachkommastellen ergeben
+ var r = parseInt(RegFrfMsb, 16) * 256;
+ r = (r + parseInt(RegFrfMid, 16) ) * 256;
+ r = (r + parseInt(RegFrfLsb, 16) );
+ r = parseInt(Fstep_SX * r);
  return r;
 }
 
 function C_FREQset(freq) {
- var r=['','',''];
- var f=freq/FXOSC_C*65536;
- r[0]=dec2hex(parseInt(f/65536));
- r[1]=dec2hex(parseInt((f%65536)/256));
- r[2]=dec2hex(parseInt(f%256));
+ var r = ['','',''];
+  // my $f = $arg/26*65536; $arg=868.300
+  // my $f2 = sprintf("%02x", $f / 65536);
+  // my $f1 = sprintf("%02x", int($f % 65536) / 256);
+  // my $f0 = sprintf("%02x", $f % 256);
+ var f = freq / FXOSC_C * 65536;
+ r[0] = dec2hex(parseInt(f / 65536));
+ r[1] = dec2hex(parseInt((f % 65536) / 256));
+ r[2] = dec2hex(parseInt(f % 256));
+console.info('f',f);
+console.info('r[0]',(f / 65536));
+console.info('r[1]',(((f % 65536) / 256)));
+console.info('r[2]',((f % 256)));
+console.info('r[0]',parseInt(f / 65536));
+console.info('r[1]',parseInt(parseInt((f % 65536) / 256)));
+console.info('r[2]',parseInt(parseInt(f % 256)));
+console.info('r',r);
  return r;
 }
 
 function SX_FREQset(freq) {
- var r=['','',''];
- var f=freq/Fstep_SX;
- r[0]=dec2hex(parseInt(f/65536));
- r[1]=dec2hex(parseInt((f%65536)/256));
- r[2]=dec2hex(parseInt(f%256));
+ var r = ['','',''];
+ var f = parseInt(freq / Fstep_SX);
+ r[0] = dec2hex(parseInt( f / 65536 ));
+ r[1] = dec2hex(parseInt((f % 65536) / 256 ));
+ r[2] = dec2hex(parseInt( f % 256 ));
  return r;
 }
 
