@@ -36,7 +36,7 @@ hex = (i <= 15 ? '0' : '') + i.toString(16);
 element = document.getElementsByName('r' + i)[0];
 element.maxLength = 2;
 element.size=2;
-element.title = "Input: 2 characters in hexadecimal";
+element.title = `Input: 2 characters in hexadecimal`;
 element.onkeypress = validHEX;
 document.getElementById('s' + i).innerHTML = '0x' + hex.toUpperCase() + '&ensp;' + C_RegN[i];
 document.getElementById('n' + i).innerHTML = C_Exp[i];
@@ -67,11 +67,11 @@ var cla = event.target.className;
 var modal = document.getElementById("Mo" + nr); // Get the modal
 if (C_Add[nr] !== ''){
 if(id && modal) {
-modal.style.display = "block"; // When user clicks button, open the modal
+modal.style.display = "block"; // open the modal
 lastmodal = modal;
 }
 if(cla && cla == 'close'){
-lastmodal.style.display = "none"; // When user clicks <span> (x), close the modal
+lastmodal.style.display = "none"; // close the modal
 }
 }
 }
@@ -167,7 +167,18 @@ const pattern = /^[0-9a-fA-F]$/;
 return pattern.test(e.key)
 }
 
-const C_Exp = ['GDO2 Output Pin Configuration','GDO1 Output Pin Configuration','GDO0 Output Pin Configuration','RX FIFO and TX FIFO Thresholds','Sync Word, High Byte','Sync Word, Low Byte','Packet Length','Packet Automation Control (Preamble quality, ...)','Packet Automation Control (Packet length config, ...)','Device Address','Channel Number','Frequency Synthesizer Control','Frequency Synthesizer Control','Frequency Control Word, High Byte','Frequency Control Word, Middle Byte','Frequency Control Word, Low Byte','Modem Configuration 4 (Datarate, Bandwidth)','Modem Configuration 3 (Datarate)','Modem Configuration 2 (Modulation, Sync_Mod, ...)','Modem Configuration 1 (Num_Preamble, ...)','Modem Configuration 0','Modem Deviation Setting','Main Radio Control State Machine Configuration 2','Main Radio Control State Machine Configuration 1','Main Radio Control State Machine Configuration 0','Frequency Offset Compensation Configuration','Bit Synchronization Configuration','AGC Control 2','AGC Control 1','AGC Control 0','High Byte Event0 Timeout','Low Byte Event0 Timeout','Wake On Radio Control','Front End RX Configuration','Front End TX Configuration','Frequency Synthesizer Calibration 3','Frequency Synthesizer Calibration 2','Frequency Synthesizer Calibration 1','Frequency Synthesizer Calibration 0','RC Oscillator Configuration 1','RC Oscillator Configuration 0','Frequency Synthesizer Calibration Control','Production Test','AGC Test','Various Test Settings 2','Various Test Settings 1','Various Test Settings 0'];
+const a=` Output Pin Configuration`;
+const b=`Packet Automation Control (`;
+const c=`Frequency Synthesizer Control`;
+const d=`Frequency Control Word, `;
+const e=`Modem Configuration `;
+const f=`Main Radio Control State Machine Configuration `;
+const g=`AGC Control `;
+const h=`Frequency Synthesizer Calibration `;
+const i=`RC Oscillator Configuration `;
+const j=`Various Test Settings `;
+
+const C_Exp = [`GDO2${a}`,`GDO1${a}`,`GDO0${a}`,'RX FIFO and TX FIFO Thresholds','Sync Word, High Byte','Sync Word, Low Byte','Packet Length',`${b}Preamble quality, ...)`,`${b}Packet length config, ...)`,'Device Address','Channel Number',`${c}`,`${c}`,`${d}High Byte`,`${d}Middle Byte`,`${d}Low Byte`,`${e}4 (Datarate, Bandwidth)`,`${e}3 (Datarate)`,`${e}2 (Modulation, Sync_Mod, ...)`,`${e}1 (Num_Preamble, ...)`,`${e}0`,'Modem Deviation Setting',`${f}2`,`${f}1`,`${f}0`,'Frequency Offset Compensation Configuration','Bit Synchronization Configuration',`${g}2`,`${g}1`,`${g}0`,'High Byte Event0 Timeout','Low Byte Event0 Timeout','Wake On Radio Control','Front End RX Configuration','Front End TX Configuration',`${h}3`,`${h}2`,`${h}1`,`${h}0`,`${i}1`,`${i}0`,'Frequency Synthesizer Calibration Control','Production Test','AGC Test',`${j}2`,`${j}1`,`${j}0`];
 const tabPre = '<table><tr><td>Bit No.</td><td>Name</td><td>Reset</td><td>R/W</td><td>Description</td></tr><tr><td>';
 const tabEnd = '</td></tr></table>';
 
@@ -176,7 +187,7 @@ tabPre + '7</td><td>&nbsp;</td><td>0x00</td><td>R0</td><td>Not used</td></tr><tr
 tabPre + '7</td><td>GDO_DS</td><td>0x00</td><td>R/W</td><td>Set high (1) or low (0) output drive strength on the GDO pins.</td></tr><tr><td>6</td><td>GDO1_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td> 5:0</td><td>GDO1_CFG[5:0]</td><td>0x2e</td><td>R/W</td><td>Default is 3-state.' + tabEnd,
 tabPre + '7</td><td>TEMP_SENSOR_ENABLE</td><td>0x00</td><td>R/W</td><td>Enable analog temperature sensor. Write 0 in all other register bits when using temperature sensor.</td></tr><tr><td>6</td><td>GDO0_INV</td><td>0x00</td><td>R/W</td><td>Invert output, i.e. select active low (1) / high (0)</td></tr><tr><td>5:0</td><td>GDO0_CFG[5:0]</td><td>0x3f</td><td>R/W</td><td>Default is CLK_XOSC/192. It is recommended to disable the clock output in initialization, in order to optimize RF performance.' + tabEnd,
 tabPre + '7</td><td></td><td>0x00</td><td>R/W</td><td>Reserved , write 0 for compatibility with possible future extensions</td></tr><tr><td>6</td><td>ADC_RETENTION</td><td>0x00</td><td>R/W</td><td>...</td></tr><tr><td>5:4</td><td>CLOSE_IN_RX [1:0]</td><td>0x00</td><td>R/W</td><td>...</td></tr><tr><td>3:0</td><td>FIFO_THR[3:0]</td><td>0x07</td><td>R/W</td><td>Set the threshold for the TX FIFO and RX FIFO.<br>The threshold is exceeded when the number of bytes in the FIFO is equal to or higher than the threshold value. <table><tbody><tr><td>Setting </td><td>Bytes in TX FIFO</td><td>Bytes in RX FIFO</td></tr><tr><td>0 (0000)</td><td>61</td><td>4</td></tr><tr><td>1 (0001)</td><td>57</td><td>8</td></tr><tr><td>2 (0010)</td><td>53</td><td>12</td></tr><tr><td>3 (0011)</td><td>49</td><td>16</td></tr><tr><td>4 (0100)</td><td>45 </td><td>20</td></tr><tr><td>5 (0101)</td><td>41 </td><td>24 </td></tr><tr><td>6 (0110)</td><td>37</td><td>28</td></tr><tr><td>7 (0111)</td><td>33</td><td>32</td></tr><tr><td>8 (1000)</td><td>29</td><td>36</td></tr><tr><td>9 (1001)</td><td>25</td><td>40</td></tr><tr><td>10 (1010)</td><td>21</td><td>44</td></tr><tr><td>11 (1011)</td><td>17</td><td>48</td></tr><tr><td>12 (1100)</td><td>13</td><td>52</td></tr><tr><td>13 (1101)</td><td>9</td><td>56</td></tr><tr><td>14 (1110)</td><td>5</td><td>60</td></tr><tr><td>15 (1111)</td><td>1</td><td>64</td></tr></tbody></table>' + tabEnd,
-'','','Indicates the packet length when fixed packet length mode is enabled.<br>If variable packet length mode is used, this value indicates the maximum packet length allowed.<br><br><span id="PKTLEN">xxx</span>',
+'','','Indicates the packet length when fixed packet length mode is enabled.<br>If variable packet length mode is used, this value indicates the maximum packet length allowed.',
 tabPre + '7:5</td><td>PQT[2:0]</td><td>0x00</td><td>R/W</td><td>Preamble quality estimator threshold. The preamble quality estimator increases an internal counter by one each time a bit is received that is different from the previous bit, and decreases the counter by 8 each time a bit is received that is the same as the last bit. A threshold of 4∙PQT for this counter is used to gate sync word detection. When PQT=0 a sync word is always accepted.</td></tr><tr><td>4</td><td></td><td>0x00</td><td>R0</td><td>Not Used.</td></tr><tr><td>3</td><td>CRC_AUTOFLUSH</td><td>0x00</td><td>R/W</td><td>Enable automatic flush of RX FIFO when CRC is not OK. This requires that only one packet is in the RXIFIFO and that packet length is limited to the RX FIFO size.</td></tr><tr><td>2</td><td>APPEND_STATUS</td><td>0x01</td><td>R/W</td><td>When enabled, two status bytes will be appended to the payload of the packet. The status bytes contain RSSI and LQI values, as well as CRC OK.</td></tr><tr><td>1:0</td><td>ADR_CHK[1:0]</td><td>0x00</td><td>R/W</td><td>Controls address check configuration of received packages.<br><br>Values:<br>0 : No address check<br>1 : Address check, no broadcast<br>2 : Address check and 0 (0x00) broadcast<br>3 : Address check and 0 (0x00) and 255 (0xFF) broadcast' + tabEnd,
 tabPre + '7</td><td></td><td>0x00</td><td>R0</td><td>Not used</td></tr><tr><td>6</td><td>WHITE_DATA</td><td>0x01</td><td>R/W</td><td>Turn data whitening on / off.<br><br>Values:<br>0 : Whitening off<br>1 : Whitening on</td></tr><tr><td>5:4</td><td>PKT_FORMAT[1:0]</td><td>0x00</td><td>R/W</td><td>Format of RX and TX data<br><br>Values:<br>0 : Normal mode, use FIFOs for RX and TX<br>1 : Synchronous serial mode, Data in on GDO0 and data out on either of the GDOx pins<br>2 : Random TX mode; sends random data using PN9 generator. Used for test. Works as normal mode, setting 0 (00), in RX<br>3 : Asynchronous serial mode, Data in on GDO0 and data out on either of the GDOx pins</td></tr><tr><td>3</td> <td></td><td>0x00</td><td>R0</td><td>Not used</td></tr><tr><td>2</td><td>CRC_EN</td><td>0x01</td><td>R/W</td><td>Values:<br>1 : CRC calculation in TX and CRC check in RX enabled<br>0 : CRC disabled for TX and RX</td></tr><tr><td>1:0</td><td>LENGTH_CONFIG[1:0]</td><td>0x01</td><td>R/W</td><td>Configure the packet length<br><br>Values:<br>0 : Fixed packet length mode. Length configured in PKTLEN register<br>1 : Variable packet length mode. Packet length configured by the first byte after sync word<br>2: Infinite packet length mode<br>3: Reserved' + tabEnd,
 '','','','','','','','','','',
@@ -185,5 +196,5 @@ tabPre + '7</td><td>FEC_EN</td><td>0x00</td><td>R/W</td><td>Enable Forward Error
 
 const C_Length = ['Fixed packet length. Length configured in PKTLEN register','Variable packet length. Length configured by the first byte after sync word','Infinite packet length','Reserved'];
 const C_Mod = ['2-FSK', 'GFSK', '', 'ASK/OOK', '4-FSK', '', '', 'MSK'];
-const C_NumP = ['2', '3', '4', '6', '8', '12', '16', '24'];
+const C_NumP = [2, 3, 4, 6, 8, 12, 16, 24];
 const C_Sync = ['No preamble/sync','15/16 sync word bits detected','16/16 sync word bits detected','30/32 sync word bits detected','No preamble/sync, carrier-sense above threshold','15/16 + carrier-sense above threshold','16/16 + carrier-sense above threshold','30/32 + carrier-sense above threshold'];

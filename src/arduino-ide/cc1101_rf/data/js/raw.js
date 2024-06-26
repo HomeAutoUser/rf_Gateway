@@ -1,5 +1,4 @@
-﻿// https://stackoverflow.com/questions/16206322/how-to-get-js-variable-to-retain-value-after-page-refresh
-var store = document.querySelector(':root');  /* Get the CSS root element */
+﻿var store = document.querySelector(':root');  /* Get the CSS root element */
 var value = getComputedStyle(store);          /* Get the styles (properties and values) for the root */
 var color1 = value.getPropertyValue('--rssi_good');
 var color2 = value.getPropertyValue('--rssi_bad');
@@ -12,8 +11,8 @@ document.onreadystatechange = function () {
 if (document.readyState == 'complete') {
 const sd = document.getElementsByName('sd')[0];
 sd.maxLength = 128;
-sd.placeholder = 'Hex data to send (max 128 characters).';
-sd.title = 'Input: only hexadecimal characters.';
+sd.placeholder = `Hex data to send (max 128 characters).`;
+sd.title = `Input: only hexadecimal characters.`;
 sd.size = 60;
 const rep = document.getElementsByName('rep')[0];
 rep.max = 99;
@@ -21,7 +20,7 @@ rep.min = 0;
 rep.size = 4;
 rep.value = 0;
 const rept = document.getElementsByName('rept')[0];
-rept.max = 300000; // 999999
+rept.max = 300000;
 rept.min = 2;
 rept.size = 7;
 rept.value = 100;
@@ -34,28 +33,51 @@ if (event.data.includes('RAW,')) {
 var time = new Date().toLocaleTimeString();
 const obj=event.data.split(',');
 document.getElementById('MODE').innerHTML = obj[1];
+
+var checkBox = document.getElementById("bits");
 var table = document.getElementById('dataTable');
 var row = table.insertRow(1);
-var cell1 = row.insertCell(0);
-var cell2 = row.insertCell(1);
-var cell3 = row.insertCell(2);
-var cell4 = row.insertCell(3);
-TableHandlers();
-cell1.innerHTML = time;
-cell1.style.textAlign = "center";
-cell2.innerHTML = obj[2];
-cell2.style.fontFamily = "Courier New,Lucida Console";
-cell3.innerHTML = obj[3];
-if (obj[3] <= -80) {
-cell3.style.color = color2;
-} else if(obj[3] > -50) {
-cell3.style.color = color1;
+var c1r1 = row.insertCell(0);
+var c2r1 = row.insertCell(1);
+var c3r1 = row.insertCell(2);
+var c4r1 = row.insertCell(3);
+c1r1.innerHTML = time;
+c1r1.style.textAlign = "center";
+c2r1.style.fontFamily = "Courier New,Lucida Console";
+
+if (checkBox.checked == true && (!obj[2].match('^MU;'))){
+var row2 = table.insertRow(2);
+c2r1.innerHTML = obj[2];
+
+var c1r2 = row2.insertCell(0);
+var c2r2 = row2.insertCell(1);
+c1r2.innerHTML = time;
+c1r2.style.textAlign = "center";
+var bits = '';
+var raw = obj[2];
+for (let i = 0; i < raw.length; i++) {
+bits+=(parseInt(raw[i], 16).toString(2)).padStart(4, '0');
 }
-cell3.style.textAlign = "right";
-cell3.style.paddingRight = "12px";
-cell4.innerHTML = obj[4];
-cell4.style.textAlign = "right";
-cell4.style.paddingRight = "12px";
+c2r2.colSpan = 3;
+c2r2.innerHTML = bits;
+c2r2.style.fontFamily = "Courier New,Lucida Console";
+} else {
+c2r1.innerHTML = obj[2];
+}
+
+c3r1.innerHTML = obj[3];
+if (obj[3] <= -80) {
+c3r1.style.color = color2;
+} else if(obj[3] > -50) {
+c3r1.style.color = color1;
+}
+c3r1.style.textAlign = "right";
+c3r1.style.paddingRight = "12px";
+c4r1.innerHTML = obj[4];
+c4r1.style.textAlign = "right";
+c4r1.style.paddingRight = "12px";
+
+TableHandlers();
 } else if (event.data.includes('MODE,')) {
 const obj=event.data.split(',');
 document.getElementById('MODE').innerHTML = obj[1];

@@ -849,8 +849,8 @@ void web_raw() {            // ########## web_raw ##########
   } else {
     website += F("Ready to broadcast.");
   }
-  website += F("</span></td>"
-               "<form method=\"get\"><td class=\"td1\" colspan=\"2\">" // Output Power setting
+  website += F("</span><td class=\"td1\">log bits<input type=\"checkbox\" id=\"bits\"</td></td>"
+               "<form method=\"get\"><td class=\"td1\">" // Output Power setting
                "Output power&ensp;<select id=\"pow\" name=\"pow\">");
 #ifdef CC110x
   float freq = Chip_readFreq(); // kHz

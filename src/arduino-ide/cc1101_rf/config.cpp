@@ -51,7 +51,7 @@ const struct Data Registers[] PROGMEM = {
 
 #ifdef RFM69
 #ifdef Inverter_CMT2300A_comp
-  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 27 }, /* under development | RFM69 */
+  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 53 }, // under development | only RFM69
 #endif
 #endif
 

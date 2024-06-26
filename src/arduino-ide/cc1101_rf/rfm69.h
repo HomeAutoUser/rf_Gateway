@@ -1753,7 +1753,7 @@ const uint8_t Config_X_Sense[] PROGMEM = {
 const uint8_t Config_Inverter_CMT2300A[] PROGMEM = {
   // SX1231 register values for Inverter with CMT2300A receiver
   0x00, // 0x00 - RegFifo
-  0x10, // 0x01 - RegOpMode
+  0x04, // 0x01 - RegOpMode
   0x00, // 0x02 - RegDataModul
   0x06, // 0x03 - RegBitrateMsb
   0x40, // 0x04 - RegBitrateLsb
@@ -1832,7 +1832,7 @@ const uint8_t Config_Inverter_CMT2300A[] PROGMEM = {
   0x00, // 0x4D - RegAesKey16
   0x01, // 0x4E - RegTemp1
   0x00, // 0x4F - RegTemp2
-  0x1B, // 0x58 - RegTestLna
+  0x2D, // 0x58 - RegTestLna
   0x09, // 0x59 - RegTestTcxo
   0x08, // 0x5F - RegTestllBw
   0x30, // 0x6F - RegTestDagc
