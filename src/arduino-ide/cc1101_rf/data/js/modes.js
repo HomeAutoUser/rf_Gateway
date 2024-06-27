@@ -101,26 +101,28 @@ return notes[i][1];
 }
 }
 
+const a = `- firmware must support processing & only one register setting does not work!`;
+
 const notes = [
 [`Chip factory default`,`factory settings chip from datasheet`],
 [`Chip user setting`,`User settings after adjustment`],
 //[`ASK/OOK 433 MHz`,``],
 //[`Avantek DB-LE`,``],
 //[`Bresser 5-in-1`,``],
-//[`Bresser 6-in-1`,``],
+[`Bresser 6-in-1`,`send interval: 12 secondes, two different messages`],
 //[`Bresser 7-in-1`,``],
 //[`Fine Offset WH51 434 MHz`,``],
 //[`Fine Offset_WH51 868 MHz`,``],
 //[`Fine Offset WH57 434 MHz`,``],
 //[`Fine Offset WH57 868 MHz`,``],
 //[`Inkbird IBS-P01R`,``],
-[`Hoymiles Inverter HMS/HMT`,`- Settings of the base frequency DTU\n- different frequencies must be set manually !`],
-//[`KOPP FC`,``],
-[`LaCrosse mode 1`,`send interval 4 secondes`],
-[`LaCrosse mode 2`,`send interval 11 secondes`],
+[`Hoymiles Inverter HMS_HMT`,`${a}\n- settings of the base frequency DTU (different frequencies must be set manually !)\n- send interval: different`],
+[`KOPP FC`,`- untested!`],
+[`LaCrosse mode 1`,`send interval: 4 secondes`],
+[`LaCrosse mode 2`,`send interval: 10 secondes`],
 //[`PCA301`,``],
 //[`Rojaflex`,``],
-//[`WMBus S`,``],
-//[`WMBus T`,``],
-//[`X-Sense XS01-WR`,``]
+[`WMBus S`,`${a}`],
+[`WMBus T`,`${a}`],
+[`X-Sense XS01-WR`,`- only on SX1231 can receive & send | CC110X receiver not suitable (only receive)`]
 ];
