@@ -81,9 +81,9 @@ First, sorry. This software is not perfect.
   -
   ![CC110x](./screenshots/picture2.png)
   -
-  ![CC110x register](./screenshots/picture3.png)
+  ![rf_Gateway register](./screenshots/picture3.png)
   -
-  ![CC110x reception](./screenshots/picture4.png)
+  ![rf_Gateway reception](./screenshots/picture4.png)
   -
   ![RAW data](./screenshots/picture5.png)
   -
