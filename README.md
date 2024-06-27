@@ -83,8 +83,4 @@ First, sorry. This software is not perfect.
   -
   ![rf_Gateway register](./screenshots/picture3.png)
   -
-  ![rf_Gateway reception](./screenshots/picture4.png)
-  -
-  ![RAW data](./screenshots/picture5.png)
-  -
   ![WLAN](./screenshots/picture6.png)
