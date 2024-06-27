@@ -102,6 +102,7 @@ return notes[i][1];
 }
 
 const a = `- firmware must support processing & only one register setting does not work!`;
+const b = `- support for WH31, WH40\n- only the RAW length is larger`;
 
 const notes = [
 [`Chip factory default`,`factory settings chip from datasheet`],
@@ -111,8 +112,8 @@ const notes = [
 //[`Bresser 5-in-1`,``],
 [`Bresser 6-in-1`,`send interval: 12 secondes, two different messages`],
 //[`Bresser 7-in-1`,``],
-//[`Fine Offset WH51 434 MHz`,``],
-//[`Fine Offset_WH51 868 MHz`,``],
+[`Fine Offset WH51 434 MHz`,`${b}`],
+[`Fine Offset_WH51 868 MHz`,`${b}`],
 //[`Fine Offset WH57 434 MHz`,``],
 //[`Fine Offset WH57 868 MHz`,``],
 //[`Inkbird IBS-P01R`,``],
