@@ -3,7 +3,7 @@
 ### Getting started
 
 
-System to receive digital signals and provide them to other systems for demodulation. A CC110x or SX1231 is used as receiver. The cabling is analogue and compatible with the SIGNALduino. You can toggle up to 4 reception modes with a minimum time of 30 seconds. It can be operated via the WEB interface or the uC command (telnet). Standard operation is possible via FHEM. <br>Current reception modes are (values can be compiled in or compiled out yourself) :
+System to receive digital signals and provide them to other systems for demodulation. A CC110x or SX1231 is used as receiver. The cabling is analogue and compatible with the SIGNALduino. You can toggle up to 4 reception modes with a minimum time of 30 seconds. It can be operated via the WEB interface or the uC command (telnet). Standard operation is possible via FHEM.<br><br>Current reception modes are (values can be compiled in or compiled out yourself) :
   - Chip factory default (standard values according to data sheet)
   - Chip user setting
   - ASK/OOK 433 MHz
