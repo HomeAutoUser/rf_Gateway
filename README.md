@@ -1,26 +1,30 @@
-# cc1101_rf_Gateway uC v2.0.0pre with CC110x/ SX1231 support
+# rf_Gateway uC v2.1.5pre with CC110x/ SX1231 support
 
 ### Getting started
 
 
-System to receive digital signals and provide them to other systems for demodulation. A CC1101 is used as receiver. The cabling is analogue and compatible with the SIGNALduino. You can toggle up to 4 reception modes with a minimum time of 30 seconds. It can be operated via the WEB interface or the uC command (telnet). Standard operation is possible via FHEM. <br>Current reception modes are (values can be compiled in or compiled out yourself) :
-  - CC110x Factory Default (standard values according to data sheet)
-  - Avantek
-  - Bresser_5in1
-  - Bresser_6in1
-  - Bresser_7in1
-  - Fine_Offset_WH51_434
-  - Fine_Offset_WH51_868
-  - Fine_Offset_WH57_434
-  - Fine_Offset_WH57_868
-  - Inkbird_IBS_P01R
-  - KOPP_FC
-  - Lacrosse_mode1
-  - Lacrosse_mode2
-  - OOK - Modulation on 433MHz
+System to receive digital signals and provide them to other systems for demodulation. A CC110x or SX1231 is used as receiver. The cabling is analogue and compatible with the SIGNALduino. You can toggle up to 4 reception modes with a minimum time of 30 seconds. It can be operated via the WEB interface or the uC command (telnet). Standard operation is possible via FHEM. <br>Current reception modes are (values can be compiled in or compiled out yourself) :
+  - Chip factory default (standard values according to data sheet)
+  - Chip user setting
+  - ASK/OOK 433 MHz
+  - Avantek DB-LE
+  - Bresser 5-in-1
+  - Bresser 6-in-1
+  - Bresser 7-in-1
+  - Fine Offset WH51 434 MHz
+  - Fine Offset_WH51 868 MHz
+  - Fine Offset WH57 434 MHz
+  - Fine Offset WH57 868 MHz
+  - Inkbird IBS-P01R
+  - Hoymiles Inverter HMS_HMT
+  - KOPP FC
+  - LaCrosse mode 1
+  - LaCrosse mode 2
   - PCA301
   - Rojaflex
-  - X_Sense
+  - WMBus S
+  - WMBus T
+  - X-Sense XS01-WR
   - ... some development´s
 
 
@@ -37,7 +41,7 @@ required libraries: [digitalWriteFast](https://www.arduino.cc/reference/en/libra
 3. define one SIGNALduino device <br> ( define \<name\> SIGNALduino \<device\> )
 4. check the reading 'state' and if communication is successful it says 'opened'
 
-### Using cc1101_rf_Gateway in FHEM (with a SX1231 chip)
+### Using rfm69_rf_Gateway in FHEM (with a SX1231 chip)
 
 1. ... text is being adapted
 2. ... a bit patience
