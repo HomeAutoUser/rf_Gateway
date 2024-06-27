@@ -64,3 +64,63 @@ if (document.activeElement.tagName == "INPUT" && document.activeElement.type == 
 changed++;
 }
 });
+
+
+document.onreadystatechange = function () {
+if (document.readyState == 'complete') {
+CheckNotes();
+}
+};
+
+function CheckNotes() {
+const tbody = document.querySelector('#rec_mod tbody');
+tbody.addEventListener('mouseover', function (e) {
+const cell = e.target.closest('td');
+if (!cell) {return;}
+const row = cell.parentElement;
+if(cell.cellIndex == 0) {
+var value = cell.innerHTML;
+if (value.match('^[\\d]{1,3}')) {
+var mode = value.substring(5);
+var txt = modeIndex(mode);
+if (txt){
+if (cell.hasAttribute('title') == false) {
+cell.setAttribute('title', txt);
+}
+}
+}
+}
+});
+}
+
+function modeIndex(Value){
+for (var i = 0; i < notes.length; i++) {
+if(Value == notes[i][0]){
+return notes[i][1];
+}
+}
+}
+
+const notes = [
+[`Chip factory default`,`factory settings chip from datasheet`],
+[`Chip user setting`,`User settings after adjustment`],
+//[`ASK/OOK 433 MHz`,``],
+//[`Avantek DB-LE`,``],
+//[`Bresser 5-in-1`,``],
+//[`Bresser 6-in-1`,``],
+//[`Bresser 7-in-1`,``],
+//[`Fine Offset WH51 434 MHz`,``],
+//[`Fine Offset_WH51 868 MHz`,``],
+//[`Fine Offset WH57 434 MHz`,``],
+//[`Fine Offset WH57 868 MHz`,``],
+//[`Inkbird IBS-P01R`,``],
+[`Hoymiles Inverter HMS/HMT`,`- Settings of the base frequency DTU\n- different frequencies must be set manually !`],
+//[`KOPP FC`,``],
+[`LaCrosse mode 1`,`send interval 4 secondes`],
+[`LaCrosse mode 2`,`send interval 11 secondes`],
+//[`PCA301`,``],
+//[`Rojaflex`,``],
+//[`WMBus S`,``],
+//[`WMBus T`,``],
+//[`X-Sense XS01-WR`,``]
+];
