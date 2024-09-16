@@ -3,6 +3,7 @@
 #ifdef CC110x
 
 #include "cc110x.h"
+#include "hoymiles.h"
 #include "functions.h"
 #include "macros.h"
 
@@ -260,8 +261,10 @@ void Chip_writeRegFor(uint8_t regNr) { // write all registers
       }
     }
   }
-#if defined (WMBus_S) || defined (WMBus_T)
+#if defined (WMBus_S) || defined (WMBus_T) || defined (Inverter_CMT2300A)
   String ReceiveModeName = getModeName(regNr); // name of active mode from array
+#endif
+#if defined (WMBus_S) || defined (WMBus_T)
   if (ReceiveModeName.startsWith("W")) { // WMBUS
     if (ReceiveModeName.endsWith("S")) { // WMBUS_S
       mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
@@ -269,6 +272,11 @@ void Chip_writeRegFor(uint8_t regNr) { // write all registers
     if (ReceiveModeName.endsWith("T")) { // WMBUS_T
       mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
+  }
+#endif
+#if defined (Inverter_CMT2300A)
+  if (ReceiveModeName.startsWith("H")) { // Hoymiles
+    hm_init();
   }
 #endif
 }
@@ -382,13 +390,10 @@ void Chip_readRXFIFO(uint8_t* data, uint8_t length, uint8_t *rssi, uint8_t *lqi)
 
 void Chip_readBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   /* Read burst data from CC110x via SPI
-
     'uiBuffer'  Buffer where to copy the result to
     'regAddr'  Register address
     'len'  Data length  */
-
   byte addr, i;
-
   addr = regAddr | READ_BURST;
   ChipSelect();                       // Select CC110x
   wait_Miso();                        // Wait until MISO goes low
@@ -398,16 +403,12 @@ void Chip_readBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   ChipDeselect();                     // Deselect CC110x
 }
 
-
 void CC110x_writeBurstReg(byte *uiBuffer, byte regAddr, byte len) {
   /* Write burst data from CC110x via SPI
-
      'uiBuffer'  Buffer where to copy the result to
      'regAddr'  Register address
      'len'  Data length  */
-
   byte addr, i;
-
   addr = regAddr | WRITE_BURST;
   ChipSelect();                 // Select CC110x
   wait_Miso();                  // Wait until MISO goes low

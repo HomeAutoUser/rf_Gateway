@@ -806,10 +806,10 @@ void web_raw() {            // ########## web_raw ##########
       RegPaLevel = (RegPaLevel & 0b11100000) | (OutputPowerNew);
       Chip_writeReg(0x11 , RegPaLevel); // PA selection and Output Power control
       OutputPower = OutputPowerNew;
-      //#ifdef debug_chip
+#ifdef debug_chip
       Serial.print(F("[DB] SX1231 write RegPaLevel 0x11: 0x")); Serial.println(RegPaLevel, HEX);
       Serial.print(F("[DB] SX1231 new OutputPower: "));  Serial.println(OutputPower);
-      //#endif
+#endif
     }
 #endif // END - #ifdef RFM69
   }
@@ -1227,7 +1227,7 @@ void WebSocket_detail(byte variant) {
 #endif
   if (webSocket.connectedClients() > 0) {
     String website = "";
-    website.reserve(200);
+    website.reserve(320);
     char chHex[3]; // for hex output
     for (byte i = 0; i <= REGISTER_MAX; i++) { /* all registers | fastest variant */
 #ifdef RFM69

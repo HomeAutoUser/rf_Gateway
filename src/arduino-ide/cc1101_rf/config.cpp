@@ -33,11 +33,8 @@ const struct Data Registers[] PROGMEM = {
 #ifdef Bresser_7in1
   { Config_Bresser_7in1, Name_Bresser_7in1, 23 },
 #endif
-#ifdef Fine_Offset_WH51_434
-  { Config_Fine_Offset_WH51_434, Name_Fine_Offset_WH51_434, 14 },
-#endif
-#ifdef Fine_Offset_WH51_868
-  { Config_Fine_Offset_WH51_868, Name_Fine_Offset_WH51_868, 14 },
+#ifdef Fine_Offset_WH31_868
+  { Config_Fine_Offset_WH31_868, Name_Fine_Offset_WH31_868, 7 },
 #endif
 #ifdef Fine_Offset_WH57_434
   { Config_Fine_Offset_WH57_434, Name_Fine_Offset_WH57_434, 9 },
@@ -45,14 +42,17 @@ const struct Data Registers[] PROGMEM = {
 #ifdef Fine_Offset_WH57_868
   { Config_Fine_Offset_WH57_868, Name_Fine_Offset_WH57_868, 9 },
 #endif
+#ifdef Fine_Offset_WH51_434
+  { Config_Fine_Offset_WH51_434, Name_Fine_Offset_WH51_434, 14 },
+#endif
+#ifdef Fine_Offset_WH51_868
+  { Config_Fine_Offset_WH51_868, Name_Fine_Offset_WH51_868, 14 },
+#endif
 #ifdef Inkbird_IBS_P01R
   { Config_Inkbird_IBS_P01R, Name_Inkbird_IBS_P01R, 18 },
 #endif
-
-#ifdef RFM69
-#ifdef Inverter_CMT2300A_comp
-  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 53 }, // under development | only RFM69
-#endif
+#ifdef Inverter_CMT2300A
+  { Config_Inverter_CMT2300A, Name_Inverter_CMT2300A, 53 }, // under development
 #endif
 
 #ifdef KOPP_FC

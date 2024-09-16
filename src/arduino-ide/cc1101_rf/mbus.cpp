@@ -103,7 +103,6 @@ static uint8_t mbus_on(uint8_t force) {
   RXinfo.bytesLeft   = 0;           // Bytes left to to be read from the RX FIFO
   RXinfo.pByteIndex  = MBbytes;     // Pointer to current position in the byte array
   RXinfo.format      = INFINITE;    // Infinite or fixed packet mode
-  //  RXinfo.complete    = FALSE;       // Packet Received
   RXinfo.mode        = mbus_mode;   // Wireless MBUS radio mode
   RXinfo.framemode   = WMBUS_NONE;  // Received frame mode (Distinguish between C- and T-mode)
   RXinfo.frametype   = 0;           // Frame A or B in C-mode
@@ -314,7 +313,8 @@ void mbus_task() {
 #endif
       }
       // END OF PAKET
-      if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+      if (digitalReadFast(GDO2) == 0) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+      // if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
         Chip_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
         CC110x_readFreqErr();
         RXinfo.state = 4; // decode!
@@ -361,33 +361,33 @@ DECODE:
         rxStatus = decodeRXBytesSmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
         rxLength = packetSize(MBpacket[0]);
 #ifdef debug_mbus
-        Serial.print(F("mbt S-MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+        Serial.print(F("mbt4 S-MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
 #endif
       } else if (RXinfo.framemode == WMBUS_TMODE) {
         rxStatus = decodeRXBytesTmode(MBbytes, MBpacket, packetSize(RXinfo.lengthField));
         rxLength = packetSize(MBpacket[0]);
 #ifdef debug_mbus
-        Serial.print(F("mbt T_MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+        Serial.print(F("mbt4 T_MODE ")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
 #endif
       } else if (RXinfo.framemode == WMBUS_CMODE) {
         if (RXinfo.frametype == WMBUS_FRAMEA) {
           rxLength = RXinfo.lengthField + 2 * (2 + (RXinfo.lengthField - 10) / 16) + 1;
           rxStatus = verifyCrcBytesCmodeA(MBbytes + 2, MBpacket, rxLength);
 #ifdef debug_mbus
-          Serial.print(F("mbt C-MODE FRAME A")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+          Serial.print(F("mbt4 C-MODE FRAME A")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
 #endif
         } else if (RXinfo.frametype == WMBUS_FRAMEB) {
           rxLength = RXinfo.lengthField + 1;
           rxStatus = verifyCrcBytesCmodeB(MBbytes + 2, MBpacket, rxLength);
 #ifdef debug_mbus
-          Serial.print(F("mbt C-MODE FRAME B")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
+          Serial.print(F("mbt4 C-MODE FRAME B")); Serial.print(rxStatus); Serial.print(' '); Serial.println(rxLength);
 #endif
         }
       }
       if (rxStatus == PACKET_OK) { // rxStatus == 0
         digitalWriteFast(LED, HIGH);    // LED on
 #ifdef debug_mbus
-        Serial.println(F("mbt PACKET_OK"));
+        Serial.println(F("mbt4 PACKET_OK"));
 #endif
 #if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #ifdef CC110x

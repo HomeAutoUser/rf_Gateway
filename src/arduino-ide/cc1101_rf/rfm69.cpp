@@ -2,6 +2,7 @@
 
 #ifdef RFM69
 #include "rfm69.h"
+#include "hoymiles.h"
 #include "functions.h"
 #include "macros.h"
 
@@ -213,8 +214,10 @@ void Chip_writeRegFor(uint8_t regNr) { // write all registers
       }
     }
   }
-#if defined (WMBus_S) || defined (WMBus_T)
+#if defined (WMBus_S) || defined (WMBus_T) || defined (Inverter_CMT2300A)
   String ReceiveModeName = getModeName(regNr); // name of active mode from array
+#endif
+#if defined (WMBus_S) || defined (WMBus_T)
   if (ReceiveModeName.startsWith("W")) { // WMBUS
     if (ReceiveModeName.endsWith("S")) { // WMBUS_S
       mbus_init(WMBUS_SMODE); // 1 = WMBUS_SMODE
@@ -222,6 +225,11 @@ void Chip_writeRegFor(uint8_t regNr) { // write all registers
     if (ReceiveModeName.endsWith("T")) { // WMBUS_T
       mbus_init(WMBUS_TMODE); // 2 = WMBUS_TMODE
     }
+  }
+#endif
+#if defined (Inverter_CMT2300A)
+  if (ReceiveModeName.startsWith("H")) { // Hoymiles
+    hm_init();
   }
 #endif
 }

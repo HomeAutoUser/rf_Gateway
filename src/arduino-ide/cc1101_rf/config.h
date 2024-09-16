@@ -12,6 +12,7 @@
 //#define debug_chip        1     // to debug chip routines
 //#define debug_eeprom      1     // to debug EEPROM
 //#define debug_html        1     // to debug HTML handling
+//#define debug_hoymiles    1     // to debug Hoymiles inverter
 //#define debug_mbus        1     // to debug Wireless-M-Bus
 //#define debug_telnet      1     // to debug Telnet
 //#define debug_websocket   1     // to debug Websocket handling
@@ -24,8 +25,8 @@
 //                                   loop-benchmark (höher=besser           = ProMini 8 MHz, CC1101, LaCrosse 74200, WMBUS ca. 26500
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
-#define FWVer             "V 2.1.5pre"
-#define FWVerDate         "2024-06-27"
+#define FWVer             "V 2.1.6pre"
+#define FWVerDate         "2024-07-15"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -99,11 +100,13 @@
 #define Bresser_5in1            1
 #define Bresser_6in1            1
 #define Bresser_7in1            1
+#define Fine_Offset_WH31_868    1
 #define Fine_Offset_WH51_434    1
 #define Fine_Offset_WH51_868    1
 #define Fine_Offset_WH57_434    1
 #define Fine_Offset_WH57_868    1
 #define Inkbird_IBS_P01R        1
+#define Inverter_CMT2300A       1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 #define Rojaflex                1
@@ -119,11 +122,6 @@
 //#define HomeMatic               1   // only CC110x inside
 //#define Lacrosse_mode3          1   // only CC110x inside
 //#define Max                     1   // only CC110x inside
-#endif
-
-#ifdef RFM69
-/* under development */
-#define Inverter_CMT2300A_comp  1   // only RFM69 inside
 #endif
 
 /* Configuration for WLAN devices */
@@ -145,6 +143,7 @@
     Arduino Nano maximal 13 Modes???
 */
 //#define Bresser_5in1            1
+#define Inverter_CMT2300A       1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 //#define Fine_Offset_WH57_868    1
@@ -152,7 +151,7 @@
 //#define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define WMBus_S                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
 #define WMBus_T                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
-#define X_Sense                 1
+//#define X_Sense                 1
 #endif
 
 // Names of the modes
@@ -163,12 +162,13 @@ const static char Name_Avantek[] PROGMEM = "Avantek DB-LE";
 const static char Name_Bresser_5in1[] PROGMEM = "Bresser 5-in-1";
 const static char Name_Bresser_6in1[] PROGMEM = "Bresser 6-in-1";
 const static char Name_Bresser_7in1[] PROGMEM = "Bresser 7-in-1";
+const static char Name_Fine_Offset_WH31_868[] PROGMEM = "Fine Offset WH31 868 MHz";
 const static char Name_Fine_Offset_WH51_434[] PROGMEM = "Fine Offset WH51 434 MHz";
-const static char Name_Fine_Offset_WH51_868[] PROGMEM = "Fine Offset_WH51 868 MHz";
-const static char Name_Fine_Offset_WH57_434[] PROGMEM = "Fine Offset WH57 434 MHz";
-const static char Name_Fine_Offset_WH57_868[] PROGMEM = "Fine Offset WH57 868 MHz";
+const static char Name_Fine_Offset_WH51_868[] PROGMEM = "Fine Offset WH51 868 MHz";
+const static char Name_Fine_Offset_WH57_434[] PROGMEM = "Fine Offset WH40/WH57 434 MHz";
+const static char Name_Fine_Offset_WH57_868[] PROGMEM = "Fine Offset WH40/WH57 868 MHz";
 const static char Name_Inkbird_IBS_P01R[] PROGMEM = "Inkbird IBS-P01R";
-const static char Name_Inverter_CMT2300A[] PROGMEM = "Hoymiles Inverter HMS_HMT";
+const static char Name_Inverter_CMT2300A[] PROGMEM = "Hoymiles Inverter HMS/HMT";
 const static char Name_KOPP_FC[] PROGMEM = "KOPP FC";
 const static char Name_Lacrosse_mode1[] PROGMEM = "LaCrosse mode 1";
 const static char Name_Lacrosse_mode2[] PROGMEM = "LaCrosse mode 2";

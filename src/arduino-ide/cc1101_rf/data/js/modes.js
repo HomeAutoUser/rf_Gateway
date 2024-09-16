@@ -102,7 +102,10 @@ return notes[i][1];
 }
 
 const a = `- firmware must support processing & only one register setting does not work!`;
-const b = `- support for WH31, WH40\n- only the RAW length is larger`;
+const b = `- Fine Offset WH40, Ambient Weather WH40E, ecowitt WH40\n- Fine Offset WH57, Ambient Weather WH31L, Froggit DP60`;
+const c = `- Fine Offset WH51, ecowitt WH51, Froggit DP100, MISOL/1`;
+const r = `remotes:\n`;
+const s = `sensors:\n`;
 
 const notes = [
 [`Chip factory default`,`factory settings chip from datasheet`],
@@ -112,17 +115,18 @@ const notes = [
 //[`Bresser 5-in-1`,``],
 [`Bresser 6-in-1`,`send interval: 12 secondes, two different messages`],
 //[`Bresser 7-in-1`,``],
-[`Fine Offset WH51 434 MHz`,`${b}`],
-[`Fine Offset_WH51 868 MHz`,`${b}`],
-//[`Fine Offset WH57 434 MHz`,``],
-//[`Fine Offset WH57 868 MHz`,``],
-//[`Inkbird IBS-P01R`,``],
-[`Hoymiles Inverter HMS_HMT`,`${a}\n- settings of the base frequency DTU (different frequencies must be set manually !)\n- send interval: different`],
+//[`Fine Offset WH31 868 MHz`,``],
+[`Fine Offset WH40/WH57 434 MHz`,`${s}${b}`],
+[`Fine Offset WH40/WH57 868 MHz`,`${s}${b}`],
+[`Fine Offset WH51 434 MHz`,`${s}${c}`],
+[`Fine Offset_WH51 868 MHz`,`${s}${c}`],
+[`Inkbird IBS-P01R`,`${s}- Inkbird IBS-P01R, ITH-20R`],
+[`Hoymiles Inverter HMS/HMT`,`${a}\n- settings of the base frequency DTU (different frequencies must be set manually !)\n- send interval: different`],
 [`KOPP FC`,`- untested!`],
 [`LaCrosse mode 1`,`send interval: 4 secondes`],
 [`LaCrosse mode 2`,`send interval: 10 secondes`],
 //[`PCA301`,``],
-//[`Rojaflex`,``],
+[`Rojaflex`,`${r}- HSR-15, HSTR-15`],
 [`WMBus S`,`${a}`],
 [`WMBus T`,`${a}`],
 [`X-Sense XS01-WR`,`- only on SX1231 can receive & send | CC110X receiver not suitable (only receive)`]

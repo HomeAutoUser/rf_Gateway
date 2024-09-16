@@ -24,9 +24,9 @@
 #define CHIP_FREQMSB             0x0D                   // Frequency Control Word, High Byte
 
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
-#define NUMBER_OF_MODES  20 // ESP - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  22 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  6  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -645,6 +645,82 @@ const uint8_t Config_Lacrosse_mode2[] PROGMEM = {
 };
 #endif
 
+#ifdef Fine_Offset_WH31_868
+const uint8_t Config_Fine_Offset_WH31_868[] PROGMEM = {
+  /*
+    Address Config = No address check
+    Base Frequency = 868.349854
+    CRC Autoflush = false
+    CRC Enable = false
+    Carrier Frequency = 868.349854
+    Channel Number = 0
+    Channel Spacing = 199.951172
+    Data Format = Normal mode
+    Data Rate = 17.2577
+    Deviation = 34.912109
+    Device Address = 0
+    Manchester Enable = false
+    Modulated = true
+    Modulation Format = 2-FSK
+    PA Ramping = true
+    Packet Length = 7
+    Packet Length Mode = Fixed packet length mode. Length configured in PKTLEN register
+    Preamble Count = 4
+    RX Filter BW = 135.416667
+    Sync Word Qualifier Mode = 16/16 sync word bits detected
+    TX Power = unknown
+    Whitening = false
+  */
+  0x01,  // IOCFG2              GDO2 Output Pin Configuration
+  0x2E,  // IOCFG1              GDO1 Output Pin Configuration
+  0x2E,  // IOCFG0              GDO0 Output Pin Configuration
+  0x41,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x2D,  // SYNC1               Sync Word, High Byte
+  0xD4,  // SYNC0               Sync Word, Low Byte
+  0x07,  // PKTLEN              Packet Length
+  0x80,  // PKTCTRL1            Packet Automation Control
+  0x00,  // PKTCTRL0            Packet Automation Control
+  0x00,  // ADDR                Device Address
+  0x00,  // CHANNR              Channel Number
+  0x06,  // FSCTRL1             Frequency Synthesizer Control
+  0x00,  // FSCTRL0             Frequency Synthesizer Control
+  0x21,  // FREQ2               Frequency Control Word, High Byte
+  0x65,  // FREQ1               Frequency Control Word, Middle Byte
+  0xE8,  // FREQ0               Frequency Control Word, Low Byte
+  0xA9,  // MDMCFG4             Modem Configuration
+  0x5C,  // MDMCFG3             Modem Configuration
+  0x02,  // MDMCFG2             Modem Configuration
+  0x22,  // MDMCFG1             Modem Configuration
+  0xF8,  // MDMCFG0             Modem Configuration
+  0x43,  // DEVIATN             Modem Deviation Setting
+  0x07,  // MCSM2               Main Radio Control State Machine Configuration
+  0x00,  // MCSM1               Main Radio Control State Machine Configuration
+  0x18,  // MCSM0               Main Radio Control State Machine Configuration
+  0x16,  // FOCCFG              Frequency Offset Compensation Configuration
+  0x6C,  // BSCFG               Bit Synchronization Configuration
+  0x43,  // AGCCTRL2            AGC Control
+  0x68,  // AGCCTRL1            AGC Control
+  0x91,  // AGCCTRL0            AGC Control
+  0x87,  // WOREVT1             High Byte Event0 Timeout
+  0x6B,  // WOREVT0             Low Byte Event0 Timeout
+  0xFB,  // WORCTRL             Wake On Radio Control
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz, FREND1 = 0xB6, RX filter bandwidth ≤ 101 kHz, FREND1 = 0x56
+  0x10,  // FREND0              Front End TX Configuration
+  0xEA,  // FSCAL3              Frequency Synthesizer Calibration (x)
+  0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
+  0x00,  // FSCAL1              Frequency Synthesizer Calibration (x)
+  0x1F,  // FSCAL0              Frequency Synthesizer Calibration (x)
+  0x41,  // RCCTRL1             RC Oscillator Configuration       (x)
+  0x00,  // RCCTRL0             RC Oscillator Configuration       (x)
+  //0x59,  // FSTEST              Frequency Synthesizer Calibration Control
+  //0x7F,  // PTEST               Production Test
+  //0x3E,  // AGCTEST             AGC Test
+  //0x88,  // TEST2               Various Test Settings
+  //0x31,  // TEST1               Various Test Settings
+  //0x0B,  // TEST0               Various Test Settings
+};
+#endif
+
 #ifdef Fine_Offset_WH51_434
 const uint8_t Config_Fine_Offset_WH51_434[] PROGMEM = {
   /*
@@ -831,7 +907,7 @@ const uint8_t Config_Fine_Offset_WH57_434[] PROGMEM = {
   0x01,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
   0x2E,  // IOCFG0              GDO0 Output Pin Configuration
-  0x43,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x42,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
   0x2D,  // SYNC1               Sync Word, High Byte
   0xD4,  // SYNC0               Sync Word, Low Byte
   0x09,  // PKTLEN              Packet Length
@@ -909,7 +985,7 @@ const uint8_t Config_Fine_Offset_WH57_868[] PROGMEM = {
   0x01,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
   0x2E,  // IOCFG0              GDO0 Output Pin Configuration
-  0x43,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x42,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
   0x2D,  // SYNC1               Sync Word, High Byte
   0xD4,  // SYNC0               Sync Word, Low Byte
   0x09,  // PKTLEN              Packet Length
@@ -1815,6 +1891,59 @@ const uint8_t Config_WMBus_T[] PROGMEM = {
   //0x31,  // 0x2E TEST1         Various Test Settings
   //0x09,  // 0x2F TEST0         Various Test Settings
 };
+#endif
+
+#ifdef Inverter_CMT2300A
+const uint8_t Config_Inverter_CMT2300A[] PROGMEM = {
+  // SX1231 register values for Hoymiles Inverter with CMT2300A receiver
+  0x06, // 0x00 - IOCFG2
+  0x2E, // 0x01 - IOCFG1
+  0x00, // 0x02 - IOCFG0
+  0x02, // 0x03 - FIFOTHR
+  0x4D, // 0x04 - SYNC1
+  0x48, // 0x05 - SYNC0
+  0x0C, // 0x06 - PKTLEN
+  0x80, // 0x07 - PKTCTRL1
+  0x00, // 0x08 - PKTCTRL0
+  0x00, // 0x09 - ADDR
+  0x00, // 0x0A - CHANNR
+  0x06, // 0x0B - FSCTRL1
+  0x00, // 0x0C - FSCTRL0
+  0x21, // 0x0D - FREQ2
+  0x62, // 0x0E - FREQ1
+  0x7D, // 0x0F - FREQ0
+  0xC9, // 0x10 - MDMCFG4
+  0x93, // 0x11 - MDMCFG3
+  0x12, // 0x12 - MDMCFG2
+  0x22, // 0x13 - MDMCFG1
+  0xF8, // 0x14 - MDMCFG0
+  0x45, // 0x15 - DEVIATN
+  0x07, // 0x16 - MCSM2
+  0x00, // 0x17 - MCSM1
+  0x18, // 0x18 - MCSM0
+  0x15, // 0x19 - FOCCFG
+  0x6C, // 0x1A - BSCFG
+  0x43, // 0x1B - AGCCTRL2
+  0x68, // 0x1C - AGCCTRL1
+  0x91, // 0x1D - AGCCTRL0
+  0x87, // 0x1E - WOREVT1
+  0x6B, // 0x1F - WOREVT0
+  0xF8, // 0x20 - WORCTRL
+  0xB6, // 0x21 - FREND1
+  0x11, // 0x22 - FREND0
+  0xEF, // 0x23 - FSCAL3
+  0x2C, // 0x24 - FSCAL2
+  0x14, // 0x25 - FSCAL1
+  0x1F, // 0x26 - FSCAL0
+  0x41, // 0x27 - RCCTRL1
+  0x00, // 0x28 - RCCTRL0
+  //  0x59, // 0x29 - FSTEST
+  //  0x7F, // 0x2A - PTEST
+  //  0x9E, // 0x2B - AGCTEST
+  //  0x88, // 0x2C - TEST2
+  //  0x31, // 0x2D - TEST1
+  //  0x09, // 0x2E - TEST0
+}; // END SX1231 register values for Hoymiles Inverter with CMT2300A receiver
 #endif
 
 /** Command strobes */

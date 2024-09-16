@@ -23,6 +23,10 @@ Data myArraySRAM;
 #include "mbus.h"
 #endif
 
+#ifdef Inverter_CMT2300A
+#include "hoymiles.h"
+#endif
+
 #include "macros.h"
 #include "functions.h"
 
@@ -261,6 +265,8 @@ void Interupt_Variant(byte nr) {
 #ifdef CC110x
   if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
+  } else if (ReceiveModeName[0] == 'H') { // Hoymiles Inverter HMS/HMT
+    FSK_RAW = 3;
   } else {
     FSK_RAW = 0;
     MOD_FORMAT = (Chip_readReg(0x12, READ_BURST) & 0b01110000 ) >> 4;
@@ -283,6 +289,8 @@ void Interupt_Variant(byte nr) {
 #elif RFM69
   if (ReceiveModeName[0] == 'W') {  // WMBUS
     FSK_RAW = 2;
+  } else if (ReceiveModeName[0] == 'H') { // Hoymiles Inverter HMS/HMT
+    FSK_RAW = 3;
   } else {
     FSK_RAW = 0;
   }
@@ -622,12 +630,18 @@ void loop() {
   }
 
 #ifdef RFM69
-  if (FSK_RAW != 2) { // no WMBUS
+  if (FSK_RAW < 2) { // not WMBUS and not Hoymiles Inverter HMS/HMT
     if (SX1231_CrcOn) { // CrcOn - 1  On
       FSK_RAW = (Chip_readReg(0x28, 0) & 0b00000010) >> 1; // RegIrqFlags2, CrcOk - Set in Rx when the CRC of the payload is Ok. Cleared when FIFO is empty.
     } else {
       FSK_RAW = (Chip_readReg(0x28, 0) & 0b00100000) >> 5; // RegIrqFlags2, FifoLevel - Set when the number of bytes in the FIFO strictly exceeds FifoThreshold, else cleared.
     }
+  }
+#endif
+
+#ifdef Inverter_CMT2300A
+  if (FSK_RAW == 3) { // Hoymiles Inverter HMS/HMT
+    hm_task();
   }
 #endif
 
