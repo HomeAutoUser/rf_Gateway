@@ -1,4 +1,4 @@
-# rf_Gateway uC v2.1.5pre with CC110x/ SX1231 support
+# rf_Gateway uC v2.1.6pre with CC110x/ SX1231 support
 
 ### Getting started
 
