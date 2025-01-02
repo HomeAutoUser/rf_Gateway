@@ -62,9 +62,15 @@
   - cc1101_rf_v215pre_240627_JAVA_Modes_revised
   Der Sketch verwendet 21140 Bytes (68%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
   Globale Variablen verwenden 1271 Bytes (62%) des dynamischen Speichers, 777 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
-  - cc1101_rf_v216pre_240708_Hoymiles-CC1101
-  Der Sketch verwendet 22240 Bytes (72%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
-  Globale Variablen verwenden 1289 Bytes (62%) des dynamischen Speichers, 759 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v217pre_241222_OOK, Lacrosse_mode1, Lacrosse_mode2, OOK_MU_433, X_Sense
+  Der Sketch verwendet 28996 Bytes (94%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v217pre_241222_OOK, Lacrosse_mode1, Lacrosse_mode2, OOK_MU_433
+  Der Sketch verwendet 28966 Bytes (94%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 698 Bytes (34%) des dynamischen Speichers, 1350 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
+  - cc1101_rf_v217pre_241222_OOK, Lacrosse_mode1, Lacrosse_mode2, X_Sense
+  Der Sketch verwendet 18298 Bytes (59%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
+  Globale Variablen verwenden 305 Bytes (14%) des dynamischen Speichers, 1743 Bytes für lokale Variablen verbleiben. Das Maximum sind 2048 Bytes.
 
   - Arduino Pro / Arduino Pro Mini OHNE debug´s | FreeRam -> 956
   Der Sketch verwendet 22574 Bytes (73%) des Programmspeicherplatzes. Das Maximum sind 30720 Bytes.
@@ -114,7 +120,7 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 415516 / 1048576 bytes (39%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     415516   code in flash
-  - cc1101_rf_v211pre_240314_RFM69-WMBUS
+  --- cc1101_rf_v211pre_240314_RFM69-WMBUS
   . Variables and constants in RAM (global, static), used 39616 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1660     initialized variables
@@ -127,19 +133,33 @@
   . Code in flash (default, ICACHE_FLASH_ATTR), used 418488 / 1048576 bytes (39%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╚══ IROM     418488   code in flash
-  - cc1101_rf_v216pre_240708_Hoymiles-CC1101
-  . Variables and constants in RAM (global, static), used 39168 / 80192 bytes (48%)
+  --- cc1101_rf_v216pre_240708_Hoymiles-CC1101
+  . Variables and constants in RAM (global, static), used 39924 / 80192 bytes (49%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ DATA     1532     initialized variables
-  ╠══ RODATA   4364     constants
-  ╚══ BSS      33272    zeroed variables
-  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61015 / 65536 bytes (93%)
+  ╠══ RODATA   4384     constants
+  ╚══ BSS      34008    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61567 / 65536 bytes (93%)
   ║   SEGMENT  BYTES    DESCRIPTION
   ╠══ ICACHE   32768    reserved space for flash instruction cache
-  ╚══ IRAM     28247    code in IRAM
-  . Code in flash (default, ICACHE_FLASH_ATTR), used 422088 / 1048576 bytes (40%)
+  ╚══ IRAM     28799    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 426100 / 1048576 bytes (40%)
   ║   SEGMENT  BYTES    DESCRIPTION
-  ╚══ IROM     422088   code in flash
+  ╚══ IROM     426100   code in flash
+  --- cc1101_rf_v217pre_241222_OOK - with cc1101
+  . Variables and constants in RAM (global, static), used 40084 / 80192 bytes (49%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1532     initialized variables
+  ╠══ RODATA   4376     constants
+  ╚══ BSS      34176    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61567 / 65536 bytes (93%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     28799    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 432964 / 1048576 bytes (41%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     432964   code in flash
+
 
 
   - ESP32 OHNE debug´s (alle Protokolle)
@@ -185,9 +205,12 @@
   - cc1101_rf_v215pre_240627_JAVA_Modes_revised
   Der Sketch verwendet 1133625 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 53912 Bytes (16%) des dynamischen Speichers, 273768 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
-  - cc1101_rf_v216pre_240708_Hoymiles-CC1101
-  Der Sketch verwendet 1134669 Bytes (86%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
-  Globale Variablen verwenden 53920 Bytes (16%) des dynamischen Speichers, 273760 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  ---------- 2024-09-13 - Arduino Release v3.0.4 based on ESP-IDF v5.1.4+ ----------
+  ---------- 2024-12-22 - Arduino Release v3.1.0 based on ESP-IDF v5.3.2 ----------
+  - cc1101_rf_v217pre_241222_OOK with cc1101
+  Der Sketch verwendet 1083903 Bytes (82%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
+  Globale Variablen verwenden 49592 Bytes (15%) des dynamischen Speichers, 278088 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!
 

@@ -1163,7 +1163,7 @@ void web_wlan() {           // ########## web_wlan ##########
 }
 
 
-void sendHtml(String & str) {
+void sendHtml(const String & str) {
   HttpServer.sendHeader(F("cache-control"), F("private, no-cache"));       // A 'cache-control' header is missing or empty.
   HttpServer.sendHeader(F("x-content-type-options"), F("nosniff"));        // Response should include 'x-content-type-options' header.
   HttpServer.sendHeader(F("content-type"), F("text/html; charset=utf-8")); // Response should include 'content-type' header.
@@ -1392,7 +1392,7 @@ void WebSocket_imp(const String values) {
 }
 
 
-String getContentType(String filename) {
+String getContentType(const String & filename) {
   if (HttpServer.hasArg("download")) return "application/octet-stream";
   //else if (filename.endsWith(".htm")) return "text/html; charset=utf-8";
   else if (filename.endsWith(".html")) return "text/html; charset=utf-8";

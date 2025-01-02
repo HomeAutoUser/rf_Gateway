@@ -89,6 +89,32 @@ void ChipInit() { /* Init CC110x - Set default´s */
         EEPROM.commit();
 #endif
       }
+#ifdef OOK_MU_433
+      EEPROM.get(EEPROM_ADDR_MC, MCenabled);
+      if (MCenabled > 1) {
+        MCenabled = 1;
+        EEPROM.write(EEPROM_ADDR_MC, MCenabled);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+        EEPROM.commit();
+#endif
+      }
+      EEPROM.get(EEPROM_ADDR_MS, MSenabled);
+      if (MSenabled > 1) {
+        MSenabled = 1;
+        EEPROM.write(EEPROM_ADDR_MS, MSenabled);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+        EEPROM.commit();
+#endif
+      }
+      EEPROM.get(EEPROM_ADDR_MU, MUenabled);
+      if (MUenabled > 1) {
+        MUenabled = 1;
+        EEPROM.write(EEPROM_ADDR_MU, MUenabled);
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
+        EEPROM.commit();
+#endif
+      }
+#endif // End #ifdef OOK_MU_433
       EEPROM.get(EEPROM_ADDR_FOFFSET, freqOffset); /* freq offset from EEPROM */
       if (freqOffset > 10000 || freqOffset < -10000) {
         freqOffset = 0;
@@ -436,7 +462,7 @@ int Chip_readRSSI() {                                        /* Read RSSI value 
 #endif
 }
 
-void CC110x_readFreqErr() {                                        /* Read RSSI value from Register */
+void CC110x_readFreqErr() {
   freqErr = Chip_readReg(CC110x_FREQEST, READ_BURST);   // 0x32 (0xF2): FREQEST – Frequency Offset Estimate from Demodulator
   if (freqAfc == 1) {
     freqErrAvg = freqErrAvg - float(freqErrAvg / 8.0) + float(freqErr / 8.0);  // Mittelwert über Abweichung

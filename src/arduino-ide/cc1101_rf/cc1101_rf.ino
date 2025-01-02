@@ -30,32 +30,24 @@ Data myArraySRAM;
 #include "macros.h"
 #include "functions.h"
 
-/* Settings for OOK messages without Sync Pulse (MU) */
+// Settings for OOK
 #ifdef OOK_MU_433
-#define MsgLenMin               24            // message minimum length
-#define MsgLenMax               254           // message maximum length
-#define PatMaxCnt               8             // pattern, maximum number (number 8 -> FHEM SIGNALduino compatible)
-#define PatTol                  0.20          // pattern tolerance
 #ifdef CODE_ESP
 #define FIFO_LENGTH             200           // 200 from SIGNALduino FW
 #else
 #define FIFO_LENGTH             90            // 90 from SIGNALduino FW
 #endif
-#define t_maxP 32000                          // Zeitdauer maximum für gültigen Puls in µs
-#define t_minP 90                             // Zeitdauer minimum für gültigen Puls in µs
-String msg;
-volatile unsigned long lastTime;              // Zeit, letzte Aktion
-int16_t ArPaT[PatMaxCnt];                     // Pattern Array für Zeiten
-signed long ArPaSu[PatMaxCnt];                // Pattern Summe, aller gehörigen Pulse
-byte ArPaCnt[PatMaxCnt];                      // Pattern Counter, der Anzahl Pulse
-byte PatNmb = 0;                              // Pattern aktuelle Nummer 0 - 9
-byte MsgLen;                                  // ToDo, kann ggf ersetzt werden durch message.valcount
-int16_t first;                                // Zeiger auf den ersten Puffereintrag
-int16_t last;                                 // Zeiger auf den letzten Puffereintrag
-byte TiOv = 0;                                // Marker - Time Overflow (SIGNALduino Kürzel p; )
-byte PatMAX = 0;                              // Marker - maximale Pattern erreicht und neuer unbekannter würde folgen (SIGNALduino Kürzel e; )
-#include "SimpleFIFO.h"
+#include "simpleFIFO.h"
 SimpleFIFO<int16_t, FIFO_LENGTH> FiFo;        // store FIFO_LENGTH # ints
+#include "signalDecoder.h"
+SignalDetectorClass musterDec;
+#define t_maxP 32001                          // Zeitdauer maximum für gültigen Puls in µs
+#define t_minP 90                             // Zeitdauer minimum für gültigen Puls in µs
+uint8_t MUenabled;
+uint8_t MCenabled;
+uint8_t MSenabled;
+//String msg;
+volatile unsigned long lastTime;              // Zeit, letzte Aktion
 #endif
 
 /* varible´s for output */
@@ -102,7 +94,7 @@ byte ToggleCnt = 0;                           // Toggle, Anzahl aktiver Modi
 
 byte MOD_FORMAT;                              // Marker - Modulation
 volatile byte FSK_RAW;                        // Marker - FSK Modulation RAW interrupt
-byte ReceiveModeNr;                           // activated protocol
+uint8_t ReceiveModeNr;                        // activated protocol
 uint8_t ChipFound;                            // chip VERSION
 
 /* predefinitions of the functions */
@@ -654,7 +646,7 @@ void loop() {
   /* not OOK */
   if ( (FSK_RAW == 1) && (ChipFound) ) { /* Received data | RX (not OOK !!!) */
     FSK_RAW = 0;
-    digitalWriteFast(LED, HIGH);    /* LED on */
+    digitalWriteFast(LED, HIGH);    // LED on
     rssi = Chip_readRSSI();
 #ifdef CC110x
     CC110x_readFreqErr();
@@ -686,14 +678,14 @@ void loop() {
 #endif  // END - if defined(debug_cc110x_ms) &&  defined(CC110x)
 
     Chip_setReceiveMode();      // start receive mode
-    digitalWriteFast(LED, LOW); /* LED off */
+    digitalWriteFast(LED, LOW); // LED off
   } else {
 #ifdef OOK_MU_433
     /* OOK */
-    int aktVal = 0;
+    static int aktVal = 0;
     while (FiFo.count() > 0 ) {       // Puffer auslesen und an Dekoder uebergeben
       aktVal = FiFo.dequeue();    // get next element
-      decode(aktVal);
+      musterDec.decode(&aktVal);
 #ifdef ARDUINO_ARCH_ESP8266
       if (FiFo.count() < 120) {
         yield();
@@ -1134,95 +1126,122 @@ void InputCommand(String input) { /* all InputCommand´s , String | Char | marke
 #endif
           }
 
-        } else if (input[1] && input[2] && !input[3]) { /* command C<n><n> - Read HEX adress values from Register, set raw CDA/CEA - disable/enable AFC */
-          uint8_t Cret = hexToDec(input.substring(1));
-          if (Cret <= REGISTER_STATUS_MAX) { // CC110x - inc. Status Registers, SX1231 - all Registers
+        } else if (input[1] && input[2] && !input[3]) { // command C<n><n> - Read HEX adress values from Register, set raw CDA/CEA, CDC/CEC, CDS/CES, CDU/CEU
+          if (input[1] != 'D' && input[1] != 'E') {     // not set config
+            uint8_t Cret = hexToDec(input.substring(1));
+            if (Cret <= REGISTER_STATUS_MAX) { // CC110x - inc. Status Registers, SX1231 - all Registers
 #ifdef SIGNALduino_comp
-            MSG_BUILD('C');
-            onlyDecToHex2Digit(Cret, chHex); // convert 1 byte to 2 hex char
-            MSG_BUILD(chHex);
-            MSG_BUILD(F(" = "));
-            onlyDecToHex2Digit((Chip_readReg(Cret, READ_BURST)), chHex); // convert 1 byte to 2 hex char
-            MSG_BUILD_LF(chHex);
+              MSG_BUILD('C');
+              onlyDecToHex2Digit(Cret, chHex); // convert 1 byte to 2 hex char
+              MSG_BUILD(chHex);
+              MSG_BUILD(F(" = "));
+              onlyDecToHex2Digit((Chip_readReg(Cret, READ_BURST)), chHex); // convert 1 byte to 2 hex char
+              MSG_BUILD_LF(chHex);
 #else
-            MSG_BUILD(F("Reg. 0x"));
-            MSG_BUILD(onlyDecToHex2Digit(Cret));
-            MSG_BUILD(F(" = 0x"));
-            MSG_BUILD_LF(onlyDecToHex2Digit(Chip_readReg(Cret, READ_BURST)));
+              MSG_BUILD(F("Reg. 0x"));
+              MSG_BUILD(onlyDecToHex2Digit(Cret));
+              MSG_BUILD(F(" = 0x"));
+              MSG_BUILD_LF(onlyDecToHex2Digit(Chip_readReg(Cret, READ_BURST)));
 #endif  // END - SIGNALduino_comp
 #ifdef CODE_ESP
-            MSG_OUTPUT(tmp);
+              MSG_OUTPUT(tmp);
 #endif
 
 #ifdef CC110x
-          } else if (Cret == 0x99) { /* command C99 - ccreg */
-            Chip_readBurstReg(uiBuffer, 0x00, 47);
-            for (uint8_t i = 0; i < 0x2f; i++) {
-              if (i == 0 || i == 0x10 || i == 0x20) {
-                if (i > 0) {
-                  MSG_BUILD(' ');
+            } else if (Cret == 0x99) { /* command C99 - ccreg */
+              Chip_readBurstReg(uiBuffer, 0x00, 47);
+              for (uint8_t i = 0; i < 0x2f; i++) {
+                if (i == 0 || i == 0x10 || i == 0x20) {
+                  if (i > 0) {
+                    MSG_BUILD(' ');
+                  }
+                  MSG_BUILD(F("ccreg "));
+                  onlyDecToHex2Digit(i, chHex); // convert 1 byte to 2 hex char
+                  MSG_BUILD(chHex);
+                  MSG_BUILD(F(": "));
                 }
-                MSG_BUILD(F("ccreg "));
-                onlyDecToHex2Digit(i, chHex); // convert 1 byte to 2 hex char
+                onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
                 MSG_BUILD(chHex);
-                MSG_BUILD(F(": "));
+                MSG_BUILD(' ');
               }
-              onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
-              MSG_BUILD(chHex);
-              MSG_BUILD(' ');
-            }
-            MSG_BUILD("\n");
+              MSG_BUILD("\n");
 #ifdef CODE_ESP
-            MSG_OUTPUT(tmp);
+              MSG_OUTPUT(tmp);
 #endif
 
-          } else if (Cret == 0x3E) { // command C3E - patable, only CC110x
-            Chip_readBurstReg(uiBuffer, 0x3E, 8);
-            MSG_BUILD(F("C3E ="));
-            for (byte i = 0; i < 8; i++) {
-              MSG_BUILD(' ');
-              onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
-              MSG_BUILD(chHex);
-            }
-            MSG_BUILD("\n");
+            } else if (Cret == 0x3E) { // command C3E - patable, only CC110x
+              Chip_readBurstReg(uiBuffer, 0x3E, 8);
+              MSG_BUILD(F("C3E ="));
+              for (byte i = 0; i < 8; i++) {
+                MSG_BUILD(' ');
+                onlyDecToHex2Digit(uiBuffer[i], chHex); // convert 1 byte to 2 hex char
+                MSG_BUILD(chHex);
+              }
+              MSG_BUILD("\n");
 #ifdef CODE_ESP
-            MSG_OUTPUT(tmp);
+              MSG_OUTPUT(tmp);
 #endif
 #endif// END - CC110x
-
-          } else if (Cret == 0xDA || Cret == 0xEA) {  // command CDA/CEA - disable/enable AFC
-            freqAfc = input[1] - 'D';             // CC110x AFC 0 oder 1
-            freqOffAcc = 0;                           // reset cc110x afc offset
-            freqErrAvg = 0;                           // reset cc110x afc average
-            MSG_BUILD_LF(freqAfc == 1 ? F("AFC enabled") : F("AFC disabled"));
-#ifdef CODE_ESP
-            MSG_OUTPUT(tmp);
-#endif
+            }
+          } else if (input[1] == 'D' || input[1] == 'E') { // set config, set raw CDA/CEA, CDC/CEC, CDS/CES, CDU/CEU
+            switch (input[2]) {
+              case 'A': // command CDA/CEA - disable/enable AFC
+                freqAfc = input[1] - 'D';                 // CC110x AFC 0 oder 1
+                freqOffAcc = 0;                           // reset cc110x afc offset
+                freqErrAvg = 0;                           // reset cc110x afc average
 #ifdef CC110x
-            Chip_writeReg(CC110x_FSCTRL0, 0);         // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
+                Chip_writeReg(CC110x_FSCTRL0, 0);         // reset Register 0x0C: FSCTRL0 – Frequency Synthesizer Control
 #elif RFM69
-            SX1231_afc(freqAfc);                      // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
+                SX1231_afc(freqAfc);                      // AfcAutoOn, 0  AFC is performed each time AfcStart is set, 1  AFC is performed each time Rx mode is entered
 #endif  // END - CC110x || RFM69
-            EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
+                EEPROMwrite(EEPROM_ADDR_AFC, freqAfc);
+                break;
+#ifdef OOK_MU_433
+              case 'C': // command CDC/CEC - disable/enable manchesterMC
+                MCenabled = input[1] - 'D';
+                EEPROMwrite(EEPROM_ADDR_MC, MCenabled); // write byte at address
+                break;
+              case 'S': // command CDS/CES - disable/enable syncedMS
+                MSenabled = input[1] - 'D';
+                EEPROMwrite(EEPROM_ADDR_MS, MSenabled); // write byte at address
+                break;
+              case 'U': // command CDU/CEU - disable/enable unsyncedMU
+                MUenabled = input[1] - 'D';
+                EEPROMwrite(EEPROM_ADDR_MU, MUenabled); // write byte at address
+                break;
+#endif
+            }
 #ifdef CODE_ESP
             EEPROM.commit();
 #endif  // END - defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
           }
 
-        } else if (input[1] == 'G' && !input[2]) { /* command CG - get config*/
-          uint8_t mu = 1;
-          uint8_t mn = 0;
-          if (MOD_FORMAT != 3) {  // not OOK
-            mu = 0;
-            mn = 1;
+        } else if (input[1] == 'G' && !input[2]) { // command CG - get config
+          if (MOD_FORMAT != 3) { // not OOK - MN=1;WMBus=0;WMBus_T=1;AFC=0
+            String ReceiveModeName = getModeName(ReceiveModeNr); // name of active mode from array
+            MSG_BUILD(F("MN=1"));
+            if (ReceiveModeName.startsWith("W")) { // WMBUS
+              MSG_BUILD(F(";WMBus=1"));
+              MSG_BUILD(F(";WMBus_T="));
+              if (ReceiveModeName.endsWith("T")) { // WMBUS_T
+                MSG_BUILD("1");
+              } else {
+                MSG_BUILD("0");
+              }
+            }
+            MSG_BUILD(F(";AFC="));
+            MSG_BUILD(freqAfc);  // AFC an oder aus
+          } else {               // OOK - MS=1;MU=1;MC=1;Mred=1
+#ifdef OOK_MU_433
+            MSG_BUILD(F("MS="));
+            MSG_BUILD(MSenabled);
+            MSG_BUILD(F(";MU="));
+            MSG_BUILD(MUenabled);
+            MSG_BUILD(F(";MC="));
+            MSG_BUILD(MCenabled);
+#endif
           }
-          MSG_BUILD(F("MS=0;MU="));
-          MSG_BUILD(mu);
-          MSG_BUILD(F(";MC=0;MN="));
-          MSG_BUILD(mn);
-          MSG_BUILD(F(";AFC="));
-          MSG_BUILD(freqAfc);         // AFC an oder aus
-          MSG_BUILD(F(";Mred=0\n"));
+          MSG_BUILD("\n");
 #ifdef CODE_ESP
           MSG_OUTPUT(tmp);
 #endif
@@ -1528,7 +1547,12 @@ void Telnet() {
         Serial.println(logText);
 #endif  // END - debug_telnet
         appendLogFile(logText); // append to logfile
-        TelnetClient[i].flush(); /* clear input buffer, else you get strange characters */
+#if defined(ARDUINO_ARCH_ESP32)
+        TelnetClient[i].clear(); // clear input buffer, else you get strange characters
+#endif
+#if defined(ARDUINO_ARCH_ESP8266)
+        TelnetClient[i].flush(); // ESP32 - warning: 'virtual void NetworkClient::flush()' is deprecated: Use clear() instead.
+#endif
         TelnetClient[i].print(F("Telnet session (")); TelnetClient[i].print(i);
         TelnetClient[i].print(F(") started to ")); TelnetClient[i].println(TelnetClient[i].localIP());
 
@@ -1667,149 +1691,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
 }
 #endif  // END - defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 
-
-/* for OOK modulation */
-#ifdef OOK_MU_433
-void decode(const int pulse) {  /* Pulsübernahme und Weitergabe */
-  if (MsgLen > 0) {
-    last = first;
-  } else {
-    last = 0;
-  }
-  first = pulse;
-  // Pulsprüfung und Weitergabe an Patternprüfung
-  bool valid = (MsgLen == 0 || last == 0 || (first ^ last) < 0);   // true if a and b have opposite signs
-  valid &= (MsgLen == MsgLenMax) ? false : true;
-  valid &= ( (first > -t_maxP) && (first < t_maxP) );         // if low maxPulse detected, start processMessage()
-#ifdef debug_cc110x_MU
-  Serial.print(F("[DB] PC:")); Serial.print(PatNmb); Serial.print(F(" ML:")); Serial.print(MsgLen); Serial.print(F(" v:")); Serial.print(valid);
-  Serial.print(F(" | ")); Serial.print(first); Serial.print(F("    ")); Serial.println(last);
-#endif  // END - debug_cc110x_MU
-  if (valid) {
-    findpatt(first);
-  } else {
-#ifdef debug_cc110x_MU
-    Serial.println(F("[DB] -- RESET --"));
-#endif  // END - debug_cc110x_MU
-    msgOutput_MU();
-  }
-}
-
-void msgOutput_MU() { /* Nachrichtenausgabe */
-  if (MsgLen >= MsgLenMin) {
-    rssi = Chip_readReg(CC110x_RSSI, READ_BURST);  // not converted
-    digitalWriteFast(LED, HIGH);      // LED on
-    uint8_t CP_PaNum = 0;
-    int16_t PulseAvgMin = 32767;
-    String raw = "MU"; // 423456   code in flash
-    raw.reserve(360);
-    for (uint8_t i = 0; i <= PatNmb; i++) {
-      int16_t PulseAvg = ArPaSu[i] / ArPaCnt[i];
-      raw += ";P"; raw += i; raw += '='; raw += PulseAvg; // 423460   code in flash
-      // search Clockpulse (CP=) - das funktioniert noch nicht richtig! --> kein richtiger Einfall ;-) TODO
-      if (ArPaSu[i] > 0) { // HIGH-Pulse
-        if (PulseAvg < PulseAvgMin) { // kürzeste Zeit
-          PulseAvgMin = PulseAvg;     // kürzeste Zeit übernehmen
-          CP_PaNum = i;
-        }
-        if (ArPaCnt[i] > ArPaCnt[CP_PaNum]) {
-          CP_PaNum = i;               // ClockPulse übernehmen
-        }
-      }
-    }
-    raw += F(";D="); raw += msg; raw += F(";CP="); raw += CP_PaNum; raw += F(";R="); raw += rssi; raw += ';';
-    if (MsgLen == MsgLenMax) {  /* max. Nachrichtenlänge erreicht */
-      raw += F("O;");
-    } else if (TiOv != 0) {     /* Timeoverflow größer 32000 -> Zwangstrennung */
-      raw += F("p;");
-    } else if (PatMAX == 1) {   /* max. Pattern erreicht und neuer unbekannter würde folgen */
-      raw += F("e;");
-    }
-    //    raw += F("w="); raw += valid; raw += ';';    /* letzter Puls zu vorherigen Puls msgMU valid bzw. unvalid /  */
-#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    Chip_readRSSI(); // TODO - wird am Beginn msgOutput_MU schon gelesen, allerdings nicht dezimal
-    WebSocket_raw(raw);
-#endif  // END - defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
-    raw.replace("M", "M");
-    raw += char(3); raw += char(10);
-#ifdef CODE_AVR
-    Serial.print(
-#elif CODE_ESP
-    MSG_OUTPUTALL(
-#endif  // END - CODE_AVR || CODE_ESP
-      raw);
-    msgCount++;
-    msgCountMode[ReceiveModeNr]++;
-    digitalWriteFast(LED, LOW);  // LED off
-  }
-  // Zurücksetzen nach Nachrichtenbau oder max. Länge
-  msg = "";
-  MsgLen = 0;
-  PatMAX = 0;
-  PatNmb = 0;
-  TiOv = 0;
-  for (uint8_t i = 0; i < PatMaxCnt; i++) {
-    ArPaCnt[i] = 0;
-    ArPaSu[i] = 0;
-    ArPaT[i] = 0;
-  }
-}
-
-
-void findpatt(int val) {  /* Patterneinsortierung */
-  for (uint8_t i = 0; i < PatMaxCnt; i++) {
-    if (MsgLen == 0) {  /* ### nach RESET ### */
-      msg = i;
-      ArPaCnt[i] = 1;
-      ArPaT[i] = val;
-      ArPaSu[i] = val;
-      MsgLen++;
-#ifdef debug_cc110x_MU
-      Serial.print(F("[DB] "));
-      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" msgL0: ")); Serial.print(val);
-      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
-#endif  // END - debug_cc110x_MU
-      break;
-      /* ### in Tolleranz und gefunden ### */
-    } else if ( (val > 0 && val > ArPaT[i] * (1 - PatTol) && val < ArPaT[i] * (1 + PatTol)) ||
-                (val < 0 && val < ArPaT[i] * (1 - PatTol) && val > ArPaT[i] * (1 + PatTol)) ) {
-      msg += i;
-      ArPaCnt[i]++;
-      ArPaSu[i] += val;
-      MsgLen++;
-#ifdef debug_cc110x_MU
-      Serial.print(F("[DB] "));
-      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa T: ")); Serial.print(val);
-      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
-#endif  // END - debug_cc110x_MU
-      break;
-    } else if (i < (PatMaxCnt - 1) && ArPaT[i + 1] == 0 ) { /* ### nächste freie Pattern ### */
-      msg += i + 1;
-      PatNmb++;
-      ArPaCnt[i + 1]++;
-      ArPaT[i + 1] = val;
-      ArPaSu[i + 1] += val;
-      MsgLen++;
-#ifdef debug_cc110x_MU
-      Serial.print(F("[DB] "));
-      Serial.print(i); Serial.print(F(" | ")); Serial.print(ArPaT[i]); Serial.print(F(" Pa f: ")); Serial.print(val);
-      Serial.print(F(" l: ")); Serial.print(last); Serial.print(F(" PatN: ")); Serial.print(PatNmb); Serial.print(F(" msgL: ")); Serial.print(MsgLen); Serial.print(F(" Fc: ")); Serial.println(FiFo.count());
-#endif  // END - debug_cc110x_MU
-      break;
-    } else if (i == (PatMaxCnt - 1)) {  /* ### Anzahl vor definierter Pattern ist erreicht ### */
-#ifdef debug_cc110x_MU
-      Serial.print(F("[DB] ")); Serial.print(F("PC max! | MsgLen: "));
-      Serial.print(MsgLen); Serial.print(F(" | MsgLenMin: ")); Serial.println(MsgLenMin);
-#endif  // END - debug_cc110x_MU
-      PatMAX = 1;
-      msgOutput_MU();
-      break;
-    }
-  }
-}
-#endif  // END - #ifndef OOK_MU_433
-
-
 void NO_Chip() {
   String tmp = F("Operation not executable (no CHIP found)\n");
 #ifdef CODE_AVR
@@ -1820,7 +1701,7 @@ void NO_Chip() {
 }
 
 #if defined ARDUINO_ARCH_ESP8266 || defined ARDUINO_ARCH_ESP32
-void appendLogFile(String logText) {
+void appendLogFile(const String & logText) {
   File logFile = LittleFS.open("/files/log.txt", "a");  // open logfile for append to end of file
   if (logFile) {
     if (uptime == 0) {

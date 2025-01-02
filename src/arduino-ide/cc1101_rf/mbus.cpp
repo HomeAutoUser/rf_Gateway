@@ -314,7 +314,7 @@ void mbus_task() {
       }
       // END OF PAKET
       if (digitalReadFast(GDO2) == 0) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
-      // if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
+        // if (digitalReadFast(GDO2) == 0 && RXinfo.state > 1) { // PIN_RECEIVE, Asserts when sync word has been sent / received, and de-asserts at the end of the packet.
         Chip_readRXFIFO(RXinfo.pByteIndex, (uint8_t)RXinfo.bytesLeft, &rssi, &lqi);
         CC110x_readFreqErr();
         RXinfo.state = 4; // decode!

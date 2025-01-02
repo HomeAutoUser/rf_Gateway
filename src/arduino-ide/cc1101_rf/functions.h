@@ -7,11 +7,11 @@
 
 String EEPROMread_string(int address);
 void onlyDecToHex2Digit(byte Dec, char *ret);
-boolean isNumeric(String str);
+boolean isNumeric(const String & str);
 boolean str2ip(char *string, byte * IP);
 byte hex2int(byte hex);
 int freeRam();
-uint8_t hexToDec(String hexString);
+uint8_t hexToDec(const String & hexString);
 uint32_t EEPROMread_long(int address);
 uint8_t * EEPROMread_ipaddress(int address);
 uint8_t EEPROMread(int adr);
@@ -20,5 +20,5 @@ void EEPROMread_table();
 void EEPROMwrite(int adr, byte val);
 void EEPROMwrite_ipaddress(int address, String ip);
 void EEPROMwrite_long(int address, long value);
-void EEPROMwrite_string(int address, String str);
+void EEPROMwrite_string(int address, const String & str);
 #endif  // END - #ifndef FUNCTIONS_H

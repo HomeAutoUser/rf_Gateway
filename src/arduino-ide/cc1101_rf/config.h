@@ -3,8 +3,8 @@
 
 #include <Arduino.h>
 
-//#define CC110x            1     /* https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino */
-//#define RFM69             1     /* https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png */
+//#define CC110x            1     // https://wiki.fhem.de/w/images/3/3f/Selbstbau_cul_Schaltplan_1.png | SIGNALduino
+//#define RFM69             1     // https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png
 
 //#define debug             1     // to debug other
 //#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
@@ -25,8 +25,8 @@
 //                                   loop-benchmark (höher=besser           = ProMini 8 MHz, CC1101, LaCrosse 74200, WMBUS ca. 26500
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
-#define FWVer             "V 2.1.6pre"
-#define FWVerDate         "2024-07-15"
+#define FWVer             "V 2.1.7pre"
+#define FWVerDate         "2024-12-29"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -143,14 +143,13 @@
     Arduino Nano maximal 13 Modes???
 */
 //#define Bresser_5in1            1
-#define Inverter_CMT2300A       1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
 //#define Fine_Offset_WH57_868    1
 //#define Inkbird_IBS_P01R        1
-//#define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
+#define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define WMBus_S                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
-#define WMBus_T                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
+//#define WMBus_T                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define X_Sense                 1
 #endif
 
@@ -207,7 +206,10 @@ const static char Name_X_Sense[] PROGMEM = "X-Sense XS01-WR";
 #define EEPROM_ADDR_PATABLE     174     // 8 Byte 
 #define EEPROM_ADDR_CHK         183     // FW – Prüfsumme über PKTLEN 183–184
 #define EEPROM_ADDR_FOFFSET     185     // int16_t - chip freq offset | 185-186
-#define EEPROM_ADDR_AFC         189     // chip afc | now only work on CC110x
+#define EEPROM_ADDR_AFC         188     // chip afc | now only work on CC110x
+#define EEPROM_ADDR_MC          189     // disable/enable manchesterMC
+#define EEPROM_ADDR_MS          190     // disable/enable syncedMS
+#define EEPROM_ADDR_MU          191     // disable/enable unsyncedMU
 #define EEPROM_ADDR_Prot        200     // mit command 'm' gesetzter Modus für start ohne toggle | TODO prüfen
 #define EEPROM_ADDR_FW1         209
 #define EEPROM_ADDR_FW2         210

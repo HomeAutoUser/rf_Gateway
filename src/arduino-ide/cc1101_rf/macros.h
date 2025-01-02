@@ -35,10 +35,10 @@ extern WiFiClient TelnetClient[TELNET_CLIENTS_MAX];
 extern byte TELNET_CLIENT_COUNTER;
 extern byte client_now;
 
-void MSG_OUTPUT(String output);
+void MSG_OUTPUT(const String & output);
 //void MSG_OUTPUTLN(String output);
-void MSG_OUTPUTALL(String output);
-void MSG_OUTPUTALLLN(String output);
+void MSG_OUTPUTALL(const String & output);
+void MSG_OUTPUTALLLN(const String & output);
 void MSG_OUTPUT_DecToHEX_lz(uint8_t output);
 
 /* Useful Constants | macros from DateTime.h */

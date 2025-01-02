@@ -1901,12 +1901,12 @@ const uint8_t Config_Inverter_CMT2300A[] PROGMEM = {
   0x00, // REG 0x36 RegSyncValue8
   0x00, // REG 0x37 RegPacketConfig1
   0x35, // REG 0x38 RegPayloadLength
-// 0x07, // REG 0x38 RegPayloadLength
+  // 0x07, // REG 0x38 RegPayloadLength
   0x00, // REG 0x39 RegNodeAdrs
   0x00, // REG 0x3A RegBroadcastAdrs
   0x00, // REG 0x3B RegAutoModes
   0x34, // REG 0x3C RegFifoThresh
-// 0x06, // REG 0x3C RegFifoThresh
+  // 0x06, // REG 0x3C RegFifoThresh
   0x02, // REG 0x3D RegPacketConfig2
   0x00, // REG 0x3E RegAesKey1
   0x00, // REG 0x3F RegAesKey2

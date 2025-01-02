@@ -26,7 +26,7 @@
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES  22 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  6  // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -70,9 +70,7 @@ extern void Interupt();
 #endif
 
 extern uint8_t ChipFound;
-//extern String ReceiveModeName;              // name of active mode from array
 extern byte ReceiveModeNr;                  // activated protocol in flash
-//extern byte ReceiveModePKTLEN;
 extern volatile byte FSK_RAW;               // Marker - FSK Modulation RAW interrupt
 
 extern uint8_t ToggleArray[NUMBER_OF_MODES];
@@ -83,6 +81,9 @@ extern int16_t freqOffset;
 extern int8_t freqOffAcc;
 extern float freqErrAvg;
 extern uint8_t freqAfc;
+extern uint8_t MUenabled;
+extern uint8_t MCenabled;
+extern uint8_t MSenabled;
 extern int16_t RSSI_dez;
 extern unsigned long uptime;
 extern const struct Data Registers[];
@@ -1247,7 +1248,7 @@ const uint8_t Config_OOK_MU_433[] PROGMEM = {
   0x87,  // WOREVT1             High Byte Event0 Timeout
   0x6B,  // WOREVT0             Low Byte Event0 Timeout
   0xF8,  // WORCTRL             Wake On Radio Control
-  0xB6,  // FREND1              Front End RX Configuration
+  0xB6,  // FREND1              Front End RX Configuration, RX filter bandwidth > 101 kHz
   0x11,  // FREND0              Front End TX Configuration
   0xE9,  // FSCAL3              Frequency Synthesizer Calibration (x)
   0x2A,  // FSCAL2              Frequency Synthesizer Calibration (x)
@@ -1258,8 +1259,8 @@ const uint8_t Config_OOK_MU_433[] PROGMEM = {
   //0x59,  // FSTEST              Frequency Synthesizer Calibration Control
   //0x7F,  // PTEST               Production Test
   //0x3F,  // AGCTEST             AGC Test
-  //0x88,  // TEST2               Various Test Settings
-  //0x31,  // TEST1               Various Test Settings
+  //0x88,  // TEST2               Various Test Settings, RX filter bandwidth > 325 kHz
+  //0x31,  // TEST1               Various Test Settings, RX filter bandwidth > 325 kHz
   //0x09,  // TEST0               Various Test Settings
 };
 #endif

@@ -240,8 +240,10 @@ void hm_task() {
         return;
       }
       // Output Message
+      digitalWriteFast(LED, HIGH); // LED on
       msgOutput_MN(MBpacket, RXinfo.lengthField - 1, 0, 0, rssi, freqErr); // MN - Nachricht erstellen und ausgeben
       RXinfo.state = 0;
+      digitalWriteFast(LED, LOW);  // LED off
       return;
   }
 }

@@ -7,7 +7,7 @@
 #endif
 
 
-uint8_t hexToDec(String hexString) {           // convert 2 hexdigits to 1 byte
+uint8_t hexToDec(const String & hexString) { // convert 2 hexdigits to 1 byte
   byte ret = 0;
   char ch;
   for (byte i = 0; i < 2; ++i) {
@@ -38,15 +38,12 @@ void onlyDecToHex2Digit(byte Dec, char *ret) {
 }
 
 
-boolean isNumeric(String str) {   /* Checks the value for numeric -> Return: 0 = nein / 1 = ja */
+boolean isNumeric(const String & str) { // Checks the value for numeric -> Return: 0 = nein / 1 = ja
   unsigned int stringLength = str.length();
-
   if (stringLength == 0) {
     return false;
   }
-
   boolean seenDecimal = false;
-
   for (unsigned int i = 0; i < stringLength; ++i) {
     if (isDigit(str.charAt(i))) {
       continue;
@@ -132,30 +129,26 @@ String EEPROMread_string(int address) {   /* read String from EEPROM (Address) *
 }
 
 
-void EEPROMwrite_string(int address, String str) {    /* write String to EEPROM */
+void EEPROMwrite_string(int address, const String & str) { // write String to EEPROM
 #ifdef debug_eeprom
   Serial.print(F("[DB] EEPROMwrite_string, at address ")); Serial.print(address); Serial.print(F(" - "));
 #endif
-
   for (unsigned int i = 0; i < str.length(); ++i) {
 #ifndef ARDUINO_AVR_NANO
     EEPROM.put(address + i, str[i]);
 #else
     EEPROM.write(address + i, str[i]);
 #endif
-
 #ifdef debug_eeprom
     Serial.print(str[i]);
 #endif
   }
-
 #if not defined (ARDUINO_AVR_NANO) && not defined (ARDUINO_RADINOCC1101) && not defined (ARDUINO_AVR_PRO)
   EEPROM.put(address + str.length(), 0);
   EEPROM.commit();
 #else
   EEPROM.write(address + str.length(), 0);
 #endif
-
 #ifdef debug_eeprom
   Serial.println();
 #endif

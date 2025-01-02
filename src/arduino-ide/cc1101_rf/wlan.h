@@ -9,7 +9,7 @@
 #include "functions.h"
 
 // external integration: cc1101_rf.ino
-extern void appendLogFile(String logText);
+extern void appendLogFile(const String & logText);
 extern String OwnStationHostname;
 extern boolean WLAN_AP;
 extern byte used_dhcp;

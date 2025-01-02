@@ -44,7 +44,7 @@ extern String webSocketSite[WEBSOCKETS_SERVER_CLIENT_MAX];
 extern int8_t freqErr;
 extern const struct Data Registers[];
 extern void InputCommand(String input);
-extern void appendLogFile(String logText);
+extern void appendLogFile(const String & logText);
 extern void Interupt();
 extern void Interupt_Variant(byte nr);
 
@@ -67,7 +67,7 @@ void web_modes();
 void web_raw();
 void web_wlan();
 void HTML_mod(String & str);
-void sendHtml(String & str);
+void sendHtml(const String & str);
 
 /* Display of all websites from the web server
   https://wiki.selfhtml.org/wiki/HTML/Tutorials/Grundger%C3%BCst
