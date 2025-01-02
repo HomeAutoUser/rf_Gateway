@@ -381,12 +381,6 @@ void web_detail_import() {  // ########## web_detail_import ##########
       for (uint16_t i = 2; i < imp.length(); i += 7) {
         Adr = hexToDec(imp.substring(i, i + 2));
         Val = hexToDec(imp.substring(i + 2, i + 4));
-#ifdef debug_html
-        onlyDecToHex2Digit(Adr, chHex);
-        Serial.print(F("[DB] web_detail_import, chip adr: 0x")); Serial.print(chHex);
-        onlyDecToHex2Digit(Val, chHex);
-        Serial.print(F(" | val: 0x")); Serial.println(chHex);
-#endif
         if (Adr > REGISTER_MAX) {
           break;
         }
