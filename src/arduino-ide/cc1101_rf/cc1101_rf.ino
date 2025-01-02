@@ -105,6 +105,7 @@ void decode(const int pulse); // only MU
 void findpatt(int val); // only MU
 void InputCommand(String input);
 void ToggleOnOff();
+void msgOutput_MN(uint8_t * data, uint16_t lenData, uint8_t frameTypeB, uint8_t lqi, uint8_t rssi, int8_t freqErr);
 
 /* varible´s for other */
 #define BUFFER_MAX 70                         // maximale Anzahl der zu sendenden Zeichen
