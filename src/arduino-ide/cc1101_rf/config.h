@@ -7,7 +7,6 @@
 //#define RFM69             1     // https://wiki.fhem.de/wiki/Datei:Lgw_Schaltplan_Devkit_full.png
 
 //#define debug             1     // to debug other
-//#define debug_cc110x_MU   1     // to debug CC110x decoder OOK
 //#define debug_cc110x_ms   1     // to debug CC110x Marcstate
 //#define debug_chip        1     // to debug chip routines
 //#define debug_eeprom      1     // to debug EEPROM
