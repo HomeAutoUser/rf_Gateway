@@ -25,7 +25,7 @@
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
 #define FWVer             "V 2.1.7pre"
-#define FWVerDate         "2024-12-29"
+#define FWVerDate         "2025-01-09"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -144,7 +144,7 @@
 //#define Bresser_5in1            1
 #define Lacrosse_mode1          1
 #define Lacrosse_mode2          1
-//#define Fine_Offset_WH57_868    1
+#define Fine_Offset_WH31_868    1
 //#define Inkbird_IBS_P01R        1
 #define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define WMBus_S                 1     // OOK_MU_433 or WMBus, not enough free RAM for both

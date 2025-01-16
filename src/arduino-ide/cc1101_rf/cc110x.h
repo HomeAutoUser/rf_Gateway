@@ -26,7 +26,7 @@
 #if defined (ARDUINO_ARCH_ESP8266) || defined (ARDUINO_ARCH_ESP32)
 #define NUMBER_OF_MODES  22 // ESP - Anzahl Datensätze in struct Data
 #else
-#define NUMBER_OF_MODES  5  // AVR - Anzahl Datensätze in struct Data
+#define NUMBER_OF_MODES  6  // AVR - Anzahl Datensätze in struct Data
 #endif
 
 #if defined (WMBus_S) || defined (WMBus_T)
@@ -675,10 +675,10 @@ const uint8_t Config_Fine_Offset_WH31_868[] PROGMEM = {
   0x01,  // IOCFG2              GDO2 Output Pin Configuration
   0x2E,  // IOCFG1              GDO1 Output Pin Configuration
   0x2E,  // IOCFG0              GDO0 Output Pin Configuration
-  0x41,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
+  0x42,  // FIFOTHR             RX FIFO and TX FIFO Thresholds
   0x2D,  // SYNC1               Sync Word, High Byte
   0xD4,  // SYNC0               Sync Word, Low Byte
-  0x07,  // PKTLEN              Packet Length
+  0x0B,  // PKTLEN              Packet Length
   0x80,  // PKTCTRL1            Packet Automation Control
   0x00,  // PKTCTRL0            Packet Automation Control
   0x00,  // ADDR                Device Address

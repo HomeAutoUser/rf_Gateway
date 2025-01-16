@@ -104,6 +104,7 @@ return notes[i][1];
 const a = `- firmware must support processing & only one register setting does not work!`;
 const b = `- Fine Offset WH40, Ambient Weather WH40E, ecowitt WH40\n- Fine Offset WH57, Ambient Weather WH31L, Froggit DP60`;
 const c = `- Fine Offset WH51, ecowitt WH51, Froggit DP100, MISOL/1`;
+const d = `- Fine Offset WH31, Ambient Weather WH31E, ecowitt WN31/WH31, Froggit DP50/WH31A, dnt DNT000005`;
 const r = `remotes:\n`;
 const s = `sensors:\n`;
 
@@ -115,7 +116,7 @@ const notes = [
 //[`Bresser 5-in-1`,``],
 [`Bresser 6-in-1`,`send interval: 12 secondes, two different messages`],
 //[`Bresser 7-in-1`,``],
-//[`Fine Offset WH31 868 MHz`,``],
+[`Fine Offset WH31 868 MHz`,`${s}${d}`],
 [`Fine Offset WH40/WH57 434 MHz`,`${s}${b}`],
 [`Fine Offset WH40/WH57 868 MHz`,`${s}${b}`],
 [`Fine Offset WH51 434 MHz`,`${s}${c}`],
@@ -124,7 +125,7 @@ const notes = [
 [`Hoymiles Inverter HMS/HMT`,`${a}\n- settings of the base frequency DTU (different frequencies must be set manually !)\n- send interval: different`],
 [`KOPP FC`,`- untested!`],
 [`LaCrosse mode 1`,`send interval: 4 secondes`],
-[`LaCrosse mode 2`,`send interval: 10 secondes`],
+[`LaCrosse mode 2`,`send interval: 5 or 10 secondes`],
 //[`PCA301`,``],
 [`Rojaflex`,`${r}- HSR-15, HSTR-15`],
 [`WMBus S`,`${a}`],

@@ -534,7 +534,7 @@ MUOutput:
       } // End "if (MCenabled)"
     }
     if (MUenabled && !mcDetected && state == clockfound && success == false && messageLen >= minMessageLen) {
-      digitalWriteFast(LED, HIGH); // LED on
+    digitalWriteFast(LED, HIGH); // LED on
 #if DEBUGDECODE > 1
       DBG_PRINT(" MU found: ");
 #endif
@@ -564,7 +564,6 @@ MUOutput:
       strRawMsg += F("R=");
       strRawMsg += rssiFhem;
       strRawMsg += ';';
-      //} // wird entfernt
       if (m_overflow) {
         //␂MU;P1=489;P4=-2045;P5=-3971;P6=-8054;D=1616141414151515141514151414141414141414141515151415151414141414141414141414141415141415;CP=1;SP=6;R=239;    O;␃
         strRawMsg += F("O;");

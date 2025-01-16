@@ -231,23 +231,25 @@ void web_modes() {          // ########## web_modes ##########
                "</tr>");
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
     website += F("<tr><td"); // Spalte 1 - available modes
+    // website += ReceiveModeNr == modeNr ? F(" class=\"bggn\">") : F(">"); // background color light green
     website += ReceiveModeNr == modeNr ? F(" class=\"bggn\">") : F(">"); // background color light green
     if (modeNr <= 9) {
-      website += F("0");
+      website += 0;
     }
     website += modeNr;
     website += F(" - ");
     website += getModeName(modeNr);
     website += F("</td>");
     website += F("<td class=\"ac"); // Spalte 2 - enable modes
-    website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
+    String bgColor = ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
+    website += bgColor; // background color light green
     website += F("\"><input name=\"c"); // c0, c1, c2 ...
     website += modeNr;
     website += F("\" type=\"checkbox\" value=\"1\"");
     website += ToggleArray[modeNr] == 1 ? F(" checked") : F("");
     website += F("></td>");
     website += F("<td class=\"ac"); // Spalte 3 - scan time (seconds)
-    website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
+    website += bgColor; // background color light green
     website += F("\"><input name=\"t"); // t0, t1, t2 ...
     website += modeNr;
     website += F("\" type=\"number\" value=\"");
@@ -257,7 +259,7 @@ void web_modes() {          // ########## web_modes ##########
     website += F("\" max=\"");
     website += TOGGLE_TIME_MAX;
     website += F("\"></td><td class=\"ar"); // Spalte 4 - msg count
-    website += ReceiveModeNr == modeNr ? F(" bggn") : F(""); // background color light green
+    website += bgColor; // background color light green
     website += F("\" colspan=\"1\"><span id=\"c"); // msg count
     website += modeNr;
     website += F("\">");
@@ -615,8 +617,29 @@ void web_detail() {         // ########## web_detail ##########
           EEPROMwrite(addr, BrowserArgsReg[i]);     // write in flash
         }
       }
+      // ASK/OOK message types
+#ifdef OOK_MU_433
+    } else if (submit == "btype") {
+      if (HttpServer.hasArg("mc")) { // Manchester coded messages (manchesterMC) for FHEM
+        InputCommand("CEC");
+      } else {
+        InputCommand("CDC");
+      }
+      if (HttpServer.hasArg("ms")) { // Messages with sync pulse (syncedMS) for FHEM
+        InputCommand("CES");
+      } else {
+        InputCommand("CDS");
+      }
+      if (HttpServer.hasArg("mu")) { // Messages without a sync pulse (unsyncedMU) for FHEM
+        InputCommand("CEU");
+      } else {
+        InputCommand("CDU");
+      }
+#endif
     }
-    ReceiveModeNr = 1;
+    if (submit != "btype") { // not by ASK/OOK message types
+      ReceiveModeNr = 1;
+    }
   }
 
   String website = FPSTR(html_meta);
@@ -684,12 +707,30 @@ void web_detail() {         // ########## web_detail ##########
                "<tr><td colspan=\"2\">Modulation</td><td class=\"ce\" colspan=\"2\"><span id=\"MOD_FORMAT\"></span></td>"
                "<td class=\"ce\"><select aria-label=\"mod\" id=\"modulation\" name=\"modulation\"></select></td>"
                "<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"bmod\">set</button></td></tr>"
+#ifdef OOK_MU_433
+               // ASK/OOK message types
+               "<tr>"
+               "<td colspan=\"2\">ASK/OOK message types</td>"
+               "<td class=\"ce\" colspan=\"3\">"
+               "Manchester (MC): <input");
+  website += (MCenabled == 1 ? F(" checked") : F(""));
+  website += F(" name=\"mc\" type=\"checkbox\" aria-label=\"MC\" value=\"1\" />"
+               "&emsp;with sync (MS): <input");
+  website += (MSenabled == 1 ? F(" checked") : F(""));
+  website += F(" name=\"ms\" type=\"checkbox\" aria-label=\"MS\" value=\"1\" />"
+               "&emsp;without sync (MU): <input");
+  website += (MUenabled == 1 ? F(" checked") : F(""));
+  website += F(" name=\"mu\" type=\"checkbox\" aria-label=\"MU\" value=\"1\" />"
+               "</td>"
+               "<td class=\"ce\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"btype\">set</button></td>"
+               "</tr>"
+#endif
                // NUM_PREAMBLE
-               "<tr><td colspan=\"2\">Number of preamble</td><td class=\"ce\" colspan=\"4\"><span id=\"MDMCFG1\"></span></td></tr>"
+               "<tr><td colspan=\"2\">FSK number of preamble</td><td class=\"ce\" colspan=\"4\"><span id=\"MDMCFG1\"></span></td></tr>"
                // Packet length config
-               "<tr><td colspan=\"2\">Packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
+               "<tr><td colspan=\"2\">FSK packet length config</td><td class=\"ce\" colspan=\"4\"><span id=\"PKTCTRL0\"></span></td></tr>"
                // Sync-word qualifier mode
-               "<tr><td colspan=\"2\">Sync-word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
+               "<tr><td colspan=\"2\">FSK sync word qualifier mode</td><td class=\"ce\" colspan=\"4\"><span id=\"SYNC_MODE\"></span></td></tr>"
                // buttons
                "<tr><td class=\"ce\" colspan=\"6\"><button class=\"btn\" type=\"submit\" name=\"submit\" value=\"breg\">set all registers</button>&emsp;"
                "<button class=\"btn\" type=\"button\" onClick=\"location.href='""detail_export""'\">export all registers</button>&emsp;"
@@ -855,7 +896,7 @@ void web_raw() {            // ########## web_raw ##########
   }
   for (int8_t x = 7; x >= 0; x--) {
     website += F("<option ");
-    website += (OutputPower == CC110x_PATABLE_VAL[x] ? "selected " : "");
+    website += (OutputPower == CC110x_PATABLE_VAL[x] ? F("selected ") : F(""));
     website += F("value=\"");
     website += CC110x_PATABLE_VAL[x];
     website += F("\">");
@@ -865,7 +906,7 @@ void web_raw() {            // ########## web_raw ##########
 #elif RFM69
   for (int8_t val = 0; val <= 31; val++) {
     website += F("<option ");
-    website += (OutputPower == val ? "selected " : "");
+    website += (OutputPower == val ? F("selected ") : F(""));
     website += F("value=\"");
     website += val;
     website += F("\">");

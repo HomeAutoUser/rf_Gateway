@@ -210,6 +210,7 @@
   - cc1101_rf_v217pre_241222_OOK with cc1101
   Der Sketch verwendet 1083903 Bytes (82%) des Programmspeicherplatzes. Das Maximum sind 1310720 Bytes.
   Globale Variablen verwenden 49592 Bytes (15%) des dynamischen Speichers, 278088 Bytes für lokale Variablen verbleiben. Das Maximum sind 327680 Bytes.
+  ---------- 2025-01-11 - Arduino Release v3.1.1 based on ESP-IDF v5.3.2 ----------
 
 
   - !!! ein Register ca. 82 Bytes des Programmspeicherplatzes & 82 Bytes Globale Variablen !!!

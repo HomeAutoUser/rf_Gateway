@@ -34,7 +34,7 @@ const struct Data Registers[] PROGMEM = {
   { Config_Bresser_7in1, Name_Bresser_7in1, 23 },
 #endif
 #ifdef Fine_Offset_WH31_868
-  { Config_Fine_Offset_WH31_868, Name_Fine_Offset_WH31_868, 7 },
+  { Config_Fine_Offset_WH31_868, Name_Fine_Offset_WH31_868, 11 },
 #endif
 #ifdef Fine_Offset_WH57_434
   { Config_Fine_Offset_WH57_434, Name_Fine_Offset_WH57_434, 9 },

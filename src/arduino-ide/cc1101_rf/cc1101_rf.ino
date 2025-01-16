@@ -539,6 +539,9 @@ void setup() {
       toggleTick = ToggleTimeMode[modeNr]; // set toggle time
     }
   }
+  if (ReceiveModeNr == 255) { // kein Mode aktiv
+    ReceiveModeNr = 0;        // default Mode
+  }
 #ifdef debug_chip
   Serial.println(F("Available modes:"));
   for (uint8_t x = 0; x < NUMBER_OF_MODES; x++) {
