@@ -522,7 +522,7 @@ void setup() {
 #endif  // END - BOARDS
 #endif  // END debug
 
-  ReceiveModeNr = 255;
+  ReceiveModeNr = 0; // Chip factory default
   for (uint8_t modeNr = 0; modeNr < NUMBER_OF_MODES; modeNr++) {
     ToggleTimeMode[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleTime + modeNr);  // scan time all modes
     ToggleArray[modeNr] = EEPROM.read(EEPROM_ADDR_ToggleMode + modeNr);     // read all modes if enabled/disabled
@@ -534,13 +534,10 @@ void setup() {
 #endif
     }
     ToggleCnt += ToggleArray[modeNr]; // count enabled modes
-    if (ReceiveModeNr == 255 && ToggleArray[modeNr] == 1) { // found first enbabled mode
+    if (ReceiveModeNr == 0 && ToggleArray[modeNr] == 1) { // found first enbabled mode
       ReceiveModeNr = modeNr;
       toggleTick = ToggleTimeMode[modeNr]; // set toggle time
     }
-  }
-  if (ReceiveModeNr == 255) { // kein Mode aktiv
-    ReceiveModeNr = 0;        // default Mode
   }
 #ifdef debug_chip
   Serial.println(F("Available modes:"));
@@ -549,9 +546,9 @@ void setup() {
     Serial.print(F(": "));
     Serial.println(getModeName(x));
   }
-  Serial.print(F("[DB] ToggleCnt:       ")); Serial.println(ToggleCnt);
-  Serial.print(F("[DB] ReceiveModeNr:   ")); Serial.println(ReceiveModeNr);
-  Serial.print(F("[DB] ReceiveModeName: ")); Serial.println(getModeName(ReceiveModeNr));
+  Serial.print(F("ToggleCnt:       ")); Serial.println(ToggleCnt);
+  Serial.print(F("ReceiveModeNr:   ")); Serial.println(ReceiveModeNr);
+  Serial.print(F("ReceiveModeName: ")); Serial.println(getModeName(ReceiveModeNr));
   delay(10000);
 #endif
   ChipInit();

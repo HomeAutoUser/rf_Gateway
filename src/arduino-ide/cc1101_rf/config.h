@@ -25,7 +25,7 @@
 //                                   loop-benchmark (höher=besser           = Nano 16 MHz, CC1101, LaCrosse ca. 150000, WMBus T ca. 60000
 
 #define FWVer             "V 2.1.7pre"
-#define FWVerDate         "2025-01-09"
+#define FWVerDate         "2025-01-21"
 
 /* SIGNALduino compatibility (please comment out for no compatibility) */
 #define SIGNALduino_comp  1       // for compatibility in FHEM
@@ -114,6 +114,7 @@
 
 #ifdef CC110x
 #define OOK_MU_433              1
+#define OOK_MU_868              1
 #define KOPP_FC                 1
 #define PCA301                  1
 #define X_Sense                 1
@@ -147,6 +148,7 @@
 #define Fine_Offset_WH31_868    1
 //#define Inkbird_IBS_P01R        1
 #define OOK_MU_433              1     // OOK_MU_433 or WMBus, not enough free RAM for both
+#define OOK_MU_868              1     // OOK_MU_868 or WMBus, not enough free RAM for both
 //#define WMBus_S                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define WMBus_T                 1     // OOK_MU_433 or WMBus, not enough free RAM for both
 //#define X_Sense                 1
@@ -156,6 +158,7 @@
 const static char Name_Default[] PROGMEM = "Chip factory default";
 const static char Name_User[] PROGMEM = "Chip user setting";
 const static char Name_OOK_MU_433[] PROGMEM = "ASK/OOK 433 MHz";
+const static char Name_OOK_MU_868[] PROGMEM = "ASK/OOK 868 MHz";
 const static char Name_Avantek[] PROGMEM = "Avantek DB-LE";
 const static char Name_Bresser_5in1[] PROGMEM = "Bresser 5-in-1";
 const static char Name_Bresser_6in1[] PROGMEM = "Bresser 6-in-1";

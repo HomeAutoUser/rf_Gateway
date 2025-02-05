@@ -21,6 +21,9 @@ const struct Data Registers[] PROGMEM = {
 #ifdef OOK_MU_433
   { Config_OOK_MU_433, Name_OOK_MU_433, 5 },
 #endif
+#ifdef OOK_MU_868
+  { Config_OOK_MU_868, Name_OOK_MU_868, 5 },
+#endif
 #ifdef Avantek
   { Config_Avantek, Name_Avantek,  8 },
 #endif
