@@ -222,7 +222,7 @@
   foff<n>           - frequency offset
   ft                - frequency testsignal SN;R=99;D=FF;
   t                 - get uptime
-  tob<0-3><0-6>     - set togglebank (0-3) to value | <n> bank , <n> mode or 99 | 99 reset togglebank n (set to -)
+  tob<mm><0/1>      - set modeNr <mm> to active 1 or deactiv 0 for toggle
   tob88             - scan all modes
   tob99             - reset togglebank              | set to { - | - | - | - }
   tot<mm><nnn>      - set toggletime on <mm> modeNr to <nnn> seconds (min defined in config.h)
