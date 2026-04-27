@@ -223,8 +223,8 @@
   ft                - frequency testsignal SN;R=99;D=FF;
   t                 - get uptime
   tob<mm><0/1>      - set modeNr <mm> to active 1 or deactiv 0 for toggle
-  tob88             - scan all modes
-  tob99             - reset togglebank              | set to { - | - | - | - }
+  tob88             - scan all modes for 60 seconds
+  tob99             - reset togglebank and stop scanmode
   tot<mm><nnn>      - set toggletime on <mm> modeNr to <nnn> seconds (min defined in config.h)
   x                 - write cc110x_patable
   C                 - reads complete CC110x register
