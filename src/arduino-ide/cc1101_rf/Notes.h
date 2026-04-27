@@ -225,7 +225,7 @@
   tob<0-3><0-6>     - set togglebank (0-3) to value | <n> bank , <n> mode or 99 | 99 reset togglebank n (set to -)
   tob88             - scan all modes
   tob99             - reset togglebank              | set to { - | - | - | - }
-  tot<n>            - toggletime in milliseconds (min defined in config.h)
+  tot<mm><nnn>      - set toggletime on <mm> modeNr to <nnn> seconds (min defined in config.h)
   x                 - write cc110x_patable
   C                 - reads complete CC110x register
   C<n>              - reads one register adress (0-61)
@@ -246,7 +246,6 @@
   EEPROM addresses: ... see config.h ...
 
   notes ToDO:
-  - ? wenn dev Protokolle aktiv, diese bei ScanAll überspringen
   - ? MQTT Weiterleitung
 
   https://www.ti.com/lit/ds/symlink/cc1101.pdf
